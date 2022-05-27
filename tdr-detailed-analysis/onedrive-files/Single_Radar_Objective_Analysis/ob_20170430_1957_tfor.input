@@ -1,0 +1,42 @@
+1                       ! iradtype = 0 (ground-based), = 1 (airborne)
+-98.0047  43.5244  0.7900 ! radar long. (deg E), lat. (deg N), and alt. (km MSL).  Only used for case of ground-based radar where iradtype = 0 (see above).
+-87.3  34.15  0.2180 ! grid origin long. (deg E), lat. (deg N), and alt. (km MSL) (was -98.7545  43.0091  0.450)
+0                        ! map projection: 0=flat earth, 1=azimuthal, 2=Lambert conformal (one parallel)
+721  621   41             ! number of grid points in x, y, and z directions
+0.250  0.250  0.250      ! grid spacings in x, y, and z directions (km)  
+0.0  0.0  0.0            ! xmin (km), ymin (km), zmin (km)
+0   13.29  8.60  21.0000  4.00  10.00  26.0000  ! istorm, ut0, vt0, smfpt0, ut1, vt1, smfpt1. Used for computing translation velocity:  U (m/s), V (m/s)
+2                        ! number of base data fields to be interpolated.  For iradtype = 1 (airborne), fields 3-5 are x-, y-, and z-gridded 3-D coordinates of P-3
+'VD'                     ! name of the velocity field to be interpolated
+'DD'                     ! name of the reflectivity field to be interpolated
+'VD'   60.0    1.0       ! field #1 name, sanity check absolute value, multiplicative sign scale (-1 = reverse sign; 1 = same sign);  Normally set to 1.0;  For case of P-3 velocity only, use -1.0.
+'DD'   90.0    1.0       ! field #2 name, sanity check absolute value, multiplicative sign scale (-1 = reverse sign; 1 = same sign);  Normally set to 1.0;  For case of P-3 velocity only, use -1.0.
+2                        ! interpolation method (1=Cressman,2=Barnes,3=linear least squares)
+0  0.6  0.6  22.0000   0.1592  0.1592  26.0000  ! ikappa (was 0.3582 for TDR) (= 0, const k; = 1, time-varying k), hsp00, vsp00, spfpt0, hsp01, vsp01, spfpt1. 1st-pass smoothing parameter (km*km) k ~ (1.33D)**2 and D = coarsest data spacing
+1                        ! allow extrapolation?  1 = yes (standard ob. an.), 0 = no
+5, 2.0                   ! mincount (min. # of gates), minsum (min. sum of weights)
+5.00                    ! threshold for minimum allowable range (km) from radar (was 2.000)
+360.1  48.0   0   ! elmax = maximum elevation angle (deg); rmax = max data range for oban; maxrh (=0, no threshold; = 1, threshold by horizontal range rhmax)
+0                        ! correction to year in data
+0                        ! correction to month in data
+0                        ! correction to day in data
+0                        ! UMass data? (0=no, 1=yes)
+0                        ! az. angle correction method:  0=none, 1=avg. beam locations
+0.0                      ! elevation angle correction
+0.0                      ! azimuth angle offset (deg)
+5  10.0  4.0  6.0      ! BAD VELOCITY DETECT/FLAG: nwhalf (ODD-NUMBERED one-sided median filter width), diff_thres (m/s), rhmax_near (km), hmax_near (km)
+1   1   2   20   1  20.0   30.0 !  SINGLE-RADAR 1-D HOLE-FILLING: iradfilt, isigfilt, ifilter (filter type), nuvfpass (# vh passes, 20), nwfpass (# w-passes, 5), dbzmiss, dbzmiss0 (fill below)
+0   2   0   2 ! SINGLE-RADAR FILTERING: ivsmooth, ismooth (filter type), nuvsmooth (# of u/v smoothing passes), nwsmooth (# of w smoothing passes)
+1                        ! number of passes
+0.3                      ! gamma (only invoked if npass > 1; CLZ recommends gamma = 0.3)
+1                        ! format for output:  1=Cartesian, 2=PPI
+120                       ! maxswps.  Set as the dimension of the sfname array (i.e., the maximum number of sweep files per radar volume)
+'/Volumes/Pegasus/projData/vortexse17/radar/170430/TDR/all_edit/fore_out_swp'      ! path of subdirectory containing input sweep files
+'swp.*'               ! file name mask
+1                     ! nanal = number of objective analysis times
+2017 04 30 19 57 00      ! central date and time:  YYYY MM DD HH MM SS
+17 04 30 19 56 30      ! YY (since 2000), MM, DD, HH, MM, SS of time just preceding beginning sweep file of current radar volume by e.g., ~ 1 sec
+17 04 30 20 00 50      ! YY (since 2000), MM, DD, HH, MM, SS of time just following ending sweep file of current radar volume by e.g., ~ 1 sec
+'/Users/daniel.stechman/Research/projects/vortexse17/170430/oban/20170430_1957_tfor_1pass.out'               ! output file name
+'/Users/daniel.stechman/Research/projects/vortexse17/170430/oban/20170430_1957_tfor_1pass.v5d'               ! output vis5d file name
+'/Users/daniel.stechman/Research/projects/vortexse17/170430/oban/20170430_1957_tfor_1pass.nc'                ! output netcdf file name

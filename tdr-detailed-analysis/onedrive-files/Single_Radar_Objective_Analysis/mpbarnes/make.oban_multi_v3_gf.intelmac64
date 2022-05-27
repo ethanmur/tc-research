@@ -1,0 +1,64 @@
+#
+# Compile Multi-pass objective analysis program executable with GFortran for Intel Mac OSX (64-bit)
+#
+
+EXEC = x.oban_multi_v3_gf
+
+# Fortran and C compiler information
+
+FC   = gfortran-9 -ffixed-line-length-none
+
+#
+#.... CLZ (10/16/19): GFortran compiler options
+#
+
+OPT = -w -Wl,-stack_size,10000000
+
+
+
+CC   = gcc-9
+
+CFLAGS = -DLITTLE -DUNDERSCORE -c -g
+
+NETCDFLIB = -L/Users/daniel.stechman/homebrew/lib -lm -lnetcdf -lnetcdff -lhdf5_hl -lhdf5 -lz
+
+
+#
+# instructions for building programs
+#
+
+OBJS = oban_multi_v3.o util_v3.o radfill1d.o fileio_v3_gfort.o read_dorade.o binio.o v5d.o
+
+default: $(EXEC)
+
+$(EXEC): $(OBJS)
+	$(FC) $(OPT) -o $(EXEC) $(OBJS) $(NETCDFLIB)
+
+
+#
+# instructions for compiling object files
+#
+
+oban_multi_v3.o: oban_multi_v3.f structures.inc dow.inc
+	$(FC) $(OPT) -c oban_multi_v3.f
+
+radfill1d.o: radfill1d.f
+	$(FC) $(OPT) -c radfill1d.f
+
+read_dorade.o: read_dorade.c read_dorade.h
+	$(CC) -c read_dorade.c
+
+fileio_v3_gfort.o: fileio_v3_gfort.f
+	$(FC) $(OPT) -c fileio_v3_gfort.f
+
+util_v3.o: util_v3.f dow.inc structures.inc
+	$(FC) $(OPT) -c util_v3.f
+
+binio.o: binio.c
+	$(CC) $(CFLAGS) binio.c -o binio.o
+
+v5d.o: v5d.c
+	$(CC) $(CFLAGS) v5d.c -o v5d.o
+
+clean:
+	rm $(EXEC) $(OBJS)

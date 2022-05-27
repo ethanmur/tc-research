@@ -1,0 +1,19 @@
+<latest_data_info>
+  <unix_time>1632944480</unix_time>
+  <year>2021</year>
+  <month>09</month>
+  <day>29</day>
+  <hour>19</hour>
+  <min>41</min>
+  <sec>20</sec>
+  <rel_data_path>ncf_20210929_194120.nc</rel_data_path>
+  <file_ext>nc</file_ext>
+  <data_type>netCDF</data_type>
+  <user_info1>none</user_info1>
+  <user_info2>none</user_info2>
+  <is_forecast>false</is_forecast>
+  <forecast_lead_secs>0</forecast_lead_secs>
+  <writer>Radx2Grid</writer>
+  <max_time>1632944480</max_time>
+  <prev_mod_time>0</prev_mod_time>
+</latest_data_info>

@@ -1,0 +1,394 @@
+#Input YAML file for CIMMS-RadarQC run_radQC.py - VERSION 1.3.8
+
+# With few exceptions (e.g., the Input/Output and Platform options section below), 
+#   the first parameter in each section is a boolean controlling execution of the given 
+#   function. These control parameters are surrounded by special characters for ease of 
+#   identification, as in the following example:
+#
+#   # ▽▽▽▽▽▽▽▽▽▽▽▽▽▽
+#   rmvSpokes: false
+#   # △△△△△△△△△△△△△△
+#
+#   When set to `false`, none of the other parameters in that section will be evaluated
+#   and can be safely ignored. Notable exceptions include the KDP recalulation section
+#   and the dual-PRF/staggered-PRT section which both have multiple top-level controlling 
+#   boolean expressions.
+
+
+
+
+#######################################
+## Input/Output and platform options ##
+#######################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Path to directory containing input CfRadial files
+radar_folder: '/Volumes/Guo/VORTEX_SE/TDR/TDR_Cali/2034/Dorade/CfRadial/'
+
+# Is the input data from an airborne radar?
+air: true
+
+# Output intermediate versions of edited variables? (useful for debugging/tuning parameters)
+svExtra: true
+
+# Output files are automatically saved as CfRadial, though you may specify an additional
+#   format you wish to produce. RadxConvert will be called to convert the output CfRadial
+#   files to the specified format unless said format is given as 'None' (no conversion) 
+#   or is an invalid option.
+frmat: 'dorade'
+
+
+# Variable names for the input fields
+velIn: 'V0'  # Input velocity field name
+refIn: 'D0' # Input reflectivity field name
+
+# Variable names for the output fields
+velOut: 'VD' # Output velocity field name
+refOut: 'DD' # Output reflectivity field name
+
+
+
+
+###########################
+## Spoke removal options ##
+###########################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Remove "spokes" prior to aggregation (clear air mask generation) and/or other editing?
+# ▽▽▽▽▽▽▽▽▽▽▽▽▽▽
+rmvSpokes: true
+# △△△△△△△△△△△△△△
+
+
+# Threshold difference (dBZ) between current and adjacent gates above which 
+#   to flag gate a spoke candidate
+spokeDiff: 10
+
+# Range in meters beyond which to mask ALL data (45000 for VSE; 51750 for TORUS) 
+#   (a value of 0 will turn this off)
+maskRingOut: 45000
+
+# Range in meters within which ALL data will be masked (e.g., 2500 for VSE; 0 or 300 for TORUS) 
+#   (a value of 0 will turn this off)
+maskRingIn: 2500
+
+# Apply an offset correction to account for differences in reflectivity sensitivity 
+#   due to use of both a short and long pulse. Applies specifically to TORUS TDR data
+#   where a +9.8 dBZ offset is added to reflectivity data within 450 m and 5625 m.
+#   May be made more configurable by the user if/when other use cases are identified.
+dualPRTofst: false
+
+
+
+
+#######################################
+## Clear air mask generation options ##
+#######################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Generate the volume aggregate stats file(s) for use in creating the clear air mask(s)? 
+#   *** If `false`, it is expected this file (or files) already exists ***
+# ▽▽▽▽▽▽▽▽
+agg: true
+# △△△△△△△△
+
+
+# Details for each volume/PDD to be analyzed 
+#   The entry for each volume should be of the following format:
+#       [<volume number>, '<volume start date & time>', '<volume end date & time>', '<volume storm position>']
+#   The first parameter, volume number, is not used by the code at this time, and is 
+#       included only to assist the user in identifying volumes here in the input file.
+#   The second and third parameters, start/end dates & times for each volume, must adhere
+#       to the following format: 'YYYYMMDD_HHMMSS' (**NOTE: must enclose each entry in 
+#       single quotes). 
+#       Use 0 for the volume start/end parameters to include sweeps in the clear air mask 
+#       starting with the first sweep file in `radar_folder`. Similarly, use 0 for the  
+#       volume end date/time to include sweeps through the end of all sweeps in `radar_folder`.
+#   The fourth parameter is the storm position relative to the aircraft fuselage (i.e., 
+#       facing toward nose, 'L' = left side, 'R' = right side) for each volume/PDD.
+#
+#   Example of the two usages:
+#   1. Use all sweeps in `radar_folder` to define the radar volume, and indicate that
+#       the storm is to the left of the aircraft:
+#
+#       vols:
+#       - [0,0,0,'L']
+#
+#   2. Define 4 separate volumes:
+#
+#       vols:
+#       - [1, '20170430_184910','20170430_185430','L']
+#       - [2, '20170430_185740','20170430_191205','R']
+#       - [3, '20170430_191600','20170430_192503','L']
+#       - [4, '20170430_192945','20170430_193616','R']
+
+vols:
+
+- [0,0,0,'R']
+
+#- [1, '20180413_203203','20180413_203702','L']
+#- [2, '20180413_231949','20180413_232145','R']
+#- [3, '20180413_232353','20180413_232403','L']
+#- [4, '20180413_232658','20180413_232916','R']
+
+
+
+
+########################################
+## Radial velocity simulation options ##
+########################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Generate a simulated radial velocity field using an input environmental wind profile?
+#   The input file currently must be in the NCAR EOL Sounding Composite (ESC) format.
+#   These ESC files typically contain data from multiple soundings within a given period,
+#   separated by the header for each dataset. To be used with CIMMS-RadarQC, you must
+#   move the header and data for the desired sounding to a separate file.
+# ▽▽▽▽▽▽▽▽▽▽▽▽▽▽
+makeSimVel: true
+# △△△△△△△△△△△△△△
+
+
+# Location of the input environmental sounding
+soundF: '/Users/guli7443/Documents/VORTEX_SE/CIMMS_Radar_QC_Software/ULM_20180413_2021_Monroe.txt'
+
+# Run quality control checks and apply smoothing to the wind profile?
+#   This will use the built-in QC flags present in NCAR EOL CLS sounding files
+#   to filter out any data deemed potentially unphysical. Then, any missing data are 
+#   removed and the MetPy gaussian smoothing function is applied to the wind data
+qcSnd: true
+
+# Specify the name you wish to assign to the output simulated radial velocity field
+simVelID: 'VELS'
+
+
+
+
+#################################
+## Velocity dealiasing options ##
+#################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Dealias (unfold and optionally despeckle) the velocity field using the region-based 
+#   algorithm (4DD methods take precedence if enabled below)?
+# ▽▽▽▽▽▽▽▽▽
+deal: true
+# △△△△△△△△△
+
+
+# Dealias (unfold and optionally despeckle) the velocity field with the 4DD algorithm using
+#   an input environmental sounding?
+#   NOTE: `deal` must be true for this method to run, and `dealias2` will not allow a second pass.
+#   If using this method, the path to an input sounding (`soundF`) is also required
+deal4d_snde: true
+
+# Dealias (unfold and optionally despeckle) the velocity field with the 4DD algorithm using
+#   a previously edited/dealiased volume?
+#   If using this method, the path to a previous (edited) volume is also required
+deal4d_vol: false
+editVol: '/path/to/4dd/edited/volume'
+
+# Perform a 2nd dealiasing pass to eliminate any points the first pass missed? 
+#   A second dealiasing pass is only an option when using the default region-based 
+#       dealiasing (and thus will not run if deal4d_snde or deal4d_vol are true.
+#   If there is particularly strong rotation (e.g., in a supercell), enable `strong_rot` 
+#       to perform a third dealiasing pass
+dealias2: false
+strong_rot: false
+
+# Exclude a given range of azimuths from dealiasing?
+#   (e.g., minAzExcld of 95 and maxAzExcld of 275 will reset the velocity field to 
+#    pre-dealiasing values for azimuths between 85° and 275°, inclusive)
+#   Note: it remains to be seen whether this functionality is truly needed when
+#       using the `deal4d_snde` dealiasing -- it was originally intended to prevent
+#       the occasional errant dealiasing which would be applied to surface/near-surface
+#       echoes when using the default region-based algorithm.
+azRstrctDeal: false
+minAzExcld: 85
+maxAzExcld: 275
+
+# SNR and standard deviation thresholds used when dealiasing
+snrn: 'SQI'    # SNR field name
+SNR: false     # Is the SNR field actually SNR? (yes = true // no = false)
+flg: 'None'    # Trip flag field name (if present; use 'None' otherwise)
+
+snrThres: 0.0   # Gates with SNR *below* this value will be masked
+stdThresh: 5    # Gates with a standard deviation of velocity *above* this value will be masked
+windowLen: 5    # Window length over which the standard deviation will be calculated
+refThresh: 5    # The standard deviation filter will not apply to gates with a reflectivity above this value
+
+
+# Number of gates for despeckling. 
+#   5 is good for ground-based radar; 1 is OK for airborne; 0 turns off.
+despk: 0
+
+
+
+
+################################################
+## Processor mistake error correction options ##
+################################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Correct dual-PRF processing errors?
+# ▽▽▽▽▽▽▽▽▽
+dual: true
+# △△△△△△△△△
+
+# Flag to use the new algorithm (true) or original algorithm (false)
+#   The original algorithm is 5-10 times slower, but seems to do a much
+#   better job of correcting the processor mistakes without introducing
+#   many/any new errors.
+useNew_dPRF: false  
+
+
+# Correct staggered-PRT processing errors? (dealiasing can be disabled)
+# ▽▽▽▽▽▽▽▽▽
+stag: false
+# △△△△△△△△△
+
+
+
+
+###############################
+## KDP recalculation options ##
+###############################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Recalculate KDP from PHIDP using a spline fit (fast method)?
+# ▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽
+kdpCalcFast: false
+# △△△△△△△△△△△△△△△△
+
+# Recalculate KDP from PHIDP using a least squares method (slow)?
+# ▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽▽
+kdpCalcSlow: false
+# △△△△△△△△△△△△△△△△
+
+
+phin: 'PHC'  # PHIDP field name
+kdpn: 'KDC'  # KDP field name
+rhon: 'RHC'  # RhoHV field name
+
+
+
+
+####################################
+## Attenuation correction options ##
+####################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Perform an attenuation correction?
+# ▽▽▽▽▽▽▽▽▽▽▽▽▽▽
+attenCorr: false
+# △△△△△△△△△△△△△△
+
+zdrn: 'ZDC'  # ZDR field name
+
+
+
+
+###########################################
+## Surface detection and masking options ##
+###########################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Mask potential ground echos? This step is intended for airborne radar,
+#   specifically the NOAA TDR
+# ▽▽▽▽▽▽▽▽▽▽▽
+sfcRmv: true
+# △△△△△△△△△△△
+
+
+# Altitude adjustment (in meters) to apply to the radar altitude specifically for the
+#   purpose of modifying the geometry-based surface removal step. A negative value will
+#   remove more gates near the surface, while a positive value removes fewer gates than
+#   the standard removal using the actual altitude. Set to 0 to apply no adjustment.
+altAdj: 0
+
+# Reflectivity value in each finite grid cell, computed from leg-aggregated (mean dBZ) + (std. dev. dBZ), 
+#   above which to consider masking gates in individual sweeps
+aggMagThrsh: 5
+
+# Absolute value of radial velocity below which gates may be considered ground clutter
+sfcVel: 2.5
+
+# When the difference between reflectivity at a given gate and the reflectivity at the same gate
+#   within the clear air aggregate exceeds this threshold value AND the radial velocity is
+#   within the range defined by ±sfcVel, the gate will be unmasked if originally flagged by
+#   earlier steps
+mskDifThrsh: 10
+
+# Degrees (rotation angle) above radar-relative horizon to include in surface masking on
+#   both the storm side of the aircraft (`mskAzBuf_strm`) and the clear side (`mskAzBuf_clr`)
+#   Radar zenith is always 0 or 360 deg.
+#   For example, if the storm is to the left of the radar, radials with azimuths 
+#   satisfying the following condition will be considered:
+#       (90 - mskAzBuf_clr) ≥ azmth ≥ (270 + mskAzBuf_strm)
+#   If the storm is to the right:
+#       (90 - mskAzBuf_strm) ≥ azmth ≥ (270 + mskAzBuf_clr)
+mskAzBuf_strm: 2
+mskAzBuf_clr: 7
+
+# Threshold cumulative scaled value of Z below which to apply surface masking. 
+#   The cumulative scaled value of Z is derived by dividing Z by 1,000,000 mm^6 m^-3 and 
+#   then calculating the cumulative sum along each radial.  Smaller threshold results in 
+#   less masking, higher will mask further along ray.
+zCsumThrsh: 25
+
+
+
+
+#############################
+## Noise filtering options ##
+#############################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Apply a 2D Gaussian filter to mitigate noise?
+# ▽▽▽▽▽▽▽▽▽▽▽▽
+g2dFilt: true
+# △△△△△△△△△△△△
+
+
+# Run the noise filtering / thresholding prior to dealiasing, processor mistake correction,
+#   and/or surface removal? False will run the filtering as a final editing step.
+preDealThrsh: false
+
+# Specify the name of the variable to be smoothed and used as a thresholding field 
+#   along with the fill value to be used to replace missing/NaN gates in that field
+#   during the smoothing process. The fill value should be among the lowest expected
+#   values for that variable, or at least reasonably different from the value used for
+#   `smthThrsh` (e.g., -10 works well when reflectivity is used as the thresholding field).
+thrshVarID: 'DD'
+thrshFillVal: -10
+
+# Std. Dev. values used in X and Y for the astropy 2D Gaussian smoothing filter 
+#   (either value closer to 0 produces sharper response)
+filtStdX: 10
+filtStdY: 1
+
+# Value of smoothed thresholding field to threshold below
+smthThrsh: 0
+
+# Do not filter reflectivity for gates obtained using the short pulse (of a dual-PRT pair)
+#   This specifically applies to TORUS TDR data between 450 m and ~975 m range. If similar
+#   behavior is desired for other radars/ranges, the `radFilt` function will need to be
+#   modified accordingly.
+retainShrtPulse: false
+
+
+
+
+######################################
+## Clear air velocity check options ##
+######################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Compare observed radial velocity field to a simulated radial velocity field generated
+#   from an inout environmental sounding to identify and mask errant observations in
+#   areas of low reflectivity (i.e., clear air)?
+#   NOTE: `makeSimVel` should be set to true if choosing to use this function.
+# ▽▽▽▽▽▽▽▽▽▽▽▽▽
+clrVelChk: true
+# △△△△△△△△△△△△△
+
+
+# Max value of reflectivity to be considered clear air. Observed velocities will 
+#   only be compared to simulated radial velocities when the gate reflectivity is
+#   less than or equal to this value.
+refThrsh: 10
+
+# Absolute difference allowed between the observed radial velocity and the 
+#   simulated radial velocity. When the difference exceeds this value and has a 
+#   reflectivity less than or equal to `refThrsh`, that gate will be masked in `velID`
+#   only (reflectivity variable `dbzID` is not modified by this function).
+velDifThrsh: 10

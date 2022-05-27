@@ -1,0 +1,36 @@
+5/26/22 Dan meeting notes:
+
+nyquist vel
+rhi ground based, vs ppi
+
+ncview- a quick netcdf viewer!
+
+vd- qual controlled vel
+dd- '' reflect
+
+qlcs- quasi linear conv system
+
+okubo-weiss number / circulation
+
+csu - michael bell spiral tdr plots
+
+hawkeye is supposed to replace solo
+
+single vs dual pole radar
+
+socrates mission
+
+mrms - multi radar multi sensor
+
+derechos are like mcs's
+
+ciro lab- where dan works
+nnsl- conrad
+
+adobe illustrator for fixing up plots- can edit vectors of plots when downloaded as pdfs
+
+using pyart is excellent! colorblind friendly :) homeyer rainbow. examples on web page
+
+cm_ocean- python package with good color packages. delta, a good divering color map
+
+soloii vs solo3- solo3 builds well on ubuntu
