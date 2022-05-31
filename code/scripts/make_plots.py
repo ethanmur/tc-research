@@ -13,40 +13,85 @@ import datetime
 # import nclcmaps
 
 
-def plot_T(data_path, data_file, index1, index2, xaxis):
+# a helper script used in most plotting functions to determine the x axis scale variable
 
-    # get data
+def x_axis_helper( data_path, data_file, index1, index2, xaxis):
+    
     os.chdir( data_path)
     crl_data = xr.open_dataset( data_file)
-    color_map = plt.cm.get_cmap( "RdYlBu").reversed()
-
     # choose x axis type
     if xaxis == 'lon':
         xaxis = crl_data.Lon[index1:index2]
         x_label = 'longitude (degrees)'
         xlims = [ crl_data.Lon[index1], crl_data.Lon[index2] ]
+        return xaxis, x_label, xlims
+
     elif xaxis == 'lat':
         xaxis = crl_data.Lat[index1:index2]
         x_label = 'latitude (degrees)'
         xlims = [ crl_data.Lat[index1], crl_data.Lat[index2] ]
+        return xaxis, x_label, xlims
+
     elif xaxis == 'time':
         xaxis = crl_data.time[index1:index2]
         x_label = 'Time (UTC)'
         xlims = [ crl_data.time[index1], crl_data.time[index2] ]
+        return xaxis, x_label, xlims
+
     elif xaxis == 'distance':
         max_lat = np.max( crl_data.Lat[index1:index2] )
         min_lat = np.min( crl_data.Lat[index1:index2] )
         # using the delta lat formula found on the wikipedia page, assuming lat = 15 degrees
         scale = 110.649
-        
+
         # make the 0 km mark the center of the tc!
         xaxis = np.linspace( 0, scale * ( max_lat - min_lat), index2 - index1)
         xaxis = xaxis - np.max( xaxis) / 2
         x_label = 'Distance (km)'
         xlims = [ np.min( xaxis), np.max( xaxis) ]
+        return xaxis, x_label, xlims
+
     else:
         print("Error: Please Choose 'lat', 'lon', 'time', or 'distance' for the x axis")
         return
+
+# # older code
+#     # choose x axis type
+#     if xaxis == 'lon':
+#         xaxis = crl_data.Lon[index1:index2]
+#         x_label = 'longitude (degrees)'
+#         xlims = [ crl_data.Lon[index1], crl_data.Lon[index2] ]
+#     elif xaxis == 'lat':
+#         xaxis = crl_data.Lat[index1:index2]
+#         x_label = 'latitude (degrees)'
+#         xlims = [ crl_data.Lat[index1], crl_data.Lat[index2] ]
+#     elif xaxis == 'time':
+#         xaxis = crl_data.time[index1:index2]
+#         x_label = 'Time (UTC)'
+#         xlims = [ crl_data.time[index1], crl_data.time[index2] ]
+#     elif xaxis == 'distance':
+#         max_lat = np.max( crl_data.Lat[index1:index2] )
+#         min_lat = np.min( crl_data.Lat[index1:index2] )
+#         # using the delta lat formula found on the wikipedia page, assuming lat = 15 degrees
+#         scale = 110.649
+#         xaxis = np.linspace( 0, scale * ( max_lat - min_lat), index2 - index1)
+#         x_label = 'Distance (km)'
+#         xlims = [ np.min( xaxis), np.max( xaxis) ]
+#     else:
+#         print("Error: Please Choose 'lat', 'lon', 'time', or 'distance' for the x axis")
+#         return
+
+
+    
+def plot_T(data_path, data_file, index1, index2, xaxis_name):
+
+    # get data
+    os.chdir( data_path)
+    crl_data = xr.open_dataset( data_file)
+    color_map = plt.cm.get_cmap( "RdYlBu").reversed()
+    
+    # choose x axis with helper script
+    xaxis, x_label, xlims = x_axis_helper( data_path, data_file, index1, index2, xaxis_name)
 
     # calculate temperature
     temp = crl_data.T[index1:index2, :].where( crl_data.T[index1:index2, :].values < 50).transpose()
@@ -63,36 +108,14 @@ def plot_T(data_path, data_file, index1, index2, xaxis):
 
 
 
-def plot_T_anomaly(data_path, data_file, index1, index2, xaxis):
+def plot_T_anomaly(data_path, data_file, index1, index2, xaxis_name):
 
     # get data
     os.chdir( data_path)
     crl_data = xr.open_dataset( data_file)
 
-    # choose x axis type
-    if xaxis == 'lon':
-        xaxis = crl_data.Lon[index1:index2]
-        x_label = 'longitude (degrees)'
-        xlims = [ crl_data.Lon[index1], crl_data.Lon[index2] ]
-    elif xaxis == 'lat':
-        xaxis = crl_data.Lat[index1:index2]
-        x_label = 'latitude (degrees)'
-        xlims = [ crl_data.Lat[index1], crl_data.Lat[index2] ]
-    elif xaxis == 'time':
-        xaxis = crl_data.time[index1:index2]
-        x_label = 'Time (UTC)'
-        xlims = [ crl_data.time[index1], crl_data.time[index2] ]
-    elif xaxis == 'distance':
-        max_lat = np.max( crl_data.Lat[index1:index2] )
-        min_lat = np.min( crl_data.Lat[index1:index2] )
-        # using the delta lat formula found on the wikipedia page, assuming lat = 15 degrees
-        scale = 110.649
-        xaxis = np.linspace( 0, scale * ( max_lat - min_lat), index2 - index1)
-        x_label = 'Distance (km)'
-        xlims = [ np.min( xaxis), np.max( xaxis) ]
-    else:
-        print("Error: Please Choose 'lat', 'lon', 'time', or 'distance' for the x axis")
-        return
+    # choose x axis with helper script
+    xaxis, x_label, xlims = x_axis_helper( data_path, data_file, index1, index2, xaxis_name)
 
     # calculate temperature and temperature anomaly
     temp = crl_data.T[index1:index2, :].where( crl_data.T[index1:index2, :].values < 50).transpose()
@@ -119,37 +142,15 @@ def plot_T_anomaly(data_path, data_file, index1, index2, xaxis):
 
 
 
-def plot_wvmr(data_path, data_file, index1, index2, xaxis):
+def plot_wvmr(data_path, data_file, index1, index2, xaxis_name):
 
     # get data
     os.chdir( data_path)
     crl_data = xr.open_dataset( data_file)
 
-    # choose x axis type
-    if xaxis == 'lon':
-        xaxis = crl_data.Lon[index1:index2]
-        x_label = 'longitude (degrees)'
-        xlims = [ crl_data.Lon[index1], crl_data.Lon[index2] ]
-    elif xaxis == 'lat':
-        xaxis = crl_data.Lat[index1:index2]
-        x_label = 'latitude (degrees)'
-        xlims = [ crl_data.Lat[index1], crl_data.Lat[index2] ]
-    elif xaxis == 'time':
-        xaxis = crl_data.time[index1:index2]
-        x_label = 'Time (UTC)'
-        xlims = [ crl_data.time[index1], crl_data.time[index2] ]
-    elif xaxis == 'distance':
-        max_lat = np.max( crl_data.Lat[index1:index2] )
-        min_lat = np.min( crl_data.Lat[index1:index2] )
-        # using the delta lat formula found on the wikipedia page, assuming lat = 15 degrees
-        scale = 110.649
-        xaxis = np.linspace( 0, scale * ( max_lat - min_lat), index2 - index1)
-        x_label = 'Distance (km)'
-        xlims = [ np.min( xaxis), np.max( xaxis) ]
-    else:
-        print("Error: Please Choose 'lat', 'lon', 'time', or 'distance' for the x axis")
-        return
-
+    # choose x axis with helper script
+    xaxis, x_label, xlims = x_axis_helper( data_path, data_file, index1, index2, xaxis_name)    
+    
     # calculate wvmr
     step1 = crl_data.WVMR.where( crl_data.WVMR.values != 0)
     step2 = step1.where( step1.values < 20)
@@ -167,37 +168,15 @@ def plot_wvmr(data_path, data_file, index1, index2, xaxis):
 
 
 
-def plot_lsr(data_path, data_file, index1, index2, xaxis):
+def plot_lsr(data_path, data_file, index1, index2, xaxis_name):
 
     # get data
     os.chdir( data_path)
     crl_data = xr.open_dataset( data_file)
 
-    # choose x axis type
-    if xaxis == 'lon':
-        xaxis = crl_data.Lon[index1:index2]
-        x_label = 'longitude (degrees)'
-        xlims = [ crl_data.Lon[index1], crl_data.Lon[index2] ]
-    elif xaxis == 'lat':
-        xaxis = crl_data.Lat[index1:index2]
-        x_label = 'latitude (degrees)'
-        xlims = [ crl_data.Lat[index1], crl_data.Lat[index2] ]
-    elif xaxis == 'time':
-        xaxis = crl_data.time[index1:index2]
-        x_label = 'Time (UTC)'
-        xlims = [ crl_data.time[index1], crl_data.time[index2] ]
-    elif xaxis == 'distance':
-        max_lat = np.max( crl_data.Lat[index1:index2] )
-        min_lat = np.min( crl_data.Lat[index1:index2] )
-        # using the delta lat formula found on the wikipedia page, assuming lat = 15 degrees
-        scale = 110.649
-        xaxis = np.linspace( 0, scale * ( max_lat - min_lat), index2 - index1)
-        x_label = 'Distance (km)'
-        xlims = [ np.min( xaxis), np.max( xaxis) ]
-    else:
-        print("Error: Please Choose 'lat', 'lon', 'time', or 'distance' for the x axis")
-        return
-
+    # choose x axis with helper script
+    xaxis, x_label, xlims = x_axis_helper( data_path, data_file, index1, index2, xaxis_name)
+    
     # calculate lsr
     step1 = crl_data.LSR[index1:index2, :].where( crl_data.LSR[index1:index2].values < 10).transpose()
     crl_lsr = step1.where( step1.values > .1)
@@ -214,36 +193,14 @@ def plot_lsr(data_path, data_file, index1, index2, xaxis):
 
 
 
-def plot_power_ch1(data_path, data_file, index1, index2, xaxis):
+def plot_power_ch1(data_path, data_file, index1, index2, xaxis_name):
 
     # get data
     os.chdir( data_path)
     crl_data = xr.open_dataset( data_file)
 
-    # choose x axis type
-    if xaxis == 'lon':
-        xaxis = crl_data.Lon[index1:index2]
-        x_label = 'longitude (degrees)'
-        xlims = [ crl_data.Lon[index1], crl_data.Lon[index2] ]
-    elif xaxis == 'lat':
-        xaxis = crl_data.Lat[index1:index2]
-        x_label = 'latitude (degrees)'
-        xlims = [ crl_data.Lat[index1], crl_data.Lat[index2] ]
-    elif xaxis == 'time':
-        xaxis = crl_data.time[index1:index2]
-        x_label = 'Time (UTC)'
-        xlims = [ crl_data.time[index1], crl_data.time[index2] ]
-    elif xaxis == 'distance':
-        max_lat = np.max( crl_data.Lat[index1:index2] )
-        min_lat = np.min( crl_data.Lat[index1:index2] )
-        # using the delta lat formula found on the wikipedia page, assuming lat = 15 degrees
-        scale = 110.649
-        xaxis = np.linspace( 0, scale * ( max_lat - min_lat), index2 - index1)
-        x_label = 'Distance (km)'
-        xlims = [ np.min( xaxis), np.max( xaxis) ]
-    else:
-        print("Error: Please Choose 'lat', 'lon', 'time', or 'distance' for the x axis")
-        return
+    # choose x axis with helper script
+    xaxis, x_label, xlims = x_axis_helper( data_path, data_file, index1, index2, xaxis_name)
 
     # calculate power backscattered to channel 1
     step1 = 10 * np.log10( crl_data.P_ch1 )
@@ -268,38 +225,15 @@ def plot_power_ch1(data_path, data_file, index1, index2, xaxis):
 
 
 
-def plot_rh(data_path, data_file, index1, index2, xaxis):
+def plot_rh(data_path, data_file, index1, index2, xaxis_name):
 
     # get data
     os.chdir( data_path)
     crl_data = xr.open_dataset( data_file)
 
-    # choose x axis type
-    if xaxis == 'lon':
-        xaxis = crl_data.Lon[index1:index2]
-        x_label = 'longitude (degrees)'
-        xlims = [ crl_data.Lon[index1], crl_data.Lon[index2] ]
-        # plt.gca().invert_xaxis()
-    elif xaxis == 'lat':
-        xaxis = crl_data.Lat[index1:index2]
-        x_label = 'latitude (degrees)'
-        xlims = [ crl_data.Lat[index1], crl_data.Lat[index2] ]
-    elif xaxis == 'time':
-        xaxis = crl_data.time[index1:index2]
-        x_label = 'Time (UTC)'
-        xlims = [ crl_data.time[index1], crl_data.time[index2] ]
-    elif xaxis == 'distance':
-        max_lat = np.max( crl_data.Lat[index1:index2] )
-        min_lat = np.min( crl_data.Lat[index1:index2] )
-        # using the delta lat formula found on the wikipedia page, assuming lat = 15 degrees
-        scale = 110.649
-        xaxis = np.linspace( 0, scale * ( max_lat - min_lat), index2 - index1)
-        x_label = 'Distance (km)'
-        xlims = [ np.min( xaxis), np.max( xaxis) ]
-    else:
-        print("Error: Please Choose 'lat', 'lon', 'time', or 'distance' for the x axis")
-        return
-
+    # choose x axis with helper script
+    xaxis, x_label, xlims = x_axis_helper( data_path, data_file, index1, index2, xaxis_name)
+    
     # calculate rh
     # defining constants
     epsilon = .622
@@ -325,11 +259,16 @@ def plot_rh(data_path, data_file, index1, index2, xaxis):
     crl_rh = crl_rh.where( crl_rh.values <= 100)
     crl_rh = crl_rh.where( crl_rh.values >= 0)
 
-    # plot things
+    # plot things        
     plt.pcolormesh( xaxis, - crl_data.H, crl_rh)
     plt.colorbar(label="RH ( %)")
     plt.ylabel( 'Height (km)')
-    plt.xlabel( x_label)
+    
+    # unique fix for rh code axes, they need to be flipped for some reason to get plots to match :/
+    if xaxis_name == 'lon' or xaxis_name == 'lat':
+        plt.gca().invert_xaxis()
+    
+    # plt.xlabel( x_label)
     # plt.xlim( xlims )
     plt.grid( 'on')
     ax = plt.gca()
