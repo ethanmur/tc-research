@@ -9,14 +9,14 @@ import xarray as xr
 import warnings
 import datetime
 
-# os.chdir(  "/Users/etmu9498/Desktop/research/scripts")
-# import nclcmaps
+os.chdir(  "/Users/etmu9498/research/code/scripts")
+import helper_fns
 
 
 # a helper script used in most plotting functions to determine the x axis scale variable
 
 def x_axis_helper( data_path, data_file, index1, index2, xaxis):
-    
+
     os.chdir( data_path)
     crl_data = xr.open_dataset( data_file)
     # choose x axis type
@@ -55,41 +55,14 @@ def x_axis_helper( data_path, data_file, index1, index2, xaxis):
         print("Error: Please Choose 'lat', 'lon', 'time', or 'distance' for the x axis")
         return
 
-# # older code
-#     # choose x axis type
-#     if xaxis == 'lon':
-#         xaxis = crl_data.Lon[index1:index2]
-#         x_label = 'longitude (degrees)'
-#         xlims = [ crl_data.Lon[index1], crl_data.Lon[index2] ]
-#     elif xaxis == 'lat':
-#         xaxis = crl_data.Lat[index1:index2]
-#         x_label = 'latitude (degrees)'
-#         xlims = [ crl_data.Lat[index1], crl_data.Lat[index2] ]
-#     elif xaxis == 'time':
-#         xaxis = crl_data.time[index1:index2]
-#         x_label = 'Time (UTC)'
-#         xlims = [ crl_data.time[index1], crl_data.time[index2] ]
-#     elif xaxis == 'distance':
-#         max_lat = np.max( crl_data.Lat[index1:index2] )
-#         min_lat = np.min( crl_data.Lat[index1:index2] )
-#         # using the delta lat formula found on the wikipedia page, assuming lat = 15 degrees
-#         scale = 110.649
-#         xaxis = np.linspace( 0, scale * ( max_lat - min_lat), index2 - index1)
-#         x_label = 'Distance (km)'
-#         xlims = [ np.min( xaxis), np.max( xaxis) ]
-#     else:
-#         print("Error: Please Choose 'lat', 'lon', 'time', or 'distance' for the x axis")
-#         return
 
-
-    
 def plot_T(data_path, data_file, index1, index2, xaxis_name):
 
     # get data
     os.chdir( data_path)
     crl_data = xr.open_dataset( data_file)
     color_map = plt.cm.get_cmap( "RdYlBu").reversed()
-    
+
     # choose x axis with helper script
     xaxis, x_label, xlims = x_axis_helper( data_path, data_file, index1, index2, xaxis_name)
 
@@ -149,8 +122,8 @@ def plot_wvmr(data_path, data_file, index1, index2, xaxis_name):
     crl_data = xr.open_dataset( data_file)
 
     # choose x axis with helper script
-    xaxis, x_label, xlims = x_axis_helper( data_path, data_file, index1, index2, xaxis_name)    
-    
+    xaxis, x_label, xlims = x_axis_helper( data_path, data_file, index1, index2, xaxis_name)
+
     # calculate wvmr
     step1 = crl_data.WVMR.where( crl_data.WVMR.values != 0)
     step2 = step1.where( step1.values < 20)
@@ -176,7 +149,7 @@ def plot_lsr(data_path, data_file, index1, index2, xaxis_name):
 
     # choose x axis with helper script
     xaxis, x_label, xlims = x_axis_helper( data_path, data_file, index1, index2, xaxis_name)
-    
+
     # calculate lsr
     step1 = crl_data.LSR[index1:index2, :].where( crl_data.LSR[index1:index2].values < 10).transpose()
     crl_lsr = step1.where( step1.values > .1)
@@ -208,7 +181,7 @@ def plot_power_ch1(data_path, data_file, index1, index2, xaxis_name):
     crl_pch1 = step2[index1:index2, :].transpose()
 
     # plot things
-    
+
     # looking at different colormaps
     # color_map = nclcmaps.cmap( 'MPL_brg'  "MPL_RdGy" 'ncview_default')
     # color_map = plt.cm.get_cmap( "RdYlBu").reversed()
@@ -233,7 +206,7 @@ def plot_rh(data_path, data_file, index1, index2, xaxis_name):
 
     # choose x axis with helper script
     xaxis, x_label, xlims = x_axis_helper( data_path, data_file, index1, index2, xaxis_name)
-    
+
     # calculate rh
     # defining constants
     epsilon = .622
@@ -259,15 +232,15 @@ def plot_rh(data_path, data_file, index1, index2, xaxis_name):
     crl_rh = crl_rh.where( crl_rh.values <= 100)
     crl_rh = crl_rh.where( crl_rh.values >= 0)
 
-    # plot things        
+    # plot things
     plt.pcolormesh( xaxis, - crl_data.H, crl_rh)
     plt.colorbar(label="RH ( %)")
     plt.ylabel( 'Height (km)')
-    
+
     # unique fix for rh code axes, they need to be flipped for some reason to get plots to match :/
     if xaxis_name == 'lon' or xaxis_name == 'lat':
         plt.gca().invert_xaxis()
-    
+
     # plt.xlabel( x_label)
     # plt.xlim( xlims )
     plt.grid( 'on')
@@ -301,11 +274,11 @@ def plot_sondes(crl_path, crl_file_name, sonde_path, variable_to_plot):
 
         if mid_time < 3.0:
             mid_time = mid_time + 24
-            
+
         # get temperatures
         Z = sonde[variable_to_plot].values[~np.isnan( sonde[variable_to_plot].values)]
         heights = np.linspace( np.nanmin( -crl_data.H.values), np.nanmax( -crl_data.H.values), len( Z))
-        plt.pcolormesh( [mid_time - .00125, mid_time + .00125], heights, np.matrix( [Z, Z] ).transpose(), 
+        plt.pcolormesh( [mid_time - .00125, mid_time + .00125], heights, np.matrix( [Z, Z] ).transpose(),
                        vmin = 0, vmax =20 )
 
 
@@ -313,23 +286,23 @@ def plot_sondes(crl_path, crl_file_name, sonde_path, variable_to_plot):
 
 # the function I'm using to plot tdr reflectivity
 def plot_tdr( tdr_path, inbound_name, outbound_name, xaxis):
-    
+
     warnings.filterwarnings("ignore")
 
     # get data
     os.chdir( tdr_path)
     inbound_data = xr.open_dataset( inbound_name)
     outbound_data = xr.open_dataset( outbound_name)
-    
+
     # choose x axis type
     if xaxis == 'lon':
         x_label = 'longitude (degrees)'
         xaxis_out = outbound_data.longitude [ ~np.isnan( outbound_data.longitude)] # np.nan_to_num() as an alternative?
         xaxis_in =  inbound_data.longitude[ ~np.isnan( inbound_data.longitude)]
-        
+
     elif xaxis == 'lat':
         x_label = 'latitude (degrees)'
-        xaxis_out = outbound_data.latitude[ ~np.isnan( outbound_data.latitude)]    
+        xaxis_out = outbound_data.latitude[ ~np.isnan( outbound_data.latitude)]
         # min_lat = np.min( inbound_data.latitude)
         # max_lat = np.max( inbound_data.latitude)
         xaxis_in = inbound_data.latitude[ ~np.isnan( inbound_data.latitude)]
@@ -351,14 +324,14 @@ def plot_tdr( tdr_path, inbound_name, outbound_name, xaxis):
     # plot outbound data
     # get rid of nans and resize array to get rid of overlapping data
     reflectivity = outbound_data.REFLECTIVITY.isel(time=0).isel(heading=0).transpose()
-    
+
     reflectivity = reflectivity[:, range( len( xaxis_out) )]
-    
+
     plt.pcolormesh( xaxis_out, outbound_data.height, reflectivity, cmap = color_map )
-    
+
     # Plot inbound data
     reflectivity = inbound_data.REFLECTIVITY.isel(time=0).isel(heading=0).transpose()
-   
+
     reflectivity = reflectivity[:, range( len( xaxis_in) )]
 
     plt.pcolormesh( xaxis_in, inbound_data.height, reflectivity, cmap = color_map )
@@ -369,12 +342,12 @@ def plot_tdr( tdr_path, inbound_name, outbound_name, xaxis):
     plt.xlabel( x_label)
     plt.grid( 'on')
     # plt.gca().invert_xaxis()
-    
+
     warnings.filterwarnings("default")
 
 
-    
-    
+
+
 def plot_tdr_radial_vel( tdr_path, inbound_name, outbound_name, xaxis):
     warnings.filterwarnings("ignore")
     # get data
@@ -389,7 +362,7 @@ def plot_tdr_radial_vel( tdr_path, inbound_name, outbound_name, xaxis):
         xaxis_in =  inbound_data.longitude[ ~np.isnan( inbound_data.longitude)]
     elif xaxis == 'lat':
         x_label = 'latitude (degrees)'
-        xaxis_out = outbound_data.latitude[ ~np.isnan( outbound_data.latitude)]    
+        xaxis_out = outbound_data.latitude[ ~np.isnan( outbound_data.latitude)]
         # min_lat = np.min( inbound_data.latitude)
         # max_lat = np.max( inbound_data.latitude)
         xaxis_in = inbound_data.latitude[ ~np.isnan( inbound_data.latitude)]
@@ -402,22 +375,22 @@ def plot_tdr_radial_vel( tdr_path, inbound_name, outbound_name, xaxis):
     else:
         print("Error: Please Choose 'lat', 'lon', 'time', or 'distance' for the x axis")
         return
-    
+
     # make plot
     color_map = plt.cm.get_cmap( "RdBu").reversed()
     # set 0 as the central point of the pcolormesh!
     divnorm = colors.TwoSlopeNorm(vmin=-20, vcenter=0, vmax=20)
-    
+
     # plot outbound data
     # get rid of nans and resize array to get rid of overlapping data
     vel = outbound_data.Radial_wind.isel(time=0).isel(heading=0).transpose()
     vel = vel[:, range( len( xaxis_out) )]
     plt.pcolormesh( xaxis_out, outbound_data.height, vel, cmap = color_map, norm=divnorm )
-    
+
     # Plot inbound data
     vel = inbound_data.Radial_wind.isel(time=0).isel(heading=0).transpose()
     vel = vel[:, range( len( xaxis_in) )]
-    
+
     # get rid of negative sign?!?
     plt.pcolormesh( xaxis_in, inbound_data.height, - vel, cmap = color_map, norm=divnorm )
 
@@ -427,11 +400,11 @@ def plot_tdr_radial_vel( tdr_path, inbound_name, outbound_name, xaxis):
     plt.xlabel( x_label)
     plt.grid( 'on')
     # plt.gca().invert_xaxis()
-    
+
     warnings.filterwarnings("default")
 
-    
-    
+
+
 def plot_tdr_vertical_vel( tdr_path, inbound_name, outbound_name, xaxis):
     warnings.filterwarnings("ignore")
     # get data
@@ -446,7 +419,7 @@ def plot_tdr_vertical_vel( tdr_path, inbound_name, outbound_name, xaxis):
         xaxis_in =  inbound_data.longitude[ ~np.isnan( inbound_data.longitude)]
     elif xaxis == 'lat':
         x_label = 'latitude (degrees)'
-        xaxis_out = outbound_data.latitude[ ~np.isnan( outbound_data.latitude)]    
+        xaxis_out = outbound_data.latitude[ ~np.isnan( outbound_data.latitude)]
         # min_lat = np.min( inbound_data.latitude)
         # max_lat = np.max( inbound_data.latitude)
         xaxis_in = inbound_data.latitude[ ~np.isnan( inbound_data.latitude)]
@@ -459,22 +432,22 @@ def plot_tdr_vertical_vel( tdr_path, inbound_name, outbound_name, xaxis):
     else:
         print("Error: Please Choose 'lat', 'lon', 'time', or 'distance' for the x axis")
         return
-    
+
     # make plot
     color_map = plt.cm.get_cmap( "RdBu").reversed()
     # set 0 as the central point of the pcolormesh!
     divnorm = colors.TwoSlopeNorm(vmin=-10, vcenter=0, vmax=10)
-    
+
     # plot outbound data
     # get rid of nans and resize array to get rid of overlapping data
     vel = outbound_data.Vertical_wind.isel(time=0).isel(heading=0).transpose()
     vel = vel[:, range( len( xaxis_out) )]
     plt.pcolormesh( xaxis_out, outbound_data.height, vel, cmap = color_map, norm=divnorm )
-    
+
     # Plot inbound data
     vel = inbound_data.Vertical_wind.isel(time=0).isel(heading=0).transpose()
     vel = vel[:, range( len( xaxis_in) )]
-    
+
     # get rid of negative sign?!?
     plt.pcolormesh( xaxis_in, inbound_data.height, - vel, cmap = color_map, norm=divnorm )
 
@@ -484,11 +457,11 @@ def plot_tdr_vertical_vel( tdr_path, inbound_name, outbound_name, xaxis):
     plt.xlabel( x_label)
     plt.grid( 'on')
     # plt.gca().invert_xaxis()
-    
+
     warnings.filterwarnings("default")
 
-    
-        
+
+
 def plot_all(data_path, data_file, title, index1, index2, xaxis):
 
     warnings.filterwarnings("ignore")
@@ -558,60 +531,14 @@ def plot_temps_wv(data_path, data_file, title, index1, index2, xaxis):
     warnings.filterwarnings("default")
 
 
+def load_crl( path):
+    return helper_fns.display_data_files( path, 'crl', 'hide-list')
 
-def load_crl(crl_path):
-    file_names = []
-    for (dirpath, dirnames, file) in os.walk( crl_path):
-        file_names.extend(file)
-        break
+def load_tdr( path):
+    return helper_fns.display_data_files( path, 'tdr', 'show-list')
 
-    print( "\ncrl data files:")
-    for number in range( len( file_names)):
-        print( str( number) + ") " + file_names[ number])
+def load_sondes( path):
+    return helper_fns.display_data_files( path, 'dropsonde', 'show-list')
 
-    return file_names
-
-
-
-def load_tdr(tdr_path):
-
-    file_names = []
-    for (dirpath, dirnames, file) in os.walk( tdr_path):
-        file_names.extend(file)
-        break
-
-    print( "tdr data files:")
-    for number in range( len( file_names)):
-        print( str( number) + ") " + file_names[ number])
-
-    return file_names
-
-
-
-def load_sondes(sonde_path):
-
-    file_names = []
-    for (dirpath, dirnames, file) in os.walk( sonde_path):
-        file_names.extend(file)
-        break
-
-    print( "\ndropsonde files for " + str( sonde_path[48:52] ))
-    for number in range( len( file_names)):
-        print( str( number) + ") " + file_names[ number])
-
-
-    return file_names
-    # return [ file_names_0926, file_names_0927, file_names_0929 ]
-
-def load_flight_level(flight_path):
-
-    file_names = []
-    for (dirpath, dirnames, file) in os.walk( flight_path):
-        file_names.extend(file)
-        break
-
-    print( "\nFlight Level Measurement files:" )
-    for number in range( len( file_names)):
-        print( str( number) + ") " + file_names[ number])
-
-    return file_names
+def load_flight_level( path):
+    return helper_fns.display_data_files( path, 'in-situ', 'show-list')
