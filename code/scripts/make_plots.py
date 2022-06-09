@@ -8,6 +8,8 @@ import matplotlib.colors as colors
 import xarray as xr
 import warnings
 import datetime
+from matplotlib.ticker import FormatStrFormatter
+
 
 os.chdir(  "/Users/etmu9498/research/code/scripts")
 import helper_fns
@@ -74,10 +76,12 @@ def plot_T(data_path, data_file, index1, index2, xaxis_name):
     plt.ylabel( 'Height (km)')
     # plt.xlabel( x_label)
     plt.xlim( xlims )
-    plt.grid( 'on')
     ax = plt.gca()
     ax.set_facecolor('k')
     plt.colorbar(label="Temperature ( C)")
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+    ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+    plt.grid( True)
 
 
 
@@ -532,13 +536,13 @@ def plot_temps_wv(data_path, data_file, title, index1, index2, xaxis):
 
 
 def load_crl( path):
-    return helper_fns.display_data_files( path, 'crl', 'hide-list')
+    return helper_fns.display_data_files( path, 'crl', 'show-list')
 
 def load_tdr( path):
     return helper_fns.display_data_files( path, 'tdr', 'show-list')
 
 def load_sondes( path):
-    return helper_fns.display_data_files( path, 'dropsonde', 'show-list')
+    return helper_fns.display_data_files( path, 'dropsonde', 'hide-list')
 
 def load_flight_level( path):
     return helper_fns.display_data_files( path, 'in-situ', 'show-list')
