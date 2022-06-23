@@ -60,6 +60,8 @@ def x_axis_helper( data_path, data_file, index1, index2, xaxis):
 
 def plot_T(data_path, data_file, index1, index2, xaxis_name):
 
+    warnings.filterwarnings("ignore")
+
     # get data
     os.chdir( data_path)
     crl_data = xr.open_dataset( data_file)
@@ -82,7 +84,7 @@ def plot_T(data_path, data_file, index1, index2, xaxis_name):
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     plt.grid( True)
-
+    warnings.filterwarnings("default")
 
 
 def plot_T_anomaly(data_path, data_file, index1, index2, xaxis_name):
@@ -171,6 +173,7 @@ def plot_lsr(data_path, data_file, index1, index2, xaxis_name):
 
 
 def plot_power_ch1(data_path, data_file, index1, index2, xaxis_name):
+    warnings.filterwarnings("ignore")
 
     # get data
     os.chdir( data_path)
@@ -199,6 +202,7 @@ def plot_power_ch1(data_path, data_file, index1, index2, xaxis_name):
     plt.grid( 'on')
     ax = plt.gca()
     ax.set_facecolor('k')
+    warnings.filterwarnings("default")
 
 
 
@@ -535,14 +539,14 @@ def plot_temps_wv(data_path, data_file, title, index1, index2, xaxis):
     warnings.filterwarnings("default")
 
 
-def load_crl( path):
-    return helper_fns.display_data_files( path, 'crl', 'show-list')
+def load_crl( path, print_files=True):
+    return helper_fns.display_data_files( path, 'crl', print_files)
 
-def load_tdr( path):
-    return helper_fns.display_data_files( path, 'tdr', 'show-list')
+def load_tdr( path, print_files=True):
+    return helper_fns.display_data_files( path, 'tdr', print_files)
 
-def load_sondes( path):
-    return helper_fns.display_data_files( path, 'dropsonde', 'hide-list')
+def load_sondes( path, print_files=True):
+    return helper_fns.display_data_files( path, 'dropsonde', print_files)
 
-def load_flight_level( path):
-    return helper_fns.display_data_files( path, 'in-situ', 'show-list')
+def load_flight_level( path, print_files=True):
+    return helper_fns.display_data_files( path, 'in-situ', print_files)

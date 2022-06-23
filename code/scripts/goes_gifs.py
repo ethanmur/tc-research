@@ -1,6 +1,6 @@
 """
 Created 6/1/22
-Last edited 6/2/22
+Last edited 6/9/22
 Description: this file contains scripts used to automatically generate the
              images used to create animated gifs of tc motion, using a
              variety of GOES satellite bands.
@@ -22,8 +22,27 @@ import cmocean
 os.chdir("/Users/etmu9498/research/code/scripts")
 import helper_fns
 
-def load_goes( gif_path):
-    return helper_fns.display_data_files( gif_path, 'goes', 'hide-list')
+def load_goes( gif_path, print_files=True):
+    return helper_fns.display_data_files( gif_path, 'goes', print_files)
+
+
+def goes_ir_in_situ( goes_names, goes_data_path, flight_name, flight_path): # flight_line):
+    """
+    goes_wv_upper_gif generates images from satellite data (located in a folder
+    specified by the user), and saves them automatically to a unique folder.
+    The output folder can be found under research/figures/goes-gifs. The clean IR
+    band on the goes satellite is used for this analysis.
+    """
+    channel_name = "CMI_C13"
+    channel_full_name = "GOES-16 Clean IR Channel"
+    os.chdir( goes_data_path)
+    first_dataset = xr.open_dataset( goes_names[ 0])
+    scan_start_first_dataset = datetime.strptime( first_dataset.time_coverage_start, '%Y-%m-%dT%H:%M:%S.%fZ')
+    output_folder = scan_start_first_dataset.strftime('%m%d%Y') + "_ir"
+    plot_color = 'Greys'
+    flight_line_color = 'k'
+    goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name, channel_full_name, goes_names, goes_data_path, flight_name, flight_path)
+
 
 
 def goes_ir_gif( goes_names, goes_data_path, crl_name, crl_path): # flight_line):
@@ -230,9 +249,11 @@ def goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name,
                 ax.scatter( long, latit, s=200, c= flight_line_color, marker='*', transform=ccrs.PlateCarree() ) # marker = 's'
                 break
 
+        # ax.set_extent([-54, -50, 15, 18], crs=ccrs.PlateCarree())
+
         # save figure
         os.chdir( "/Users/etmu9498/research/figures/goes-gifs/" + output_folder)
-        plt.savefig( "goes-image-" + str( goes_ind) + ".png") # str( file_names[ goes_ind][0: -3] ) + '.png', bbox_inches=0)
+        plt.savefig( "goes-image-" + str( goes_ind) + ".png", dpi=200) # is dpi=200 necessary? # str( file_names[ goes_ind][0: -3] ) + '.png', bbox_inches=0)
         os.chdir( goes_path)
         plt.clf()
         print( "Image " + str( goes_ind + 1) + " complete" )

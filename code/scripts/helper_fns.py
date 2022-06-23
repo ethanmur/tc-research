@@ -1,6 +1,6 @@
 import os
 
-def display_data_files( path, data_type, print_status):
+def display_data_files( path, data_type, print_files):
     """
     This function simply prints out and returns a list of data files found at a
     specified path.
@@ -19,23 +19,23 @@ def display_data_files( path, data_type, print_status):
         file_names.extend(file)
         break
 
-    if data_type == 'crl' and print_status == 'show-list':
+    if data_type == 'crl' and print_files:
         print( "crl data files:")
         for number in range( len( file_names)):
             print( str( number) + ") " + file_names[ number])
-    elif data_type == 'tdr' and print_status == 'show-list':
+    elif data_type == 'tdr' and print_files:
         print( "tdr data files:")
         for number in range( len( file_names)):
             print( str( number) + ") " + file_names[ number])
-    elif data_type == 'in-situ' and print_status == 'show-list':
+    elif data_type == 'in-situ' and print_files:
         print( "in situ data files:")
         for number in range( len( file_names)):
             print( str( number) + ") " + file_names[ number])
-    elif data_type == 'dropsonde' and print_status == 'show-list':
+    elif data_type == 'dropsonde' and print_files:
         print( "dropsonde data files:")
         for number in range( len( file_names)):
             print( str( number) + ") " + file_names[ number])
-    elif data_type == 'goes' and print_status == 'show-list':
+    elif data_type == 'goes' and print_files:
         print( "GOES satellite data files:")
         for number in range( len( file_names)):
             print( str( number) + ") " + file_names[ number])
