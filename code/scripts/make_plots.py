@@ -172,7 +172,7 @@ def plot_lsr(data_path, data_file, index1, index2, xaxis_name):
 
 
 
-def plot_power_ch1(data_path, data_file, index1, index2, xaxis_name):
+def plot_power_ch1(data_path, data_file, index1, index2, xaxis_name, cutoff=-30):
     warnings.filterwarnings("ignore")
 
     # get data
@@ -185,7 +185,6 @@ def plot_power_ch1(data_path, data_file, index1, index2, xaxis_name):
     # calculate power backscattered to channel 1
     step1 = 10 * np.log10( crl_data.P_ch1 )
 
-    cutoff = -30
     step2 = step1.where( step1.values > cutoff)
     crl_pch1 = step2[index1:index2, :].transpose()
 
@@ -337,18 +336,20 @@ def plot_tdr( tdr_path, inbound_name, outbound_name, xaxis):
 
     reflectivity = reflectivity[:, range( len( xaxis_out) )]
 
-    print( 'number of outbound points: ' + str( len( xaxis_out)) )
+    # print( 'number of outbound points: ' + str( len( xaxis_out)) )
+
     if len( xaxis_out) != 0:
-        plt.pcolormesh( xaxis_out, outbound_data.height, reflectivity, cmap = color_map )
+        plt.pcolormesh( xaxis_out, outbound_data.height, reflectivity, cmap = color_map, vmin= -10, vmax = 50 )
 
     # Plot inbound data
     reflectivity = inbound_data.REFLECTIVITY.isel(time=0).isel(heading=0).transpose()
 
     reflectivity = reflectivity[:, range( len( xaxis_in) )]
 
-    print( 'number of inbound points: ' + str( len( xaxis_in)) )
+    # print( 'number of inbound points: ' + str( len( xaxis_in)) )
+
     if len( xaxis_in) != 0:
-        plt.pcolormesh( xaxis_in, inbound_data.height, reflectivity, cmap = color_map )
+        plt.pcolormesh( xaxis_in, inbound_data.height, reflectivity, cmap = color_map, vmin = -10, vmax = 50 )
 
     # making things prettier
     if len( xaxis_in) != 0 or len( xaxis_out) != 0:

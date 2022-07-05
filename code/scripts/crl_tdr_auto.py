@@ -108,6 +108,22 @@ def choose_data( tc='sam'):
             "1", "2", "3", "1", "2", "3"]
         tc_name = 'Ida'
 
+    elif tc.casefold() == 'ida-crl':
+        # paths to data
+        crl_path = "/Users/etmu9498/research/data/CRL_data/2021"
+        tdr_path = "/Users/etmu9498/research/data/tdr/ida/nc-files"
+        # load a list of available data to these variables
+        tdr_list = make_plots.load_tdr(tdr_path, print_files=False)
+        crl_list = make_plots.load_crl(crl_path, print_files=False)
+
+        # list of touples representing the min and max indices used to clip crl data
+        crl_range = [(1500, 4700)]
+        xlims = [(-92, -87)]
+
+        dates = ['08-29']
+        eye_pass = [ "2"]
+        tc_name = 'Ida'
+
     elif tc.casefold() == 'sam':
         # paths to data
         crl_path = "/Users/etmu9498/research/data/CRL_data/2021"
@@ -198,8 +214,13 @@ def plot( tc='sam', yaxis_zoom=False):
 
         # load data
         os.chdir( tcdata['tdr_path'] )
-        inbound_data = tcdata[ 'tdr_list'] [ counter*2]
-        outbound_data = tcdata['tdr_list'] [ counter*2 + 1]
+        # special case to plot the one crl tdr case that works for ida!
+        if tc == 'ida-crl':
+            inbound_data = tcdata[ 'tdr_list'] [ 20]
+            outbound_data = tcdata['tdr_list'] [ 21]
+        else:
+            inbound_data = tcdata[ 'tdr_list'] [ counter*2]
+            outbound_data = tcdata['tdr_list'] [ counter*2 + 1]
         os.chdir( tcdata['crl_path'] )
 
         crl_data = choose_crl_date( tcdata['dates'][counter], tcdata['crl_list'] )
@@ -245,7 +266,10 @@ def plot( tc='sam', yaxis_zoom=False):
         plt.xlim( tcdata['xlims'][ counter][0], tcdata['xlims'][counter][1])
 
 
-        if yaxis_zoom:
+        if tc == 'ida-crl':
+            os.chdir( "/Users/etmu9498/research/figures/tdr/ida/")
+            plt.savefig( "tdr-crl.png" )
+        elif yaxis_zoom:
             os.chdir( "/Users/etmu9498/research/figures/tdr/" + tcdata['tc_name'].casefold() + "/yzoom/")
             plt.savefig( "tdr-crl-" + tcdata['tc_name'].casefold() + "-" + str( counter+1) + ".png" )
         else:
