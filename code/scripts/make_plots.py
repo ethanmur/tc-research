@@ -40,7 +40,7 @@ def x_axis_helper( data_path, data_file, index1, index2, xaxis):
         xlims = [ crl_data.time[index1], crl_data.time[index2] ]
         return xaxis, x_label, xlims
 
-    elif xaxis == 'distance':
+    elif xaxis == 'dist':
         max_lat = np.max( crl_data.Lat[index1:index2] )
         min_lat = np.min( crl_data.Lat[index1:index2] )
         # using the delta lat formula found on the wikipedia page, assuming lat = 15 degrees
@@ -318,7 +318,7 @@ def plot_tdr( tdr_path, inbound_name, outbound_name, xaxis):
         # xaxis_in = np.linspace( max_lat, min_lat, len( xaxis_in))
         # plt.gca().invert_xaxis()
 
-    elif xaxis == 'distance':
+    elif xaxis == 'dist':
         xaxis_in = inbound_data.radius
         xaxis_out = - outbound_data.radius
         x_label = 'distance (km)'
@@ -384,7 +384,7 @@ def plot_tdr_radial_vel( tdr_path, inbound_name, outbound_name, xaxis):
         xaxis_in = inbound_data.latitude[ ~np.isnan( inbound_data.latitude)]
         # xaxis_in = np.linspace( max_lat, min_lat, len( xaxis_in))
         # plt.gca().invert_xaxis()
-    elif xaxis == 'distance':
+    elif xaxis == 'dist':
         xaxis_in = inbound_data.radius
         xaxis_out = - outbound_data.radius
         x_label = 'distance (km)'
@@ -441,7 +441,7 @@ def plot_tdr_vertical_vel( tdr_path, inbound_name, outbound_name, xaxis):
         xaxis_in = inbound_data.latitude[ ~np.isnan( inbound_data.latitude)]
         # xaxis_in = np.linspace( max_lat, min_lat, len( xaxis_in))
         # plt.gca().invert_xaxis()
-    elif xaxis == 'distance':
+    elif xaxis == 'dist':
         xaxis_in = inbound_data.radius
         xaxis_out = outbound_data.radius
         x_label = 'distance (km)'
@@ -509,7 +509,7 @@ def plot_all(data_path, data_file, title, index1, index2, xaxis):
         plt.xlabel('latitude (degrees)' )
     elif xaxis == 'time':
         plt.xlabel( 'Time (UTC)' )
-    elif xaxis == 'distance':
+    elif xaxis == 'dist':
         plt.xlabel( 'Distance (km)')
 
     warnings.filterwarnings("default")
@@ -541,7 +541,7 @@ def plot_temps_wv(data_path, data_file, title, index1, index2, xaxis):
         plt.xlabel('latitude (degrees)' )
     elif xaxis == 'time':
         plt.xlabel( 'Time (UTC)' )
-    elif xaxis == 'distance':
+    elif xaxis == 'dist':
         plt.xlabel( 'Distance (km)')
 
     warnings.filterwarnings("default")

@@ -8,7 +8,7 @@ from scipy.signal import find_peaks
 
 
 
-def cloud_top_alg_top_layer_lowest_value( power, cutoff_power, H_index_matrix, time ):
+def cloud_top_alg_top_layer_lowest_value( power, cutoff_power, H_index_matrix, xaxis ):
     # range of power values after these two steps: between -.6 and cutoff dBz
     temp = power.where( power.values > cutoff_power)
 
@@ -17,9 +17,9 @@ def cloud_top_alg_top_layer_lowest_value( power, cutoff_power, H_index_matrix, t
     power_threshold = np.where( np.isnan( temp) , 0, H_index_matrix)
 
     # make an empty array to hold power indices for plotting
-    power_index = np.empty( len( time), dtype=int)
+    power_index = np.empty( len( xaxis), dtype=int)
     # cycle through each column until the last power value within cutoff is found: this is the cloud top height!
-    for column_index in range( len( time)):
+    for column_index in range( len( xaxis)):
         power_col = power_threshold[ column_index, :]
         # maybe change this, or at least get rid of the fixed number...
         # see selection script for full description
@@ -43,7 +43,7 @@ def cloud_top_alg_top_layer_lowest_value( power, cutoff_power, H_index_matrix, t
             # power_index[ column_index] = power_col[ -1] # old solution
     return power_index
 
-def cloud_top_alg_lowest_value( power, cutoff_power, H_index_matrix, time):
+def cloud_top_alg_lowest_value( power, cutoff_power, H_index_matrix, xaxis):
     # range of power values after these two steps: between -.6 and cutoff dBz
     temp = power.where( power.values > cutoff_power)
 
@@ -53,9 +53,9 @@ def cloud_top_alg_lowest_value( power, cutoff_power, H_index_matrix, time):
 
     # original cloud top height selection script
     # make an empty array to hold power indices for plotting
-    power_index = np.empty( len( time), dtype=int)
+    power_index = np.empty( len( xaxis), dtype=int)
     # cycle through each column until the last power value within cutoff is found: this is the cloud top height!
-    for column_index in range( len( time)):
+    for column_index in range( len( xaxis)):
         power_col = power_threshold[ column_index, :]
         power_col = power_col[ power_col > 0]
         # check for empty list
@@ -66,16 +66,16 @@ def cloud_top_alg_lowest_value( power, cutoff_power, H_index_matrix, time):
     return power_index
 
 
-def cloud_top_alg_max_value( power, cutoff_power, time):
+def cloud_top_alg_max_value( power, cutoff_power, xaxis):
 
     power = power.where( power.values > cutoff_power)
 
     # get rid of nans, they were causing errors for some reason. -200 is far below
     # every max peak
     power = np.where( np.isnan( power) , -200, power)
-    power_index = np.empty( len( time), dtype=int)
+    power_index = np.empty( len( xaxis), dtype=int)
     # cycle through each column until the last power value within cutoff is found: this is the cloud top height!
-    for column_index in range( len( time)):
+    for column_index in range( len( xaxis)):
         power_col = power[ column_index, :]
         # argmax() returns the index of the max value!
         # print( power_col)
@@ -84,15 +84,15 @@ def cloud_top_alg_max_value( power, cutoff_power, time):
     return power_index
 
 
-def cloud_top_alg_find_peaks( power, cutoff_power, time):
+def cloud_top_alg_find_peaks( power, cutoff_power, xaxis):
 
     power = power.where( power.values > cutoff_power)
     # get rid of nans, they were causing errors for some reason. -200 is far below
     # every max peak
     power = np.where( np.isnan( power) , -200, power)
-    power_index = np.empty( len( time), dtype=int)
+    power_index = np.empty( len( xaxis), dtype=int)
     # cycle through each column until the last power value within cutoff is found: this is the cloud top height!
-    for column_index in range( len( time)):
+    for column_index in range( len( xaxis)):
         power_col = power[ column_index, :]
 
         peaks = find_peaks( power_col, height = -14)
@@ -110,7 +110,7 @@ def cloud_top_alg_find_peaks( power, cutoff_power, time):
     return power_index
 
 
-def find_cloud_heights( crl_name, cutoff_power):
+def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time'):
     """
     This function finds and returns cloud heights
     :param crl_name: The name of the crl data file that will be analyzed. The crl_path
@@ -124,17 +124,22 @@ def find_cloud_heights( crl_name, cutoff_power):
     crl_path = "/Users/etmu9498/research/data/CRL_data/2021"
     os.chdir( crl_path)
     data = xr.open_dataset( crl_name)
-    data
+    power = data.P_ch1[ i1: i2]
 
-    lon = data.Lon
-    lat = data.Lat
-    power = data.P_ch1
-    time = data.time
+    if xaxis == 'lon':
+        axis = data.Lon[ i1: i2]
+    elif xaxis == 'lat':
+        axis = data.Lat[ i1: i2]
+    elif xaxis == 'time':
+        axis = data.time[ i1: i2]
+    else:
+        print( "please select 'lon', 'lat', or 'time' as a valid x axis")
+
     H = data.H
     # an index for each of the 594 height values
     H_index = range( len( H))
     # a matrix of height indices, to be used later. 594 height values x 300 repeats
-    H_index_matrix = np.repeat(np.array( H_index)[None, :], len( time), axis=0)
+    H_index_matrix = np.repeat(np.array( H_index)[None, :], len( axis), axis=0)
 
     # cut off top 8 values to get rid of NaNs from flight level data
     power = power[:, 8:]
@@ -143,28 +148,27 @@ def find_cloud_heights( crl_name, cutoff_power):
     # convert to dBz
     power = 10 * np.log10( power)
 
-    # power_index = cloud_top_alg_top_layer_lowest_value( power, cutoff_power, H_index_matrix, time)
-    # power_index = cloud_top_alg_max_value( power, cutoff_power, time)
-    power_index = cloud_top_alg_find_peaks( power, cutoff_power, time)
-    return - H[power_index], time
+    # power_index = cloud_top_alg_top_layer_lowest_value( power, cutoff_power, H_index_matrix, axis)
+    power_index = cloud_top_alg_max_value( power, cutoff_power, axis)
+    # power_index = cloud_top_alg_find_peaks( power, cutoff_power, axis)
+    return - H[power_index], axis
 
 
 
-def cloud_height_crl_comparison( crl_name, cutoff_power, xlims=False, same_plot=False):
+def cloud_height_crl_comparison( crl_name, cutoff_power, i1, i2, xaxis='time', xlims=False, same_plot=False):
     crl_path = "/Users/etmu9498/research/data/CRL_data/2021"
-    i1 = 0
-    i2 = 6000
 
-    H, time = find_cloud_heights(crl_name, cutoff_power)
+    H, xaxis_value = find_cloud_heights(crl_name, cutoff_power, i1, i2, xaxis = xaxis)
     plt.clf()
 
     # plot cloud top height line right on top of crl data
+    line_color = 'g'
     if same_plot:
         # plot results
-        plt.figure( figsize=(29, 4))
-        make_plots.plot_power_ch1( crl_path, crl_name, i1, i2, 'time', cutoff= cutoff_power)
-        plt.scatter( time, H, c= 'r', s=8, marker='s')
-        plt.plot( time, H, c= 'r', linewidth=.5, label= 'Cloud Top Height')
+        plt.figure( figsize=(18, 5))
+        make_plots.plot_power_ch1( crl_path, crl_name, i1, i2, xaxis, cutoff= cutoff_power)
+        plt.scatter( xaxis_value, H, c= line_color, s=8, marker='s') # s
+        plt.plot( xaxis_value, H, c=  line_color, linewidth=2, label= 'Cloud Top Height')
         if xlims:
             plt.xlim( [ xlims[0], xlims[1] ])
         # make lines in legend thicker
@@ -175,8 +179,8 @@ def cloud_height_crl_comparison( crl_name, cutoff_power, xlims=False, same_plot=
     else:
         # plot results
         plt.figure( figsize=(14.9, 4))
-        plt.scatter( time, H, c= 'r', s=8, marker='s')
-        plt.plot( time, H, c= 'r', linewidth=.5, label= 'Cloud Top Height')
+        plt.scatter( xaxis_value, H, c= line_color, s=12, marker='s')
+        plt.plot( xaxis_value, H, c= line_color, linewidth=.5, label= 'Cloud Top Height')
         if xlims:
             plt.xlim( [ xlims[0], xlims[1] ])
         plt.ylabel( "height (km)")
@@ -188,9 +192,11 @@ def cloud_height_crl_comparison( crl_name, cutoff_power, xlims=False, same_plot=
             line.set_linewidth(4.0)
 
         plt.figure( figsize=(29, 4))
-        make_plots.plot_power_ch1( crl_path, crl_name, i1, i2, 'time', cutoff= cutoff_power)
+        make_plots.plot_power_ch1( crl_path, crl_name, i1, i2, xaxis, cutoff= cutoff_power)
         if xlims:
             plt.xlim( [ xlims[0], xlims[1] ])
+
+
 
 
 def cloud_height_sensitivity( crl_name, cutoff_list, xlims=False, colors=False, labels=False):
