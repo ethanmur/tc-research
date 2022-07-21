@@ -9,100 +9,14 @@ os.chdir(  "/Users/etmu9498/research/code/scripts")
 import make_plots
 import eyewall_slope
 
-def choose_data( tc='sam'):
-
-    crl_path = "/Users/etmu9498/research/data/CRL_data/2021"
-    crl_list = make_plots.load_crl(crl_path, print_files=False)
-    # choose proper paths to data and formatting options
-    # casefold() allows for any capitalization variation to work here
-
-    if tc.casefold() == 'fred':
-        tdr_path = "/Users/etmu9498/research/data/tdr/fred/nc-files"
-        tdr_list = make_plots.load_tdr(tdr_path, print_files=False)
-        xlims = [
-            ( -82.5, -68), ( -82.5, -68 ),
-            ( -77, -72), ( -77, -72), (24, 18),
-            ( -77, -73.5), (-77, -73.5 ),
-            (-79, -75), (-79, -75) ]
-        dates = [
-            '08-11', '08-11',
-            '08-12-am', '08-12-am', '08-12-am',
-            '08-12-pm', '08-12-pm',
-            '08-13', '08-13' ]
-        eye_pass = ["1", "2", "1", "2", "3", "1", "2", "1", "2"]
-        tc_name = 'Fred'
-
-    elif tc.casefold() == 'grace':
-        tdr_path = "/Users/etmu9498/research/data/tdr/grace/nc-files"
-        tdr_list = make_plots.load_tdr(tdr_path, print_files=False)
-        xlims = [
-            ( -73, -69), ( -72, -69 ),
-            ( 20, 16), ( -79, -74), (20, 17),
-            ( 22, 18), (-86.5, -82.5 ), (21, 18 ),
-            (-92, -89), (-92, -90), (-93, -89) ]
-        dates = [
-            '08-16', '08-16',
-            '08-17', '08-17', '08-17',
-            '08-18', '08-18', '08-18',
-            '08-19', '08-19', '08-19' ]
-        eye_pass = ["1", "2", "1", "2", "3", "1", "2", "3", "1", "2", "3"]
-        tc_name = 'Grace'
-
-    elif tc.casefold() == 'henri':
-        tdr_path = "/Users/etmu9498/research/data/tdr/henri/nc-files"
-        tdr_list = make_plots.load_tdr(tdr_path, print_files=False)
-        xlims = [
-            ( 29.5, 33.5), (-76, -72 ), (-75, -72 ),
-            (33.5, 39), (-73, -67.5), (-72, -68.5) ]
-        dates = [
-            '08-20', '08-20', '08-20',
-            '08-21', '08-21', '08-21' ]
-        eye_pass = ["1", "2", "3", "1", "2", "3"]
-        tc_name = 'Henri'
-
-    elif tc.casefold() == 'ida':
-        # paths to data
-        tdr_path = "/Users/etmu9498/research/data/tdr/ida/nc-files"
-        tdr_list = make_plots.load_tdr(tdr_path, print_files=False)
-        xlims = [
-            (-85, -81), (-85, -81), (-85, -83), (24, 23), (-85, -83), (-85, -83),
-            (-86.5, -82), (-88.5, -85.5), (-88, -86),
-            (-90, -85), (-92, -87.5), (-92, -88.5), (-92, -88.5)]
-        dates = [
-            '08-27', '08-27', '08-27', '08-27', '08-27', '08-27', '08-27',
-            '08-28', '08-28', '08-28', '08-29', '08-29', '08-29']
-        eye_pass = [
-            "1", "2", "3","4","5","6","7",
-            "1", "2", "3", "1", "2", "3"]
-        tc_name = 'Ida'
-
-    elif tc.casefold() == 'sam':
-        tdr_path = "/Users/etmu9498/research/data/tdr/sam/nc-files"
-        tdr_list = make_plots.load_tdr(tdr_path, print_files=False)
-        xlims = [
-            (-52, -49), (-51.5, -49.75), (-51.75, -50), (-55, -51), (18, 15),
-            (-54, -52), (-59.5, -56.5), (-59.5, -56.5) ]
-        dates = [
-            '09-26', '09-26', '09-26', '09-27', '09-27', '09-27', '09-29', '09-29']
-        eye_pass = [ "1", "2", "3", "1", "2", "3", "1", "2"]
-        tc_name = 'Sam'
-    else:
-        tcdata = "selected TC name is not yet implemented"
-        return tcdata
-
-    tcdata = {
-        'crl_path': crl_path, 'tdr_path': tdr_path, 'crl_list': crl_list,
-        'tdr_list': tdr_list, 'xlims': xlims, 'dates': dates,
-        'eye_pass': eye_pass, 'tc_name': tc_name }
-    return tcdata
-
+import tc_metadata
 
 
 # only two x axis choices: 'dist' and 'lat-lon' here! the xaxis touples above
 # specify whether to use lat or lon
 def plot_tdr_only( tc='sam', eyewall_cutoff=True, xaxis='dist'):
 
-    tcdata = choose_data( tc)
+    tcdata = tc_metadata.choose_data_eyewall_slope( tc)
     if tcdata == 'selected TC name is not yet implemented':
         print( tcdata)
         return
@@ -120,16 +34,26 @@ def plot_tdr_only( tc='sam', eyewall_cutoff=True, xaxis='dist'):
 
 # a helper function to split up the plot_tdr_only() code!
 # It also has some uses in the cloud_height_auto_same_plot.py file!
-def plot_one_tdr_section( tcdata, counter, eyewall_cutoff, xaxis):
+def plot_one_tdr_section( tcdata, counter, eyewall_cutoff, xaxis, good_data_case=False):
     warnings.filterwarnings("ignore")
 
     # load data
     os.chdir( tcdata['tdr_path'] )
-    inbound_data = tcdata[ 'tdr_list'] [ counter*2]
-    if len( tcdata['tdr_list']) > counter*2+1:
-        outbound_data = tcdata['tdr_list'] [ counter*2 + 1]
+
+    # special case for only using certain good datasets(good_data_case is set to true in the parent function)
+    if good_data_case:
+        inbound_data, outbound_data = tc_metadata.choose_tdr_data( tcdata['tc_name'], tcdata['tdr_list'], counter)
+    # special case for ida (because most of the data looks so bad :(   )
+    elif tcdata['tc_name'] == 'Ida':
+        print( 'ida')
+        inbound_data = tcdata[ 'tdr_list'] [ 20]
+        outbound_data = tcdata['tdr_list'] [ 21]
     else:
-        print( 'error!')
+        inbound_data = tcdata[ 'tdr_list'] [ counter*2]
+        if len( tcdata['tdr_list']) > counter*2+1:
+            outbound_data = tcdata['tdr_list'] [ counter*2 + 1]
+        else:
+            print( 'error!')
 
     if xaxis == 'dist':
         make_plots.plot_tdr( tcdata['tdr_path'], inbound_data, outbound_data, xaxis)
@@ -184,6 +108,7 @@ def plot_one_tdr_section( tcdata, counter, eyewall_cutoff, xaxis):
         plt.savefig( tcdata['tc_name'].casefold() + "-" + str( counter+1) + ".png" )
     else:
         plt.savefig( tcdata['tc_name'].casefold() + "-lat-lon-" + str( counter+1) + ".png" )
-    print( "TDR Image " + str( counter + 1) + " complete" )
+
+    # print( "TDR Image " + str( counter + 1) + " complete" )
 
     warnings.filterwarnings("default")

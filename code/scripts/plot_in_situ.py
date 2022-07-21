@@ -14,8 +14,6 @@ from scipy.signal import find_peaks
 
 os.chdir(  "/Users/etmu9498/research/code/scripts")
 import make_plots
-import goes_gifs
-
 
 
 def load_in_situ( flight_path, flight_number, sample_step_size=1):
@@ -23,7 +21,8 @@ def load_in_situ( flight_path, flight_number, sample_step_size=1):
     # load in situ data
     os.chdir( flight_path)
     in_situ_data = pd.read_csv( flight_number, header=None)
-    in_situ_data
+
+    # in_situ_data
 
     # make proper row the df header (some rows have text descriptors, for some reason this varies
     # between data sets)
@@ -39,13 +38,14 @@ def load_in_situ( flight_path, flight_number, sample_step_size=1):
     # removing 4 columns that are labeled as 'none'
     in_situ_data.drop( 'none', inplace=True, axis=1)
 
-    # trim out every 10th element for a new, smaller dataset. Easier / faster to work with?
+    # trim out every sample_step_size element for a new, smaller dataset. Easier / faster to work with
+    # a step size of 1 won't change the data at all
     in_situ_data_trim = in_situ_data.iloc[ ::sample_step_size, :]
     # reset indices so they're nice and pretty!
     in_situ_data_trim = in_situ_data_trim.reset_index( drop=True)
     # in_situ_data_trim
 
-    # adding datetime and just time columns to pandas dataframe
+    # adding datetime and just time formatted columns to pandas dataframe
     in_situ_data_trim['dt'] = pd.to_datetime( in_situ_data_trim['TIME'])
     in_situ_data_trim['time'] = [dt_object.time() for dt_object in in_situ_data_trim.dt ]
 
@@ -54,6 +54,7 @@ def load_in_situ( flight_path, flight_number, sample_step_size=1):
 
     # get data out of xarray and put it in a useable format
     time = xr_in_situ.time.values
+    # also store the data in string and decimal formats for easier plotting
     str_time = [ ti.strftime('%H:%M:%S') for ti in time ]
     float_time = []
     for val in time:
@@ -63,6 +64,8 @@ def load_in_situ( flight_path, flight_number, sample_step_size=1):
         else:
             float_time.append( val.hour + val.minute / 60 + val.second / 3600)
 
+    # pull pitch and roll values out of the dataset, and save them as floats
+    # I think they were originally strings
     pitch = xr_in_situ.PITCHref.values
     pitch = [ float( line) for line in pitch]
 
@@ -74,8 +77,10 @@ def load_in_situ( flight_path, flight_number, sample_step_size=1):
     xr_in_situ['float_time'] = ( ['index'], float_time)
     xr_in_situ['str_time'] = ( ['index'], str_time)
     xr_in_situ['rollval'] = ( ['index'], roll)
-    xr_in_situ['pitch'] = ( ['index'], pitch)
+    xr_in_situ['pitchval'] = ( ['index'], pitch)
 
+    # this line ...
     xr_in_situ.reset_coords()
 
+    # return the processed data for graphing use
     return xr_in_situ

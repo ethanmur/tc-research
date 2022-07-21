@@ -5,6 +5,7 @@ from scipy.signal import find_peaks
 
 os.chdir( "/Users/etmu9498/research/code/scripts/")
 import make_plots
+import plot_in_situ
 
 
 
@@ -29,15 +30,6 @@ def eyewall_slope_first_val( tdr_path, inbound_name, outbound_name, eyewall_cuto
         # code taken from make_plots.py file, plot_tdr() function
         x_in =  inbound_data.longitude [ ~np.isnan( inbound_data.longitude)]
         x_out = outbound_data.longitude [ ~np.isnan( outbound_data.longitude)]
-        '''
-        print( 'inbound size with no nans: ' + str( np.size( inbound_data.longitude[ ~np.isnan( inbound_data.longitude)], 0)) )
-                # + ' x ' + str( np.size( inbound_data.longitude[ ~np.isnan( inbound_data.longitude)], 1)) )
-        print( 'inbound size with nans: ' + str( np.size( inbound_data.longitude, 0)) ) # + ' x ' + str( np.size( inbound_data.longitude, 1)) )
-
-        print( 'outbound size with no nans: ' + str( np.size( outbound_data.longitude[ ~np.isnan( outbound_data.longitude)], 0)))
-                # + ' x ' + str( np.size( outbound_data.longitude[ ~np.isnan( outbound_data.longitude)], 1)))
-        print( 'outbound size with nans: ' + str( np.size( outbound_data.longitude, 0)) ) # + ' x ' + str(np.size( outbound_data.longitude, 1)))
-        '''
 
     elif xaxis == 'lat':
         # code taken from make_plots.py file, plot_tdr() function
@@ -153,14 +145,144 @@ def eyewall_slope_first_val( tdr_path, inbound_name, outbound_name, eyewall_cuto
 
 
 
+# another algorithm for finding the start of the eyewall, using in situ wind speed data! perhaps this is better?
 
-# algorithm for finding points along the eyewall!
+# this needs a lot more work :/
+def eyewall_start_in_situ(crl_path, crl_name, in_situ_path, in_situ_name, cutoff_indices, xaxis='time'):
+
+    # load data
+    os.chdir( in_situ_path)
+    xr_in_situ = plot_in_situ.load_in_situ( in_situ_path, in_situ_name, sample_step_size=10)
+
+    # rename variables from xarray for convenience
+    float_time = xr_in_situ.float_time
+    ws = [ float( line) for line in xr_in_situ["WS.d"].values] # convert strings to floats
+    lat = [ float( line) for line in xr_in_situ["LATref"].values ]
+    lon = [ float( line) for line in xr_in_situ["LONref"].values ]
+
+    # load crl data to find the times corresponding to i1 and i2
+    os.chdir( crl_path)
+    crl_data = xr.open_dataset( crl_name)
+
+    # deal with annoying indices :(
+    if len( cutoff_indices) == 2:
+        i1 = cutoff_indices[0]
+        i2 = cutoff_indices[1]
+        time1 = crl_data.time[ i1]
+        time2 = crl_data.time[ i2]
+
+        # find the in situ times nearest the crl times
+        idx1 = (np.abs(float_time - time1)).argmin()
+        idx2 = (np.abs(float_time - time2)).argmin()
+        # use the indices for nearest time values to trim down lat and lon values
+        # this prevents data overlap and makes plotting faster!
+        lon = lon[ idx1.values : idx2.values]
+        lat = lat[ idx1.values : idx2.values]
+        ws = ws[ idx1.values : idx2.values]
+
+    elif len( cutoff_indices) == 4:
+        i1 = cutoff_indices[0]
+        i2 = cutoff_indices[1]
+        i3 = cutoff_indices[2]
+        i4 = cutoff_indices[3]
+        time1 = crl_data.time[ i1]
+        time2 = crl_data.time[ i2]
+        time3 = crl_data.time[ i3]
+        time4 = crl_data.time[ i4]
+
+        # find the in situ times nearest the crl times
+        idx1 = (np.abs(float_time - time1)).argmin()
+        idx2 = (np.abs(float_time - time2)).argmin()
+        idx3 = (np.abs(float_time - time3)).argmin()
+        idx4 = (np.abs(float_time - time4)).argmin()
+
+        # use the indices for nearest time values to trim down lat and lon values
+        # this prevents data overlap and makes plotting faster!
+        lon = lon[ idx1.values : idx2.values] + lon[ idx3.values : idx4.values]
+        lat = lat[ idx1.values : idx2.values] + lat[ idx3.values : idx4.values]
+        ws = ws[ idx1.values : idx2.values] + ws[ idx3.values : idx4.values]
+    else:
+        print( 'Error in number of indices! Update them in tc_metadata.py')
+
+    # pick the x axis to be plotted
+    if xaxis == "time":
+        xaxis_data = float_time
+    elif xaxis == "lon":
+        xaxis_data = lon
+    elif xaxis == "lat":
+        xaxis_data = lat
+    else:
+        print( "Please choose 'lon', 'lat', or 'time' as a valid xaxis!")
+
+
+    # make sure the x axis data is a numpy array for proper plotting
+    xaxis_data = np.array(xaxis_data)
+
+    # find wind speed max points
+    peaks = find_peaks( ws, prominence= 3, width=5, height= 15) # wlen=100
+
+    # find minima to figure out where the center of the tc eye is
+    # flip the wind speed dataset to use find peaks to get minima
+    ws_flipped = [ -1 * val for val in ws]
+    troughs = find_peaks( ws_flipped, prominence= 3, width=5, height= - 25)
+
+    # find th, the height of the lowest trough (center of the eye)
+    # th = trough height
+    # - sign is to undo - sign above
+    th = np.min( - troughs[1]['peak_heights'])
+    # find the x position of the trough height
+    # use xaxis_data[ ...] to go from an index to an x position
+    # ti = trough index, tx = trough position
+    ti = np.where( - troughs[1]['peak_heights'] == th)
+    tx = xaxis_data[ troughs[0][ti]]
+    # turn tx from a one element list into just that element
+    tx = tx[0]
+
+    # find the nearest left and right peaks to the trough tx!
+    # left case:
+    # find the peaks to the left of the tc eye center
+    l_peaks = xaxis_data[ peaks [0]] [np.where( xaxis_data[peaks[0]] < tx)]
+    # full list case (there are values to the left of the eye)
+    if np.any( l_peaks):
+        # lp(i, x, h) = left peak (index, position, height)
+        lpi = (np.abs( l_peaks - tx )).argmin()
+        lpx = l_peaks[ lpi]
+        lph = ws[ np.where( xaxis_data == lpx) [0][0] ]
+    # empty list case
+    else:
+        # just guess where the eyewall is lol... this needs to be fixed
+        lpx = xaxis_data[ np.where( xaxis_data == tx)[0][0] - 50]
+        lph = ws[ np.where( xaxis_data == lpx) [0][0] ]
+
+    # right case
+    r_peaks = xaxis_data[ peaks [0]] [np.where( xaxis_data[peaks[0]] >= tx)]
+    # full list case
+    if np.any( r_peaks):
+        rpi = (np.abs( r_peaks - tx )).argmin()
+        rpx = r_peaks[ rpi]
+        rph = ws[ np.where( xaxis_data == rpx) [0][0] ]
+    # empty list case
+    else:
+        rpx = xaxis_data[ np.where( xaxis_data == tx)[0][0] - 50]
+        rph = ws[ np.where( xaxis_data == rpx) [0][0] ]
+
+    in_x_start = lpx
+    out_x_start = rpx
+
+    return in_x_start, out_x_start
+
+
+
+
+
+
+# algorithm for finding the start of the eyewall using tdr data!
 def eyewall_start( tdr_path, inbound_name, outbound_name, xaxis='dist'):
 
     # using a cutoff of 20 dBz because it seems like other researchers have used this value for eyewall slope measurements!
-    cutoff = 20.0
+    cutoff = 28.0 # i bumped this value up to 28 to get rid of effects from scud clouds in the eye
     # minimum height of a dBz point required to be considered the start of the eyewall (km)
-    height_cutoff = 3.5 # height of P3 flight... would higher or lower work better?
+    height_cutoff = 2.5 # height of P3 flight is around 3.5 km... would higher or lower work better?
 
     # load data
     os.chdir( tdr_path)

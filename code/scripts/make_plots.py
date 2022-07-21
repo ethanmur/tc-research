@@ -58,7 +58,7 @@ def x_axis_helper( data_path, data_file, index1, index2, xaxis):
         return
 
 
-def plot_T(data_path, data_file, index1, index2, xaxis_name):
+def plot_T(data_path, data_file, index1, index2, xaxis_name, show_colorbar=True):
 
     warnings.filterwarnings("ignore")
 
@@ -80,7 +80,8 @@ def plot_T(data_path, data_file, index1, index2, xaxis_name):
     plt.xlim( xlims )
     ax = plt.gca()
     ax.set_facecolor('k')
-    plt.colorbar(label="Temperature ( C)")
+    if show_colorbar:
+        plt.colorbar(label="Temperature ( C)")
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     plt.grid( True)
@@ -172,7 +173,7 @@ def plot_lsr(data_path, data_file, index1, index2, xaxis_name):
 
 
 
-def plot_power_ch1(data_path, data_file, index1, index2, xaxis_name, cutoff=-30):
+def plot_power_ch1(data_path, data_file, index1, index2, xaxis_name, cutoff=-30, show_colorbar=True):
     warnings.filterwarnings("ignore")
 
     # get data
@@ -196,7 +197,8 @@ def plot_power_ch1(data_path, data_file, index1, index2, xaxis_name, cutoff=-30)
     # color_map = 'viridis'
     # color_map = plt.cm.get_cmap( "Spectral").reversed()
     plt.pcolormesh( xaxis, - crl_data.H, crl_pch1, vmin = cutoff, vmax =-10)
-    plt.colorbar(label="Backscattered Ch 1 power ( dBz)")
+    if show_colorbar:
+        plt.colorbar(label="Backscattered Ch 1 power ( dBz)")
     plt.ylabel( 'Height (km)')
     # plt.xlabel( x_label)
     plt.xlim( xlims )
@@ -355,7 +357,7 @@ def plot_tdr( tdr_path, inbound_name, outbound_name, xaxis):
     if len( xaxis_in) != 0 or len( xaxis_out) != 0:
         plt.colorbar( label="Reflectivity (dBZ)")
     plt.ylabel( 'Height from Surface (km)')
-    plt.xlabel( x_label)
+    # plt.xlabel( x_label)
     plt.grid( 'on')
     # plt.gca().invert_xaxis()
 

@@ -4,111 +4,9 @@ import numpy as np
 import xarray as xr
 os.chdir(  "/Users/etmu9498/research/code/scripts")
 import make_plots
-from scipy.signal import find_peaks
+import cloud_top_algorithms as cta
 
-
-
-def cloud_top_alg_top_layer_lowest_value( power, cutoff_power, H_index_matrix, xaxis ):
-    # range of power values after these two steps: between -.6 and cutoff dBz
-    temp = power.where( power.values > cutoff_power)
-
-    # if there is a nan value, turn it into a zero. Turn non-NaN values into
-    # height indices. These height indices will be manipulated in the following code.
-    power_threshold = np.where( np.isnan( temp) , 0, H_index_matrix)
-
-    # make an empty array to hold power indices for plotting
-    power_index = np.empty( len( xaxis), dtype=int)
-    # cycle through each column until the last power value within cutoff is found: this is the cloud top height!
-    for column_index in range( len( xaxis)):
-        power_col = power_threshold[ column_index, :]
-        # maybe change this, or at least get rid of the fixed number...
-        # see selection script for full description
-        if power_col[10] == 0:
-            power_index[ column_index] = 0
-
-        # remove all zero values
-        power_col = power_col[ power_col > 0]
-
-        # check for empty list
-        if np.size( power_col) == 0:
-            power_index[ column_index] = 0
-        else:
-            # split current list of indices into arrays of consecutive values! Helps determine the top cloud chunk
-            splits = np.split( power_col, np.where(np.diff( power_col) != 1)[0] + 1)
-            # look at the last value in the first array of non NaN values: this represents
-            # the end of the first clear air chunk beneath the plane! Aka the cloud top
-            # add 1 to go from bottom of clear air to top of cloud... actually the
-            # + 1 caused an out of bounds error so I got rid of it
-            power_index[ column_index] = splits[0] [ -1]
-            # power_index[ column_index] = power_col[ -1] # old solution
-    return power_index
-
-def cloud_top_alg_lowest_value( power, cutoff_power, H_index_matrix, xaxis):
-    # range of power values after these two steps: between -.6 and cutoff dBz
-    temp = power.where( power.values > cutoff_power)
-
-    # if there is a nan value, turn it into a zero. Turn non-NaN values into
-    # height indices. These height indices will be manipulated in the following code.
-    power_threshold = np.where( np.isnan( temp) , 0, H_index_matrix)
-
-    # original cloud top height selection script
-    # make an empty array to hold power indices for plotting
-    power_index = np.empty( len( xaxis), dtype=int)
-    # cycle through each column until the last power value within cutoff is found: this is the cloud top height!
-    for column_index in range( len( xaxis)):
-        power_col = power_threshold[ column_index, :]
-        power_col = power_col[ power_col > 0]
-        # check for empty list
-        if np.size( power_col) == 0:
-            power_index[ column_index] = 0
-        else:
-            power_index[ column_index] = power_col[ -1]
-    return power_index
-
-
-def cloud_top_alg_max_value( power, cutoff_power, xaxis):
-
-    power = power.where( power.values > cutoff_power)
-
-    # get rid of nans, they were causing errors for some reason. -200 is far below
-    # every max peak
-    power = np.where( np.isnan( power) , -200, power)
-    power_index = np.empty( len( xaxis), dtype=int)
-    # cycle through each column until the last power value within cutoff is found: this is the cloud top height!
-    for column_index in range( len( xaxis)):
-        power_col = power[ column_index, :]
-        # argmax() returns the index of the max value!
-        # print( power_col)
-        max_power_ind = np.argmax( power_col)
-        power_index[ column_index] = max_power_ind
-    return power_index
-
-
-def cloud_top_alg_find_peaks( power, cutoff_power, xaxis):
-
-    power = power.where( power.values > cutoff_power)
-    # get rid of nans, they were causing errors for some reason. -200 is far below
-    # every max peak
-    power = np.where( np.isnan( power) , -200, power)
-    power_index = np.empty( len( xaxis), dtype=int)
-    # cycle through each column until the last power value within cutoff is found: this is the cloud top height!
-    for column_index in range( len( xaxis)):
-        power_col = power[ column_index, :]
-
-        peaks = find_peaks( power_col, height = -14)
-        # pick the last viable power index using [-1]
-
-        # peaks[0] returns an array of indices of values that have peaks!
-        # case where no local peaks above -14 dBz exist
-        # update this to not just pick the max, maybe use some of the methods above?
-        if np.size( peaks[0]) == 0:
-            max_power_ind = np.argmax( power_col)
-            power_index[ column_index] = max_power_ind
-        # case where local peaks exist!
-        else:
-            power_index[ column_index] = peaks[0][-1]
-    return power_index
-
+# from scipy.signal import find_peaks
 
 def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time'):
     """
@@ -142,15 +40,19 @@ def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time'):
     H_index_matrix = np.repeat(np.array( H_index)[None, :], len( axis), axis=0)
 
     # cut off top 8 values to get rid of NaNs from flight level data
-    power = power[:, 8:]
-    H_index_matrix = H_index_matrix[:, 8:]
+
+    ''' maybe uncomment these lines! maybe important '''
+    # power = power[:, 8:]
+    # H_index_matrix = H_index_matrix[:, 8:]
 
     # convert to dBz
     power = 10 * np.log10( power)
 
-    # power_index = cloud_top_alg_top_layer_lowest_value( power, cutoff_power, H_index_matrix, axis)
-    power_index = cloud_top_alg_max_value( power, cutoff_power, axis)
-    # power_index = cloud_top_alg_find_peaks( power, cutoff_power, axis)
+    # power_index = cta.cta_top_layer_lowest_value( power, cutoff_power, H_index_matrix, axis)
+    # power_index = cta.cta_max_value( power, cutoff_power, axis)
+    # power_index = cta.cta_find_peaks( power, cutoff_power, axis)
+    # power_index = cta.cta_find_peaks_max( power, cutoff_power, axis, H_index_matrix)
+    power_index = cta.cta_prominence( power, cutoff_power, axis, H_index_matrix)
     return - H[power_index], axis
 
 
@@ -172,7 +74,7 @@ def cloud_height_crl_comparison( crl_name, cutoff_power, i1, i2, xaxis='time', x
         if xlims:
             plt.xlim( [ xlims[0], xlims[1] ])
         # make lines in legend thicker
-        leg = plt.legend()
+        leg = plt.legend( loc='lower left')
         for line in leg.get_lines():
             line.set_linewidth(4.0)
     # plot cloud top height data and crl data separately
@@ -187,7 +89,7 @@ def cloud_height_crl_comparison( crl_name, cutoff_power, i1, i2, xaxis='time', x
         plt.xlabel( 'time (hours)')
         plt.grid('on')
         # make lines in legend thicker
-        leg = plt.legend()
+        leg = plt.legend( loc='lower left')
         for line in leg.get_lines():
             line.set_linewidth(4.0)
 
