@@ -5,6 +5,7 @@ import xarray as xr
 os.chdir(  "/Users/etmu9498/research/code/scripts")
 import make_plots
 import cloud_top_algorithms as cta
+import warnings
 
 # from scipy.signal import find_peaks
 
@@ -19,6 +20,8 @@ def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time'):
     :return power_height: A list of heights representing the lowest layer of clear air detected
             by the lidar
     """
+    warnings.filterwarnings("ignore")
+
     crl_path = "/Users/etmu9498/research/data/CRL_data/2021"
     os.chdir( crl_path)
     data = xr.open_dataset( crl_name)
@@ -53,6 +56,8 @@ def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time'):
     # power_index = cta.cta_find_peaks( power, cutoff_power, axis)
     # power_index = cta.cta_find_peaks_max( power, cutoff_power, axis, H_index_matrix)
     power_index = cta.cta_prominence( power, cutoff_power, axis, H_index_matrix)
+
+    warnings.filterwarnings("default")
     return - H[power_index], axis
 
 

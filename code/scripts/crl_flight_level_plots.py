@@ -533,7 +533,7 @@ def only_flight_level_lines( crl_path, crl_name, flight_data_path, flight_name, 
     # fig, ax = plt.subplots(2, 2, figsize=( fig_len, 8), gridspec_kw= { 'width_ratios': [1, .1]})
 
     # update font sizes for this plot!
-    TINY_SIZE = 11
+    TINY_SIZE = 12
     SMALL_SIZE = 14
     MEDIUM_SIZE = 16
     plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
@@ -627,7 +627,6 @@ def only_flight_level_lines( crl_path, crl_name, flight_data_path, flight_name, 
 
     # ax[0, 0]
     plt.legend(loc='upper left')
-    plt.ylabel( "Height (km)")
 
     if xlim != 'none':
         plt.xlim( xlim)

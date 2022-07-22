@@ -74,7 +74,7 @@ def plot_T(data_path, data_file, index1, index2, xaxis_name, show_colorbar=True)
     temp = crl_data.T[index1:index2, :].where( crl_data.T[index1:index2, :].values < 50).transpose()
 
     # plot and make things pretty
-    plt.pcolormesh( xaxis, - crl_data.H, temp, cmap = color_map )
+    plt.pcolormesh( xaxis, - crl_data.H, temp, cmap = color_map, vmin=5, vmax=35 )
     plt.ylabel( 'Height (km)')
     # plt.xlabel( x_label)
     plt.xlim( xlims )
@@ -174,6 +174,7 @@ def plot_lsr(data_path, data_file, index1, index2, xaxis_name):
 
 
 def plot_power_ch1(data_path, data_file, index1, index2, xaxis_name, cutoff=-30, show_colorbar=True):
+
     warnings.filterwarnings("ignore")
 
     # get data

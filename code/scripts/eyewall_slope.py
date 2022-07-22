@@ -7,6 +7,8 @@ os.chdir( "/Users/etmu9498/research/code/scripts/")
 import make_plots
 import plot_in_situ
 
+import warnings
+
 
 
 # algorithm for finding points along the eyewall!
@@ -150,9 +152,11 @@ def eyewall_slope_first_val( tdr_path, inbound_name, outbound_name, eyewall_cuto
 # this needs a lot more work :/
 def eyewall_start_in_situ(crl_path, crl_name, in_situ_path, in_situ_name, cutoff_indices, xaxis='time'):
 
+    warnings.filterwarnings("ignore")
+
     # load data
     os.chdir( in_situ_path)
-    xr_in_situ = plot_in_situ.load_in_situ( in_situ_path, in_situ_name, sample_step_size=10)
+    xr_in_situ = plot_in_situ.load_in_situ( in_situ_path, in_situ_name, sample_step_size= 1)
 
     # rename variables from xarray for convenience
     float_time = xr_in_situ.float_time
@@ -269,6 +273,8 @@ def eyewall_start_in_situ(crl_path, crl_name, in_situ_path, in_situ_name, cutoff
     in_x_start = lpx
     out_x_start = rpx
 
+    warnings.filterwarnings("default")
+
     return in_x_start, out_x_start
 
 
@@ -278,6 +284,8 @@ def eyewall_start_in_situ(crl_path, crl_name, in_situ_path, in_situ_name, cutoff
 
 # algorithm for finding the start of the eyewall using tdr data!
 def eyewall_start( tdr_path, inbound_name, outbound_name, xaxis='dist'):
+
+    warnings.filterwarnings("ignore")
 
     # using a cutoff of 20 dBz because it seems like other researchers have used this value for eyewall slope measurements!
     cutoff = 28.0 # i bumped this value up to 28 to get rid of effects from scud clouds in the eye
@@ -369,5 +377,6 @@ def eyewall_start( tdr_path, inbound_name, outbound_name, xaxis='dist'):
             out_x_start = float('nan')
             out_H_start = float('nan')
 
+    warnings.filterwarnings("default")
 
     return in_x_start, out_x_start, in_H_start, out_H_start

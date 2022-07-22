@@ -16,7 +16,7 @@ os.chdir(  "/Users/etmu9498/research/code/scripts")
 import make_plots
 
 
-def load_in_situ( flight_path, flight_number, sample_step_size=1):
+def load_in_situ( flight_path, flight_number, sample_step_size= 1):
     # make in situ data more manageable to work by using pandas, then convert to xarray
     # load in situ data
     os.chdir( flight_path)
