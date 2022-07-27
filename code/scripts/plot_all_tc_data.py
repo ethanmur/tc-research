@@ -35,7 +35,7 @@ def plot( tc='all' ):
     # look at a specific tc, or every tc!
     for tcname in tcname_list:
         # load data
-        tcdata = tc_metadata.choose_data_cloud_tops_good_data( tcname)
+        tcdata = tc_metadata.all_data( tcname)
         if tcdata == 'selected TC name is not yet implemented':
             print( tcdata)
             return
@@ -81,7 +81,7 @@ def plot( tc='all' ):
 
             print( 'Eyewall algorithm complete')
             # add padding to sides of crl and tdr plots to see the data that's being cut off
-            step = .25 # .2
+            step = 2.0 # .2
 
             # correctly determine the x limits to be used for all plots
             # the in situ vs tdr comparisons are done to make sure the step buffer is applied well to each case!
@@ -108,6 +108,18 @@ def plot( tc='all' ):
                         lim1 = tdr_instartx + step
                         lim2 = tdr_outstartx - step
 
+            # still having small issues in output x axis order... sometimes,
+            # smaller lons (-91) are being plotted to the right of larger lons (-89),
+            # which I don't want to happen.
+            # this applies for both lat and lon:
+
+            # case where smaller lat is currently to the right on x axis:
+            # make sure smaller lat is plotted to the left
+            # kinda just flipping these values around one last time!
+            if lim2 < lim1:
+                temp = lim2
+                lim2 = lim1
+                lim1 = temp
 
             # make the full tdr, in situ, and crl plot!!
             plt.figure(figsize=(20, 26), facecolor='w')
@@ -195,7 +207,7 @@ def plot( tc='all' ):
             elif axis == 'lon':
                 plt.xlabel( "Longitude (Degrees)")
 
-            os.chdir( "/Users/etmu9498/research/figures/all-data/")
+            os.chdir( "/Users/etmu9498/research/figures/all-data-eyes/")
             plt.savefig( tcdata['tc_name'].casefold() + "-" + str( counter+1) + ".png", bbox_inches='tight', dpi=300 )
             print( "Plot " + str( counter + 1) + " saved\n" )
 

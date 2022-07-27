@@ -5,6 +5,10 @@ import matplotlib as mpl
 import warnings
 import xarray as xr
 from scipy.signal import find_peaks
+import matplotlib as mpl
+from matplotlib import cm
+from matplotlib.colors import ListedColormap
+
 
 os.chdir(  "/Users/etmu9498/research/code/scripts")
 import make_plots
@@ -309,7 +313,7 @@ def flight_level_colorbar( crl_path, crl_name, flight_data_path, flight_name, cu
 
 
 
-def flight_level_lines( crl_path, crl_name, flight_data_path, flight_name, cutoff_indices, xaxis, variable_list, xlim='none', title=False):
+def flight_level_lines( crl_path, crl_name, flight_data_path, flight_name, cutoff_indices, xaxis, xlim='none', title=False):
 
     warnings.filterwarnings("ignore")
 
@@ -319,7 +323,7 @@ def flight_level_lines( crl_path, crl_name, flight_data_path, flight_name, cutof
     plt.figure( figsize=( 16, 12))
 
     # update font sizes for this plot!
-    TINY_SIZE = 8
+    TINY_SIZE = 12
     SMALL_SIZE = 14
     MEDIUM_SIZE = 16
     plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
@@ -330,7 +334,7 @@ def flight_level_lines( crl_path, crl_name, flight_data_path, flight_name, cutof
     plt.rc('legend', fontsize=TINY_SIZE)    # legend fontsize
 
     # load and process the data
-    xr_in_situ = plot_in_situ.load_in_situ( flight_data_path, flight_name, sample_step_size=10)
+    xr_in_situ = plot_in_situ.load_in_situ( flight_data_path, flight_name, sample_step_size=1) # 10
 
     # rename variables from xarray for convenience
     str_time = xr_in_situ.str_time
@@ -342,6 +346,11 @@ def flight_level_lines( crl_path, crl_name, flight_data_path, flight_name, cutof
     lat = [ float( line) for line in xr_in_situ["LATref"].values ]
     lon = [ float( line) for line in xr_in_situ["LONref"].values ]
 
+
+    print( len( float_time))
+    print( len( ws))
+    print( len( uwz))
+    print( len( rr))
     # load crl data to find the times corresponding to i1 and i2
     os.chdir( crl_path)
     crl_data = xr.open_dataset( crl_name)
@@ -358,6 +367,7 @@ def flight_level_lines( crl_path, crl_name, flight_data_path, flight_name, cutof
         idx2 = (np.abs(float_time - time2)).argmin()
         # use the indices for nearest time values to trim down lat and lon values
         # this prevents data overlap and makes plotting faster!
+        float_time = float_time[ idx1.values : idx2.values]
         lon = lon[ idx1.values : idx2.values]
         lat = lat[ idx1.values : idx2.values]
         ws = ws[ idx1.values : idx2.values]
@@ -408,6 +418,7 @@ def flight_level_lines( crl_path, crl_name, flight_data_path, flight_name, cutof
 
     plt.subplot(311)
 
+    """
     # make sure the x axis data is a numpy array for proper plotting
     xaxis_data = np.array(xaxis_data)
 
@@ -458,7 +469,61 @@ def flight_level_lines( crl_path, crl_name, flight_data_path, flight_name, cutof
     else:
         rpx = xaxis_data[ np.where( xaxis_data == tx)[0][0] + 50]
         rph = ws[ np.where( xaxis_data == rpx) [0][0] ]
+    # plot peaks and troughs
+    # plt.scatter( xaxis_data[ peaks[0]], peaks[1]['peak_heights'], s=30, c='k', marker='x')
+    # plt.scatter( xaxis_data[ troughs[0]], - troughs[1]['peak_heights'], s=30, c='b', marker='x')
 
+    # plot the central peaks and trough in a different color and shape!
+    # plt.scatter( [lpx, rpx, tx], [lph, rph, th], s=40, c='g', marker='s')
+
+
+    """
+
+    # for y_var in variable_list:
+    plt.plot( xaxis_data, ws, c='r', label='Tangential Wind Speed (m/s)')
+    plt.plot( xaxis_data, uwz, c='k', label='Vertical Wind Speed (m/s)')
+    # plt.plot( xaxis_data, rr, c='b', label=' SFMR Rain Rate (mm/hr)')
+
+    # add an empty colorbar to make everything fit in line... kinda a
+    # messy solution but it's ok for now!
+    viridis = cm.get_cmap('viridis', 256)
+    newcolors = viridis(np.linspace(0, 1, 256))
+    white = np.array([ 1, 1, 1, 1])
+    newcolors[:, :] = white
+    white_cmap = ListedColormap(newcolors)
+    map = mpl.cm.ScalarMappable(cmap= white_cmap, norm=mpl.colors.Normalize( vmin= 0, vmax= 1))
+    cbar = plt.colorbar( mappable= map)
+    cbar.set_ticks([])
+    cbar.outline.set_visible(False)
+
+
+    plt.legend(loc='upper left')
+
+    # add titles etc
+    if title:
+        plt.title( title)
+
+    if xlim != 'none':
+        plt.xlim( xlim)
+
+    plt.grid('on')
+
+    # make base crl plots
+    plt.subplot(312)
+    make_plots.plot_T( crl_path, crl_name, i1, i2, xaxis, show_colorbar=True)
+
+    if xlim != 'none':
+        plt.xlim( xlim)
+
+    # plt.sca(ax[1, 0])  # set the current axes instance
+    plt.subplot(313)
+    make_plots.plot_power_ch1( crl_path, crl_name, i1, i2, xaxis, show_colorbar=True)
+
+    plt.xlabel( xlabel)
+    if xlim != 'none':
+        plt.xlim( xlim)
+
+    warnings.filterwarnings("ignore")
     '''
     print( 'orig peaks ' + str( xaxis_data[ peaks[0]] ))
     print( 'heights ' + str( peaks[1]['peak_heights']))
@@ -476,50 +541,6 @@ def flight_level_lines( crl_path, crl_name, flight_data_path, flight_name, cutof
     print( peaks[0])
     print( peaks[1]['peak_heights'])
     '''
-    plt.plot( xaxis_data, ws, c='r', label='Tangential Wind Speed (m/s)')
-    plt.plot( xaxis_data, uwz, c='k', label='Vertical Wind Speed (m/s)')
-    plt.plot( xaxis_data, rr, c='b', label=' SFMR Rain Rate (mm/hr)')
-
-    # plot peaks and troughs
-    # plt.scatter( xaxis_data[ peaks[0]], peaks[1]['peak_heights'], s=30, c='k', marker='x')
-    # plt.scatter( xaxis_data[ troughs[0]], - troughs[1]['peak_heights'], s=30, c='b', marker='x')
-
-    # plot the central peaks and trough in a different color and shape!
-    # plt.scatter( [lpx, rpx, tx], [lph, rph, th], s=40, c='g', marker='s')
-
-    # ax[0, 0]
-    plt.legend(loc='upper left')
-    plt.ylabel( "Height (km)")
-
-    # add titles etc
-    if title:
-        plt.title( title)
-
-    if xlim != 'none':
-        plt.xlim( xlim)
-
-    plt.grid('on')
-
-    # make base crl plots
-    plt.subplot(312)
-    make_plots.plot_T( crl_path, crl_name, i1, i2, xaxis, show_colorbar=False)
-
-    if xlim != 'none':
-        plt.xlim( xlim)
-
-    # plt.sca(ax[1, 0])  # set the current axes instance
-    plt.subplot(313)
-    make_plots.plot_power_ch1( crl_path, crl_name, i1, i2, xaxis, show_colorbar=False)
-
-    plt.xlabel( xlabel)
-    if xlim != 'none':
-        plt.xlim( xlim)
-
-    # plt.sca( ax[1, 1])
-    # plt.scatter( [1], [1])
-
-    warnings.filterwarnings("ignore")
-
 
 
 
@@ -527,10 +548,6 @@ def flight_level_lines( crl_path, crl_name, flight_data_path, flight_name, cutof
 def only_flight_level_lines( crl_path, crl_name, flight_data_path, flight_name, cutoff_indices, xaxis, xlim='none'):
 
     warnings.filterwarnings("ignore")
-
-    # define figure
-    # auto scale the size of the figure depending on the number of in situ datasets selected
-    # fig, ax = plt.subplots(2, 2, figsize=( fig_len, 8), gridspec_kw= { 'width_ratios': [1, .1]})
 
     # update font sizes for this plot!
     TINY_SIZE = 12

@@ -84,7 +84,7 @@ def plot( tc='all', eyewall_alg='in-situ'):
 
             print( 'Eyewall algorithm complete')
             # add padding to sides of crl and tdr plots to see the data that's being cut off
-            step = .25 # .2
+            step = 1 # .2
             # how thick should the vertical lines be, and what color?
             axvwidth = 4
             axvcolor = 'g'
@@ -149,7 +149,7 @@ def plot( tc='all', eyewall_alg='in-situ'):
 
                 print( "CRL Image " + str( counter + 1) + ": complete" )
 
-                os.chdir( "/Users/etmu9498/research/figures/CRL-eye-profiles-good-data/")
+                os.chdir( "/Users/etmu9498/research/figures/CRL-eye-profiles-good-data-tdr/")
                 plt.savefig( "tdr-crl-cloud-height-" + tcdata['tc_name'].casefold() + "-" + str( counter+1) + ".png" )
 
             # in situ and crl case
@@ -237,7 +237,7 @@ def plot( tc='all', eyewall_alg='in-situ'):
     warnings.filterwarnings("default")
 
 
-# old code to just plot crl data... not super useful so it's been retired
+# old code to just plot crl data... not super useful so it's been retired here
 '''
 crl_comparison=False
 

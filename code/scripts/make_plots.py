@@ -1,4 +1,4 @@
-## Last edited 5/27/22
+## Last edited 7/27/22
 
 
 import numpy as np
@@ -9,13 +9,36 @@ import xarray as xr
 import warnings
 import datetime
 from matplotlib.ticker import FormatStrFormatter
-
+from matplotlib.ticker import MaxNLocator
 
 os.chdir(  "/Users/etmu9498/research/code/scripts")
 import helper_fns
+import tc_metadata
 
+
+# add a scale to try to better collocate data!
+scale = 1 # 1.002
+str_ticks = 10
 
 # a helper script used in most plotting functions to determine the x axis scale variable
+
+x_lims_helper( axis):
+
+    os.chdir( data_path)
+    crl_data = xr.open_dataset( data_file)
+    if axis == 'lon-str':
+        xaxis = crl_data.Lon[index1:index2]
+        # np.array2string( xaxis, threshold=index2, precision=4, separator=', ')
+        # [ str( value) for value in xaxis]
+        # xaxis.astype('|S5')
+        xaxis_ticks = [ np.array2string( value) for value in xaxis]
+    elif axis == 'lat-str':
+        xaxis = crl_data.Lon[index1:index2]
+        # np.array2string( xaxis, threshold=index2, precision=4, separator=', ')
+        # [ str( value) for value in xaxis]
+        # xaxis.astype('|S5')
+        xaxis_ticks = [ np.array2string( value) for value in xaxis]
+
 
 def x_axis_helper( data_path, data_file, index1, index2, xaxis):
 
@@ -32,6 +55,22 @@ def x_axis_helper( data_path, data_file, index1, index2, xaxis):
         xaxis = crl_data.Lat[index1:index2]
         x_label = 'latitude (degrees)'
         xlims = [ crl_data.Lat[index1], crl_data.Lat[index2] ]
+        return xaxis, x_label, xlims
+
+    # print the longitude axis values as strings, not floats, so data doesn't wrap on itself
+    elif xaxis == 'lon-str':
+
+        xlims = None # [ xaxis[index1], xaxis[index2 - 1 ] ]
+        xaxis = range( index2 - 1)
+        x_label = 'longitude (degrees)'
+        return xaxis, x_label, xlims
+
+    # print the latitude axis values as strings, not floats, so data doesn't wrap on itself
+    elif xaxis == 'lat-str':
+        xaxis = crl_data.Lat[index1:index2]
+        xaxis = ["%.3f" % number for number in xaxis]
+        xlims = None # [ xaxis[index1], xaxis[index2 - 1] ]
+        x_label = 'latitude (degrees)'
         return xaxis, x_label, xlims
 
     elif xaxis == 'time':
@@ -77,13 +116,18 @@ def plot_T(data_path, data_file, index1, index2, xaxis_name, show_colorbar=True)
     plt.pcolormesh( xaxis, - crl_data.H, temp, cmap = color_map, vmin=5, vmax=35 )
     plt.ylabel( 'Height (km)')
     # plt.xlabel( x_label)
-    plt.xlim( xlims )
+    if xlims:
+        plt.xlim( xlims )
     ax = plt.gca()
     ax.set_facecolor('k')
     if show_colorbar:
         plt.colorbar(label="Temperature ( C)")
-    ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-    ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+
+    if xaxis_name == 'lon-str' or xaxis_name == 'lat-str':
+        ax.xaxis.set_major_locator(MaxNLocator( str_ticks))
+
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    ax.xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
     plt.grid( True)
     warnings.filterwarnings("default")
 
@@ -115,10 +159,15 @@ def plot_T_anomaly(data_path, data_file, index1, index2, xaxis_name):
     plt.colorbar(label="Temperature Anomaly ( C)")
     plt.ylabel( 'Height (km)')
     # plt.xlabel( x_label)
-    plt.xlim( xlims )
+    if xlims:
+        plt.xlim( xlims )
     plt.grid( 'on')
     ax = plt.gca()
     ax.set_facecolor('k')
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    ax.xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    if xaxis_name == 'lon-str' or xaxis_name == 'lat-str':
+        ax.xaxis.set_major_locator(MaxNLocator( str_ticks))
 
 
 
@@ -141,10 +190,15 @@ def plot_wvmr(data_path, data_file, index1, index2, xaxis_name):
     plt.colorbar(label="WVMR ( g/kg)")
     plt.ylabel( 'Height (km)')
     # plt.xlabel( x_label)
-    plt.xlim( xlims )
+    if xlims:
+        plt.xlim( xlims )
     plt.grid( 'on')
     ax = plt.gca()
     ax.set_facecolor('k')
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    ax.xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    if xaxis_name == 'lon-str' or xaxis_name == 'lat-str':
+        ax.xaxis.set_major_locator(MaxNLocator( str_ticks))
 
 
 
@@ -166,10 +220,15 @@ def plot_lsr(data_path, data_file, index1, index2, xaxis_name):
     plt.colorbar(label="LSR ( unitless)")
     plt.ylabel( 'Height (km)')
     # plt.xlabel( x_label)
-    plt.xlim( xlims )
+    if xlims:
+        plt.xlim( xlims )
     plt.grid( 'on')
     ax = plt.gca()
     ax.set_facecolor('k')
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    ax.xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    if xaxis_name == 'lon-str' or xaxis_name == 'lat-str':
+        ax.xaxis.set_major_locator(MaxNLocator( str_ticks))
 
 
 
@@ -197,15 +256,21 @@ def plot_power_ch1(data_path, data_file, index1, index2, xaxis_name, cutoff=-30,
     # color_map = plt.cm.get_cmap( "RdYlBu").reversed()
     # color_map = 'viridis'
     # color_map = plt.cm.get_cmap( "Spectral").reversed()
-    plt.pcolormesh( xaxis, - crl_data.H, crl_pch1, vmin = cutoff, vmax =-10)
+    plt.pcolormesh(  xaxis, - crl_data.H, crl_pch1, vmin = cutoff, vmax =-10)
     if show_colorbar:
         plt.colorbar(label="Backscattered Ch 1 power ( dBz)")
     plt.ylabel( 'Height (km)')
     # plt.xlabel( x_label)
-    plt.xlim( xlims )
+    if xlims:
+        plt.xlim( xlims )
     plt.grid( 'on')
     ax = plt.gca()
     ax.set_facecolor('k')
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    ax.xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    if xaxis_name == 'lon-str' or xaxis_name == 'lat-str':
+        ax.xaxis.set_major_locator(MaxNLocator( str_ticks))
+
     warnings.filterwarnings("default")
 
 
@@ -254,10 +319,15 @@ def plot_rh(data_path, data_file, index1, index2, xaxis_name):
         plt.gca().invert_xaxis()
 
     # plt.xlabel( x_label)
-    # plt.xlim( xlims )
+    if xlims:
+        plt.xlim( xlims )
     plt.grid( 'on')
     ax = plt.gca()
     ax.set_facecolor('k')
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    ax.xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    if xaxis_name == 'lon-str' or xaxis_name == 'lat-str':
+        ax.xaxis.set_major_locator(MaxNLocator( str_ticks))
 
 
 
@@ -296,8 +366,8 @@ def plot_sondes(crl_path, crl_file_name, sonde_path, variable_to_plot):
 
 
 
-# the function I'm using to plot tdr reflectivity
 def plot_tdr( tdr_path, inbound_name, outbound_name, xaxis):
+    # the function I'm using to plot tdr reflectivity
 
     warnings.filterwarnings("ignore")
 
@@ -548,6 +618,70 @@ def plot_temps_wv(data_path, data_file, title, index1, index2, xaxis):
         plt.xlabel( 'Distance (km)')
 
     warnings.filterwarnings("default")
+
+
+
+def plot_full_dataset_one_day( data_path, data_file, xaxis, title=None):
+    os.chdir( data_path)
+    crl_data = xr.open_dataset( data_file)
+    index1 = 0
+    index2 = len( crl_data.time) - 1
+
+    warnings.filterwarnings("ignore")
+    fig = plt.figure( figsize=(22, 24))
+
+    plt.subplot(611)
+    plot_T(data_path, data_file, index1, index2, xaxis)
+    if title:
+        plt.title( title)
+    plt.subplot(612)
+    plot_wvmr(data_path, data_file, index1, index2, xaxis)
+    plt.subplot(613)
+    plot_lsr(data_path, data_file, index1, index2, xaxis)
+    plt.subplot(614)
+    plot_power_ch1(data_path, data_file, index1, index2, xaxis)
+    plt.subplot(615)
+    plot_rh(data_path, data_file, index1, index2, xaxis)
+    plt.subplot(616)
+    plot_T_anomaly(data_path, data_file, index1, index2, xaxis)
+    # choose x axis type
+    if xaxis == 'lon':
+        plt.xlabel( 'longitude (degrees)')
+    elif xaxis == 'lat':
+        plt.xlabel('latitude (degrees)' )
+    elif xaxis == 'time':
+        plt.xlabel( 'Time (UTC, Hours)' )
+    elif xaxis == 'dist':
+        plt.xlabel( 'Distance (km)')
+
+
+
+def plot_full_datasets( tc='all', xaxis='time'):
+    if tc == 'all':
+        tcname_list = ['fred', 'grace', 'henri', 'ida', 'sam']
+    else:
+        tcname_list = [ tc]
+    # look at a specific tc, or every tc!
+    for tcname in tcname_list:
+        tcdata = tc_metadata.plot_all_crl_data( tcname)
+
+        print( "\nTC " + tcdata['tc_name'])
+        print( 'Number of crl files: ' + str( len( tcdata['dates'] ))+ '\n')
+        # load data
+
+        # plot each day's dataset for the tc
+        for counter in range( len( tcdata[ 'dates'])):
+            # get the correct name of this day's dataset
+            crl_path = tcdata[ 'crl_path']
+            crl_name = tc_metadata.choose_crl_date( tcdata[ 'dates'][counter], tcdata[ 'crl_list'])
+
+            title = "Full CRL Dataset, TC " + tcdata['tc_name'] + ", " + tcdata[ 'dates'][counter]
+            plot_full_dataset_one_day( crl_path, crl_name, xaxis, title=title)
+
+            os.chdir( "/Users/etmu9498/research/figures/all-data/")
+            plt.savefig( tcdata['tc_name'].casefold() + "-" + str( counter+1) + ".png", bbox_inches='tight', dpi=300 )
+            print( "Plot " + str( counter + 1) + " saved\n" )
+
 
 
 def load_crl( path, print_files=True):

@@ -265,6 +265,7 @@ def plot( tc='sam', yaxis_zoom=False):
         make_plots.plot_T(tcdata['crl_path'], crl_data, tcdata['crl_range'][counter][0], tcdata['crl_range'][counter][1], axis)
         plt.xlim( tcdata['xlims'][ counter][0], tcdata['xlims'][counter][1])
 
+        plt.xlabel( "Longitude (Degrees)")
 
         if tc == 'ida-crl':
             os.chdir( "/Users/etmu9498/research/figures/tdr/ida/")

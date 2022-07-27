@@ -228,7 +228,7 @@ def eyewall_start_in_situ(crl_path, crl_name, in_situ_path, in_situ_name, cutoff
     # find minima to figure out where the center of the tc eye is
     # flip the wind speed dataset to use find peaks to get minima
     ws_flipped = [ -1 * val for val in ws]
-    troughs = find_peaks( ws_flipped, prominence= 3, width=5, height= - 25)
+    troughs = find_peaks( ws_flipped, prominence= 5, width=5, height= - 25) # prominence = 3
 
     # find th, the height of the lowest trough (center of the eye)
     # th = trough height

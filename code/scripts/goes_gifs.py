@@ -17,31 +17,31 @@ import xarray as xr
 import shapely.geometry as sgeom
 import matplotlib.patches as mpatches
 from subprocess import run
-import cmocean
 
 os.chdir("/Users/etmu9498/research/code/scripts")
 import helper_fns
+import plot_in_situ
 
 def load_goes( gif_path, print_files=True):
     return helper_fns.display_data_files( gif_path, 'goes', print_files)
 
 
-def goes_ir_in_situ( goes_names, goes_data_path, flight_name, flight_path): # flight_line):
+def goes_in_situ( goes_names, goes_data_path, flight_name, flight_path, extent, p, n): # flight_line):
     """
     goes_wv_upper_gif generates images from satellite data (located in a folder
     specified by the user), and saves them automatically to a unique folder.
     The output folder can be found under research/figures/goes-gifs. The clean IR
     band on the goes satellite is used for this analysis.
     """
-    channel_name = "CMI_C13"
-    channel_full_name = "GOES-16 Clean IR Channel"
+    channel_name = "CMI_C09" # "CMI_C13"
+    channel_full_name = "GOES-16 Mid Water Vapor Channel"# "GOES-16 Clean IR Channel"
     os.chdir( goes_data_path)
     first_dataset = xr.open_dataset( goes_names[ 0])
     scan_start_first_dataset = datetime.strptime( first_dataset.time_coverage_start, '%Y-%m-%dT%H:%M:%S.%fZ')
-    output_folder = scan_start_first_dataset.strftime('%m%d%Y') + "_ir"
+    output_folder = scan_start_first_dataset.strftime('%m%d%Y') + "_in_situ"
     plot_color = 'Greys'
-    flight_line_color = 'k'
-    goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name, channel_full_name, goes_names, goes_data_path, flight_name, flight_path)
+    flight_line_color = 'g'
+    goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name, channel_full_name, goes_names, goes_data_path, flight_name, flight_path, extent=extent, show_in_situ=True, in_situ_data_path=p, in_situ_name=n)
 
 
 
@@ -142,7 +142,7 @@ def collocation_test( goes_names, goes_data_path, crl_name, crl_path):
 
 
 
-def goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name, channel_full_name, goes_names, goes_path, crl_name, crl_path):
+def goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name, channel_full_name, goes_names, goes_path, crl_name, crl_path, extent=None, show_in_situ=False, in_situ_data_path=None, in_situ_name=None):
 
     """
     goes_gif_helper is called by the functions above and does most of the work
@@ -151,27 +151,34 @@ def goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name,
     """
 
     # make sure that there's a folder in place to hold output images!
-    os.chdir( goes_path)
+
     # check if folder already exists. If not, create folder
     os.chdir( "/Users/etmu9498/research/figures/goes-gifs/")
     if not os.path.isdir( output_folder):
         os.makedirs( output_folder)
-        print( 'New folder created')
+        print( 'New folder created: ' + output_folder)
     else:
-        print( 'Existing folder accessed')
+        print( 'Existing folder accessed: ' + output_folder)
     os.chdir(goes_path)
 
     # figure out the maximum and minimum brightness temperatures in all datasets
     # to make the colorbar constant between runs
-    # just some initial valus that will be automatically rewritten
+
+    # just some initial values that will be automatically rewritten. 0 is tiny for a max
+    # (literally absolute zero lol) so it must be rewritten by the first dataset.
+    # then, the goal is to find the max and min out of all datasets, and use those values
+    # as constant colorbar min and maxes
     t_max = 0
-    t_min = 1000
+    t_min = 10000
     for goes_ind in range( len( goes_names)):
         C = xr.open_dataset( goes_names[ goes_ind])
-        if np.max( C[ channel_name].data) > t_max:
-            t_max = np.max( C[ channel_name].data )
-        if np.min( C[ channel_name].data) < t_min:
-            t_min = np.min( C[ channel_name].data )
+
+        if np.nanmax( C[ channel_name].data) > t_max:
+            t_max = np.nanmax( C[ channel_name].data )
+        if np.nanmin( C[ channel_name].data) < t_min:
+            t_min = np.nanmin( C[ channel_name].data )
+
+    print("Number of GOES Images to be Created: " + str( len( goes_names)))
 
     # make images for gif
     for goes_ind in range( len( goes_names)):
@@ -190,7 +197,7 @@ def goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name,
 
         # access wv data!
         wv_upper = C[ channel_name].data
-        print("Starting to make image " + str( goes_ind + 1))
+        print("\nStarting to make image " + str( goes_ind + 1))
 
         # make figure
         fig = plt.figure(figsize=(15, 12))
@@ -213,30 +220,53 @@ def goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name,
         img = ax.imshow( wv_upper, origin='upper',
                   cmap= plot_color, # plt.cm.get_cmap( 'cividis').reversed(), # "CMRmap",
                   extent=(x.min(), x.max(), y.min(), y.max()),
-                  transform=geos, vmin=t_min, vmax=t_max )
-        fig.colorbar(mappable=img, label="Brightness Temperature (K)")
+                  transform=geos, vmin=t_min, vmax=t_max)
+        fig.colorbar(mappable=img, label="Brightness Temperature (K)", fraction=0.04, pad=0.05)
 
-        # plot crl path and dots
-        # flight path
+        print( "GOES Image " + str( goes_ind + 1) + " Created")
+
+        # load crl data
         os.chdir( crl_path)
         crl_data = xr.open_dataset( crl_name)
         os.chdir( goes_path)
 
+        # optional function call to crop data
+        if extent:
+            ax.set_extent( extent, crs=ccrs.PlateCarree())
+            # make this size bigger when zooming in
+            scatter_size = 15
+        else:
+            scatter_size = 5
+
+        # in situ data has been provided case
+        if show_in_situ:
+            # load data
+            in_situ = plot_in_situ.load_in_situ( in_situ_data_path, in_situ_name)
+
+            # plot flight path line
+            lon = in_situ.LONref
+            lon = [ float( value) for value in lon]
+            lat = in_situ.LATref
+            lat = [ float( value) for value in lat]
+
+            ws = in_situ["WS.d"].values
+            ws = [ float( line) for line in ws]
+
+            proj = ccrs.PlateCarree()
+            img2 = ax.scatter( lon, lat,c = ws, transform= proj, s= scatter_size, marker='o', vmin=0, vmax=60, cmap= 'Greens' )
+            fig.colorbar(mappable=img2, label="Total Wind Speed (m/s)", fraction=0.04, pad=0.05)
+
+        # otherwise, just use a solid line to denote the flight path
+        else:
+            track = sgeom.LineString(zip(lon, lat))
+            ax.add_geometries([track], ccrs.PlateCarree(),
+                            facecolor='none', edgecolor= flight_line_color, linewidth=1)
+
+        print("Flight Track Added")
+
+        # add dots representing the P-3's location
         lon = crl_data.Lon
         lat = crl_data.Lat
-        track = sgeom.LineString(zip(lon, lat))
-        ax.add_geometries([track], ccrs.PlateCarree(),
-                          facecolor='none', edgecolor= flight_line_color, linewidth=1)
-        # legend and title
-        shape = mpatches.Rectangle((0, 0), 1, 1, facecolor=flight_line_color)
-        ax.legend([ shape], ['CRL Flight Path'])
-        plt.title( channel_full_name, fontweight='bold', fontsize=15, loc='left')
-        plt.title('TC Sam, {}'.format(scan_start.strftime('%H:%M UTC %d %B %Y')),
-                  loc='right')
-        # ax.tick_params(axis='both',labelsize=200,direction='out',right=False,top=False)
-        ax.gridlines(draw_labels=True) # , linewidth=0)
-
-        # dots
         mid_int = ( int( midpoint[11:13]) + int( midpoint[14:16]) / 60 + int(midpoint[17:19] ) / 3600 )
         if mid_int < 10.0:
             mid_int = mid_int + 24.0
@@ -249,7 +279,18 @@ def goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name,
                 ax.scatter( long, latit, s=200, c= flight_line_color, marker='*', transform=ccrs.PlateCarree() ) # marker = 's'
                 break
 
-        # ax.set_extent([-54, -50, 15, 18], crs=ccrs.PlateCarree())
+        print( "P-3 Location Added")
+
+
+        # legend and title
+        shape = mpatches.Rectangle((0, 0), 1, 1, facecolor=flight_line_color)
+        ax.legend([ shape], ['CRL Flight Path'])
+        plt.title( channel_full_name, fontweight='bold', fontsize=15, loc='left')
+        plt.title('{}'.format(scan_start.strftime('%H:%M UTC %d %B %Y')),
+                  loc='right')
+        # ax.tick_params(axis='both',labelsize=200,direction='out',right=False,top=False)
+        ax.gridlines(draw_labels=True) # , linewidth=0)
+
 
         # save figure
         os.chdir( "/Users/etmu9498/research/figures/goes-gifs/" + output_folder)
