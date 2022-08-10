@@ -22,7 +22,7 @@ str_ticks = 10
 
 # a helper script used in most plotting functions to determine the x axis scale variable
 
-x_lims_helper( axis):
+def x_lims_helper( axis):
 
     os.chdir( data_path)
     crl_data = xr.open_dataset( data_file)
@@ -130,6 +130,28 @@ def plot_T(data_path, data_file, index1, index2, xaxis_name, show_colorbar=True)
     ax.xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
     plt.grid( True)
     warnings.filterwarnings("default")
+
+
+def plot_new_T( data_path, data_file, xlims=None, show_colorbar=True):
+    warnings.filterwarnings("ignore")
+    # get data
+    os.chdir( data_path)
+    new_crl = xr.open_dataset( data_file)
+    color_map = plt.cm.get_cmap( "RdYlBu").reversed()
+
+    temp = new_crl.T[ 0 : len( new_crl.distance), :]
+    temp = temp.where( temp < 50).transpose()
+    plt.pcolormesh( new_crl.distance, - new_crl.H, temp, cmap = color_map, vmin=5, vmax=35 )
+
+    if show_colorbar:
+        plt.colorbar(label="Temperature ( C)")
+    plt.ylabel( 'Height (km)')
+    # plt.xlabel( x_label)
+    if xlims:
+        plt.xlim( xlims )
+    plt.grid( 'on')
+    ax = plt.gca()
+    ax.set_facecolor('k')
 
 
 def plot_T_anomaly(data_path, data_file, index1, index2, xaxis_name):
@@ -274,6 +296,30 @@ def plot_power_ch1(data_path, data_file, index1, index2, xaxis_name, cutoff=-30,
     warnings.filterwarnings("default")
 
 
+def plot_new_power_ch1( data_path, data_file, cutoff=-30, xlims=None, show_colorbar=True):
+    warnings.filterwarnings("ignore")
+    # get data
+    os.chdir( data_path)
+    new_crl = xr.open_dataset( data_file)
+
+    step1 = 10 * np.log10( new_crl.P_ch1 )
+    step2 = step1.where( step1.values > cutoff)
+    # cut off the last ind to fit the x axis!
+    crl_pch1 = step2[0 : len( new_crl.distance) , : ].transpose()
+
+    plt.pcolormesh(  new_crl.distance, - new_crl.H, crl_pch1, vmin = cutoff, vmax =-10)
+
+    if show_colorbar:
+        plt.colorbar(label="Backscattered Ch 1 power ( dBz)")
+    plt.ylabel( 'Height (km)')
+    # plt.xlabel( x_label)
+    if xlims:
+        plt.xlim( xlims )
+    plt.grid( 'on')
+    ax = plt.gca()
+    ax.set_facecolor('k')
+
+
 
 def plot_rh(data_path, data_file, index1, index2, xaxis_name):
 
@@ -392,8 +438,8 @@ def plot_tdr( tdr_path, inbound_name, outbound_name, xaxis):
         # plt.gca().invert_xaxis()
 
     elif xaxis == 'dist':
-        xaxis_in = inbound_data.radius
-        xaxis_out = - outbound_data.radius
+        xaxis_in = - inbound_data.radius
+        xaxis_out = outbound_data.radius
         x_label = 'distance (km)'
 
     else:
@@ -435,6 +481,61 @@ def plot_tdr( tdr_path, inbound_name, outbound_name, xaxis):
     warnings.filterwarnings("default")
 
 
+# This function plots the reflectivity data from the new, combined tdr files I
+# created for every good eye case
+def plot_new_tdr( tdr_path, tdr_name, xaxis='dist'):
+    warnings.filterwarnings("ignore")
+
+    # get data
+    os.chdir( tdr_path)
+    tdr_data = xr.open_dataset( tdr_name)
+
+    # choose x axis type
+    if xaxis == 'lon':
+        x_label = 'longitude (degrees)'
+        xaxis = tdr_data.longitude[ ~np.isnan( tdr_data.longitude)]
+        '''
+        # getting rid of nans on either end of latitude data to avoid plotting errors
+        # not entirely sure why I'm doing it this way... wouldn't just sorting for nans work?
+        # make a list of indices for latitude values
+        xinds = range( len( tdr_data.longitude))
+        # turn all indices with a Nan value into a 0
+        # a value other than 0 can be used here too, maybe something really big
+        xaxis = np.where( np.isnan( tdr_data.longitude), 0, xinds)
+        # get rid of all zeros
+        # this might unfairly get rid of the first data point (aka ind 0), but that's usually a nan anyways!
+        xaxis_ind = xaxis[ xaxis != 0]
+        # only select non nan latitude values
+        xaxis = tdr_data.longitude[ xaxis_ind]
+        '''
+
+    elif xaxis == 'lat':
+        x_label = 'latitude (degrees)'
+        xaxis = tdr_data.latitude[ ~np.isnan( tdr_data.latitude)]
+
+    elif xaxis == 'dist':
+        xaxis = tdr_data.distance
+        x_label = 'distance (km)'
+    else:
+        print("Error: Please Choose 'lat', 'lon', or 'dist' for the x axis")
+        return
+
+    # make plot
+    color_map = plt.cm.get_cmap( "RdYlBu").reversed()
+
+    # plot data
+    # get rid of nans and resize array to get rid of overlapping data
+    # also, no need to use .transpose() because that was already done when making the datasets!
+    reflectivity = tdr_data.REFLECTIVITY[ :, 0:len( xaxis)]
+    # refl = tdr_data.REFLECTIVITY[:, lat_no_nan_ind] # another way?
+    plt.pcolormesh( xaxis, tdr_data.height, reflectivity, cmap = color_map, vmin = -10, vmax = 50 )
+
+    # making things prettier
+    if len( xaxis) != 0 or len( xaxis) != 0:
+        plt.colorbar( label="Reflectivity (dBZ)")
+    plt.ylabel( 'Height (Km)')
+    plt.grid( 'on')
+    warnings.filterwarnings("default")
 
 
 def plot_tdr_radial_vel( tdr_path, inbound_name, outbound_name, xaxis):

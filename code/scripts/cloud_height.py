@@ -9,7 +9,7 @@ import warnings
 
 # from scipy.signal import find_peaks
 
-def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time'):
+def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time', crl_path = "/Users/etmu9498/research/data/CRL_data/2021"):
     """
     This function finds and returns cloud heights
     :param crl_name: The name of the crl data file that will be analyzed. The crl_path
@@ -22,7 +22,6 @@ def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time'):
     """
     warnings.filterwarnings("ignore")
 
-    crl_path = "/Users/etmu9498/research/data/CRL_data/2021"
     os.chdir( crl_path)
     data = xr.open_dataset( crl_name)
     power = data.P_ch1[ i1: i2]
@@ -33,6 +32,8 @@ def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time'):
         axis = data.Lat[ i1: i2]
     elif xaxis == 'time':
         axis = data.time[ i1: i2]
+    elif xaxis == 'dist':
+        axis = data.distance[ i1: i2]
     else:
         print( "please select 'lon', 'lat', or 'time' as a valid x axis")
 

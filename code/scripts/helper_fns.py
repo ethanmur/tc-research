@@ -1,4 +1,6 @@
 import os
+import matplotlib.pyplot as plt
+import numpy as np
 
 def display_data_files( path, data_type, print_files):
     """
@@ -41,3 +43,29 @@ def display_data_files( path, data_type, print_files):
             print( str( number) + ") " + file_names[ number])
 
     return file_names
+
+
+# this quick function updates the sizes of fonts in plots, and it decreases clutter in code!
+def change_font_sizes(small=14, medium=18 ):
+    plt.rc('font', size=small)          # controls default text sizes
+    plt.rc('axes', titlesize=small)     # fontsize of the axes title
+    plt.rc('axes', labelsize=medium)    # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=small)    # fontsize of the tick labels
+    plt.rc('ytick', labelsize=small)    # fontsize of the tick labels
+    plt.rc('legend', fontsize=small)    # legend fontsize
+
+# arg1 must be an xarray dataset, and arg2 can be a number or a dataset with matching
+# axes lengths! arg2 is a little more flexible
+# this returns two arguments: the index where the lowest value is found, and the lowest value itself!
+def xr_closest_val( arg1, arg2):
+
+    index = ( np.abs(arg1 - arg2)).argmin().values
+    value = arg1[ index].values
+    return index, value
+
+# this code should work for numpy datasets and numbers in arg1!
+def closest_val( arg1, arg2):
+
+    index = ( np.abs( np.subtract( arg1, arg2))).argmin()
+    value = arg1[ index]
+    return index, value
