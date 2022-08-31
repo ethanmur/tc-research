@@ -172,6 +172,15 @@ def find_crl_dist_in_situ( tcname, dataset, returnval='none'):
     height = [ float( line) for line in in_situ_data["HT.d"].values ]
     # true air speed of the P-3 (m/s)
     speed = [float( line) for line in in_situ_data["TAS.d"].values ]
+    speed = np.array( speed)
+
+    # interpolate between nans in speed array; they were cousing issues!
+    # old method
+    # mask = np.isnan( speed)
+    # speed[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), speed[~mask])
+    nans, x = nan_helper( speed)
+    speed[ nans] = np.interp( x( nans), x( ~nans), speed[~nans])
+
 
     '''
     print( len( time))
@@ -187,10 +196,13 @@ def find_crl_dist_in_situ( tcname, dataset, returnval='none'):
     distance_array = [ 0.0]
     # do this for every data point in the numpy array, except the last value
     for index in range( len( height) - 1):
+
+        speed_i = speed[ index]
+        speed_i1 = speed[ index + 1]
         # most recent distance calculated
         dist_ind = distance_array[ -1]
         # average speed between indices
-        avg_v = ( speed[ index] + speed[ index + 1]) / 2
+        avg_v = ( speed_i + speed_i1) / 2
         # distance gained during this time step
         deltax = avg_v * ( time[ index + 1] - time[ index])
         # make the new distance! and convert to km
@@ -216,16 +228,32 @@ def find_crl_dist_in_situ( tcname, dataset, returnval='none'):
     # trim the data down to search the right section for the minimum value
     # maybe a little inefficient, but I know it'll work this way
 
-    # trim height data
+    # trim height data down to the eye pass of interest
     crl_old_names = make_plots.load_crl( metadata['crl_path'], print_files=False)
     crl_old_name = tc_metadata.choose_crl_date( metadata['dates'][dataset], crl_old_names)
     cutoff_indices = metadata['crl_range'][dataset]
     trimheight = clip_old_data.in_situ_helper( metadata['crl_path'], crl_old_name, cutoff_indices, in_situ_data[ "HT.d"].values, float_time)
 
-    # find the min height in this dataset
+    # find the min height in this trimmed down dataset
     heightmin = np.nanmin( trimheight)
     heightmin_ind = np.nanargmin( trimheight) # this index is for the trimmed dataset
-    heightmin_fullind = np.where( height == heightmin)[0][0] # this index is for the full dataset!
+
+    # find the min height index for the full dataset!
+    # the old way to find this index was flawed: it either just picked the first or
+    # last occurence of the index and called that the min. but, this led to overlaps!
+    # to fix this, we need to find the in situ index closest to the crl's starting index
+    # and then add the trimheight index to it...
+    idx1 = (np.abs(float_time.values - new_crl.time[ 0].values)).argmin()
+    heightmin_fullind = heightmin_ind + idx1
+    # old, wrong way
+    # heightmin_fullind = np.where( height == heightmin)[0][-1]
+
+    '''
+    print( idx1)
+    print( heightmin_ind)
+    print('new index: ' + str( heightmin_fullind))
+    print('old index ' + str( np.where( height == heightmin)[0][-1]))
+    '''
 
     '''
     print( 'height:')
@@ -237,7 +265,10 @@ def find_crl_dist_in_situ( tcname, dataset, returnval='none'):
 
     # part two: find center distance value and subtract it to make it new 0 km
     center_dist = distance_array[ heightmin_fullind]
+    # print( 'center distance: ' + str( center_dist))
+
     center_dist_array = np.subtract( np.array( distance_array), center_dist)
+
     '''
     print( distance_array[ heightmin_fullind - 10 : heightmin_fullind + 10])
     print( center_dist_array[ heightmin_fullind - 10 : heightmin_fullind + 10])
@@ -288,3 +319,7 @@ def find_crl_dist_in_situ( tcname, dataset, returnval='none'):
         print( "Please select either 'crl' or 'in-situ' as a valid input for" +
         " the returnval parameter in the find_crl_dist_in_situ() function.")
         return None
+
+# helper function to replace nans in distance array! taken from stack overflow lol
+def nan_helper(y):
+    return np.isnan(y), lambda z: z.nonzero()[0]

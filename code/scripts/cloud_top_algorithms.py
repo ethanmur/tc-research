@@ -203,10 +203,16 @@ def cta_prominence( power, cutoff_power, xaxis, H_index_matrix):
         power_ind_column = power_ind_matrix[ column_index, :]
         power_ind_column = power_ind_column[ power_ind_column > 0]
 
+        print( power_column)
+        print( power_ind_column)
+
         # check for empty list: no backscattered values at all
         # in this case, the height should have an index of 0 aka the top value
         if np.size( power_ind_column) == 0:
             power_index[ column_index] = 0
+
+            # print( 'true at :' + str( column_index))
+
             continue
 
         # otherwise, only look at the first clear air patch
@@ -215,6 +221,10 @@ def cta_prominence( power, cutoff_power, xaxis, H_index_matrix):
         # only look at the first clear air patch
         first_consec_inds = splits[0]
 
+        # print( first_consec_inds)
+
+        # this code block seems to have issues with the updated power matrices...
+        # idk why it's even here really?
         # if the first clear air patch is below heavy attenuation (no signal until 51st height value),
         # just return an index of 0 aka top value
         if first_consec_inds[ 0] > 50:
@@ -241,6 +251,7 @@ def cta_prominence( power, cutoff_power, xaxis, H_index_matrix):
         # if no peaks exist, pick the end of the first clear cloud layer
         if np.size( peaks[0]) == 0:
 
+            print( 'no peak at: ' + str( xaxis[ column_index].values))
             # look at the last value in the first array of non NaN values: this represents
             # the end of the first clear air chunk beneath the plane! Aka the cloud top
             power_index[ column_index] = first_consec_inds[ -1]
@@ -251,4 +262,172 @@ def cta_prominence( power, cutoff_power, xaxis, H_index_matrix):
             # pick the first viable power index using [ 0]
             power_index[ column_index] = peaks[0][0]
 
+    return power_index
+
+
+# the same algorithm as above, except that it works for new in situ data!
+def cta_prominence_in_situ( power, cutoff_power, xaxis, H_index_matrix, p3_heights, H, grace_case):
+
+    # filter the power and power indices from H_index_matrix
+    power = power.where( power.values > cutoff_power)
+    # this line changes all NaNs to 0s, and all non Nans to indices
+    power_ind_matrix = np.where( np.isnan( power) , 0, H_index_matrix)
+
+    # get rid of nans in the power matrix, they were causing errors for some reason.
+    # -200 is far below every max peak.
+    power = np.where( np.isnan( power) , -200, power)
+
+    # this empty array will be returned at the end of the function call
+    power_index = np.empty( len( xaxis), dtype=int)
+
+    # cycle through each column until the last power value within cutoff is found: this is the cloud top height!
+    for column_index in range( len( xaxis)):
+
+        # select the current column from power and power_ind_matrix. Then, get rid of all 0s
+        power_column = power[ column_index, :]
+        power_ind_column = power_ind_matrix[ column_index, :]
+        power_ind_column = power_ind_column[ power_ind_column > 0]
+
+
+        # check for empty list: no backscattered values at all
+        # in this case, the height should have an index of 0 aka the top value
+        if np.size( power_ind_column) == 0:
+            power_index[ column_index] = 0
+
+            # print( 'true at :' + str( column_index))
+
+            continue
+
+        # otherwise, only look at the first clear air patch
+        # split current list of indices into arrays of consecutive values! Helps determine the top cloud chunk
+        splits = np.split( power_ind_column, np.where(np.diff( power_ind_column) != 1)[0] + 1)
+        # only look at the first clear air patch
+        first_consec_inds = splits[0]
+
+        '''
+        print( 'before:\n' + str( power_ind_column))
+        print( 'after:\n' + str( first_consec_inds))
+        '''
+
+        # print( first_consec_inds)
+
+        # if the first clear air patch is below heavy attenuation (no signal .5 km below flight level),
+        # just return an index of 0 aka top value
+
+        # print( 'index: ' + str( column_index))
+        # print( 'attenuation height: ' + str( H[ first_consec_inds[ 0]].values))
+        # print( 'P-3 height: ' + str( p3_heights[column_index]) + '\n')
+
+        '''
+        if p3_heights[column_index] - H[ first_consec_inds[ 0]] > .5:
+            power_index[ column_index] = 0
+            continue
+        '''
+
+        # trim the power column to the size of the first clear air patch
+        power_column = power_column[ first_consec_inds[0] : first_consec_inds[-1] ]
+
+        # try to find peaks in this dataset!
+        peaks = find_peaks( power_column, prominence= 5, wlen=100, height=-25) # , width = 5)
+
+        # if no peaks exist, pick the end of the first clear cloud layer
+        if np.size( peaks[0]) == 0:
+
+            # annoying grace case
+            if grace_case:
+                ind_first_power_val = ( np.abs( np.subtract( H, p3_heights[ column_index] - .65))).argmin()
+                power_index[ column_index] = first_consec_inds[ -1] - ind_first_power_val
+            # normal case
+            else:
+                # look at the last value in the first array of non NaN values: this represents
+                # the end of the first clear air chunk beneath the plane! Aka the cloud top
+                # this value actually needs to get shifted up by the distance of the blank
+                # space! This line of code was causing some problems with the new in situ data
+                ind_first_power_val = ( np.abs( np.subtract( H, p3_heights[ column_index]))).argmin()
+
+                # shift values up by the distance contained in the blank space!
+                power_index[ column_index] = first_consec_inds[ -1] - ind_first_power_val
+
+        # case where local peaks exist! Use the prominence output from find_peaks
+        else:
+            # pick the first viable power index using [ 0]
+            power_index[ column_index] = peaks[0][0]
+
+    return power_index
+
+
+
+# the same algorithm as above, except that it works for new in situ data!
+def cta_prominence_many_cloud_layers( power, cutoff_power, xaxis, H_index_matrix, p3_heights, H, grace_case):
+
+    # filter the power and power indices from H_index_matrix
+    power = power.where( power.values > cutoff_power)
+    # this line changes all NaNs to 0s, and all non Nans to indices
+    power_ind_matrix = np.where( np.isnan( power) , 0, H_index_matrix)
+
+    # get rid of nans in the power matrix, they were causing errors for some reason.
+    # -200 is far below every max peak.
+    power = np.where( np.isnan( power) , -200, power)
+
+    # this empty will be returned at the end of the function call
+    power_index = []
+
+    # cycle through each column until the last power value within cutoff is found: this is the cloud top height!
+    for column_index in range( len( xaxis)):
+
+        # select the current column from power and power_ind_matrix. Then, get rid of all 0s
+        power_column = power[ column_index, :]
+        power_ind_column = power_ind_matrix[ column_index, :]
+        power_ind_column = power_ind_column[ power_ind_column > 0]
+
+
+        # check for empty list: no backscattered values at all
+        # in this case, the height should have an index of 0 aka the top value
+        if np.size( power_ind_column) == 0:
+
+            # wrap all index values with parentheses to differentiate between the different runs!
+            power_index += [ [0]]
+            continue
+
+        # otherwise, only look at the first clear air patch
+        # split current list of indices into arrays of consecutive values! Helps determine the top cloud chunk
+        splits = np.split( power_ind_column, np.where(np.diff( power_ind_column) != 1)[0] + 1)
+        # only look at the first clear air patch
+        first_consec_inds = splits[0]
+
+        # trim the power column to the size of the first clear air patch
+        power_column = power_column[ first_consec_inds[0] : first_consec_inds[-1] ]
+
+        # try to find peaks in this dataset!
+        peaks = find_peaks( power_column, prominence= 5, wlen=100, height=-25) # , width = 5)
+
+        # if no peaks exist, pick the end of the first clear cloud layer
+        if np.size( peaks[0]) == 0:
+
+            # annoying grace case
+            if grace_case:
+                ind_first_power_val = ( np.abs( np.subtract( H, p3_heights[ column_index] - .65))).argmin()
+
+                # wrap all index values with parentheses to differentiate between the different runs!
+                power_index += [[ first_consec_inds[ -1] - ind_first_power_val.values]]
+            # normal case
+            else:
+                # look at the last value in the first array of non NaN values: this represents
+                # the end of the first clear air chunk beneath the plane! Aka the cloud top
+                # this value actually needs to get shifted up by the distance of the blank
+                # space! This line of code was causing some problems with the new in situ data
+                ind_first_power_val = ( np.abs( np.subtract( H, p3_heights[ column_index]))).argmin()
+
+                # shift values up by the distance contained in the blank space!
+                # wrap all index values with parentheses to differentiate between the different runs!
+                power_index += [[ first_consec_inds[ -1] - ind_first_power_val.values]]
+
+        # case where local peaks exist! Use the prominence output from find_peaks
+        else:
+            # return ALL peaks here!
+            power_index += [ peaks[0] ]
+
+
+    # print( type( power_index))
+    # print( power_index)
     return power_index

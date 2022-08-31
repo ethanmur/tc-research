@@ -9,7 +9,7 @@ import warnings
 
 # from scipy.signal import find_peaks
 
-def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time', crl_path = "/Users/etmu9498/research/data/CRL_data/2021"):
+def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time', crl_path = "/Users/etmu9498/research/data/CRL_data/2021", new_heights=False):
     """
     This function finds and returns cloud heights
     :param crl_name: The name of the crl data file that will be analyzed. The crl_path
@@ -24,7 +24,6 @@ def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time', crl_path =
 
     os.chdir( crl_path)
     data = xr.open_dataset( crl_name)
-    power = data.P_ch1[ i1: i2]
 
     if xaxis == 'lon':
         axis = data.Lon[ i1: i2]
@@ -32,12 +31,25 @@ def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time', crl_path =
         axis = data.Lat[ i1: i2]
     elif xaxis == 'time':
         axis = data.time[ i1: i2]
-    elif xaxis == 'dist':
-        axis = data.distance[ i1: i2]
+    elif xaxis == 'in-situ-dist':
+        axis = data.in_situ_distance[ i1: i2]
+    elif xaxis == 'tdr-dist':
+        axis = data.tdr_distance[ i1: i2]
     else:
         print( "please select 'lon', 'lat', or 'time' as a valid x axis")
 
-    H = data.H
+    # new data case: updated height values and corrected power values
+    if new_heights:
+        H = data.H_new
+        power = data.power_new[ i1: i2]
+    # old data case: still need to correct power values
+    else:
+        H = data.H
+        power = data.p_ch1[ i1: i2]
+        # convert to dBz
+        power = 10 * np.log10( power)
+
+
     # an index for each of the 594 height values
     H_index = range( len( H))
     # a matrix of height indices, to be used later. 594 height values x 300 repeats
@@ -49,17 +61,143 @@ def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time', crl_path =
     # power = power[:, 8:]
     # H_index_matrix = H_index_matrix[:, 8:]
 
-    # convert to dBz
-    power = 10 * np.log10( power)
-
     # power_index = cta.cta_top_layer_lowest_value( power, cutoff_power, H_index_matrix, axis)
     # power_index = cta.cta_max_value( power, cutoff_power, axis)
     # power_index = cta.cta_find_peaks( power, cutoff_power, axis)
     # power_index = cta.cta_find_peaks_max( power, cutoff_power, axis, H_index_matrix)
-    power_index = cta.cta_prominence( power, cutoff_power, axis, H_index_matrix)
+
+    '''
+    print( len( H))
+    print( cutoff_power)
+    print( np.shape( power))
+    np.set_printoptions(threshold=np.inf)
+    print( power.values)
+    np.set_printoptions(threshold=1000)
+    print( axis.values)
+    '''
+    if new_heights:
+        p3_heights = data.p3_heights[ i1:i2].values / 1000 # convert to km
+
+        # special case for troublesome grace 8/18 data
+        if crl_name[0:15] == 'crl-grace-08-18':
+            blank_vals = - p3_heights + np.nanmax( -H) + .65 # this value matches the one in get_p3_heights.py
+            grace_case = True
+
+        # normal case
+        else:
+            grace_case = False
+            # blank_vals should be close to - 3.25 + 4.0 = .75
+            blank_vals = - p3_heights + np.nanmax( -H)
+
+
+        power_index = cta.cta_prominence_in_situ( power, cutoff_power, axis, H_index_matrix, p3_heights, -H, grace_case)
+
+        # the heights returned by the power indices need to be corrected! Before height
+        # corrections were made, an index of 0 would automatically correspond to a height of
+        # 3.557 km, which worked! But now, theres a ton of blank space from 4 km down to flight
+        # level. So, we can no longer assume that an index of 0 should be at the top, aka 4 km.
+
+        # This code corrects for this height difference by finding the width of the blank
+        # space and subtracting it from the returned height to shift the data down.
+
+
+        cloud_heights = -H[ power_index] - blank_vals
+        cloud_heights = np.where( cloud_heights < 0, 0, cloud_heights)
+    else:
+        power_index = ta.cta_prominence( power, cutoff_power, axis, H_index_matrix)
+        cloud_heights = -H[ power_index]
+
+    '''
+    print( power_index)
+    print( - H[ power_index].values)
+
+    print( "\n" + str( len( H)))
+    print( H.values)
+    '''
 
     warnings.filterwarnings("default")
-    return - H[power_index], axis
+
+    return cloud_heights, axis
+
+
+
+
+
+# the same as the function above, but it finds multiple cloud layers, not just the highest!
+def find_multi_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='in-situ-dist', crl_path = "/Users/etmu9498/research/data/crl-new-matrices"):
+    warnings.filterwarnings("ignore")
+
+    os.chdir( crl_path)
+    data = xr.open_dataset( crl_name)
+
+    if xaxis == 'in-situ-dist':
+        axis = data.in_situ_distance[ i1: i2]
+    else:
+        print( "update find_multi_cloud_heights() if statement!")
+    print( 'Number of x axis points: ' + str( len( axis)))
+
+    # new data case: updated height values and corrected power values
+    H = data.H_new
+    power = data.power_new[ i1: i2]
+
+    # an index for each of the height values
+    H_index = range( len( H))
+    # a matrix of height indices, to be used later. 594 height values x 300 repeats
+    H_index_matrix = np.repeat(np.array( H_index)[None, :], len( axis), axis=0)
+
+
+    p3_heights = data.p3_heights[ i1:i2].values / 1000 # convert to km
+    # special case for troublesome grace 8/18 data
+    if crl_name[0:15] == 'crl-grace-08-18':
+        blank_vals = - p3_heights + np.nanmax( -H) + .65 # this value matches the one in get_p3_heights.py
+        grace_case = True
+    # normal case
+    else:
+        grace_case = False
+        # blank_vals should be close to - 3.25 + 4.0 = .75
+        blank_vals = - p3_heights + np.nanmax( -H)
+
+
+    power_index = cta.cta_prominence_many_cloud_layers( power, cutoff_power, axis, H_index_matrix, p3_heights, -H, grace_case)
+
+    cloud_heights = []
+    new_xaxis = []
+
+    cloud_counts = np.zeros( 100).tolist()
+
+    for i in range( len( power_index)):
+        cloud_heights += [ -H[ power_index[i] ].values - blank_vals[ i] ]
+        new_xaxis += np.full( shape=len(power_index[i]), fill_value= axis[i] ).tolist()
+
+        # print( power_index[ i])
+        # print( len( power_index[ i]))
+
+        cloud_number_i = len( power_index[ i])
+        cloud_counts[ cloud_number_i] += 1
+
+    print( cloud_counts)
+
+    '''
+    for i in range( len( power_index)):
+        print( 'index: ' + str( i))
+        print( power_index[ i])
+        print( cloud_heights[ i])
+    '''
+
+    # try flattening all of the lists for easier plotting
+    flat_power_index = [item for sublist in power_index for item in sublist]
+    flat_cloud_heights = [item for sublist in cloud_heights for item in sublist]
+
+    # print( new_xaxis)
+    # print( flat_power_index)
+    # print( flat_cloud_heights)
+
+#    cloud_heights = -H[ power_index] - blank_vals
+#    cloud_heights = np.where( cloud_heights < 0, 0, cloud_heights)
+
+    warnings.filterwarnings("default")
+
+    return flat_cloud_heights, new_xaxis, cloud_counts
 
 
 

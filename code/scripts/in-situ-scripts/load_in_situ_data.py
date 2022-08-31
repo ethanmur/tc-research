@@ -72,12 +72,27 @@ def load_in_situ( flight_path, flight_number, sample_step_size= 1):
     roll = xr_in_situ.ROLLref.values
     roll = [ float( line) for line in roll]
 
+    # newlon = [ float( value) for value in in_situ.LONref]
+    # newlat = [ float( value) for value in in_situ.LATref]
+
+
     # add new time variables to dataset
     # older method: xr_in_situ.assign( str_time=str_time, float_time=float_time)
     xr_in_situ['float_time'] = ( ['index'], float_time)
     xr_in_situ['str_time'] = ( ['index'], str_time)
     xr_in_situ['rollval'] = ( ['index'], roll)
     xr_in_situ['pitchval'] = ( ['index'], pitch)
+
+    # this variable has an ambiguous 'object' data type, which causes problems
+    # when trying to save the dataset later... so it needs to be dropped here!
+    xr_in_situ = xr_in_situ.drop( 'time')
+
+    # change time from a variable to a coordinate
+    # use float_time's values to avoid ambiguous data types
+    xr_in_situ= xr_in_situ.assign_coords( {'time': float_time })
+    xr_in_situ.time.attrs['long_name'] = 'time'
+    xr_in_situ.time.attrs['units'] = 'Hours (UTC)'
+    xr_in_situ.time.attrs['description'] = "Time of measurement, from the P-3's internal clock"
 
     # this line ...
     xr_in_situ.reset_coords()

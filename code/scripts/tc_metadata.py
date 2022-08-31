@@ -48,6 +48,10 @@ def all_data( tc='sam'):
 
     new_tdr_path = "/Users/etmu9498/research/data/tdr-new"
     new_crl_path = "/Users/etmu9498/research/data/crl-new"
+    new_flight_data_path = '/Users/etmu9498/research/data/in-situ-new'
+
+    updated_matrices_crl_path = "/Users/etmu9498/research/data/crl-new-matrices"
+
     # load a list of available data to these variables
     crl_list = make_plots.load_crl(crl_path, print_files=False)
     in_situ_list = make_plots.load_flight_level(in_situ_path, print_files=False)
@@ -65,8 +69,11 @@ def all_data( tc='sam'):
             (-92, -89), (-92, -90), (-93, -89) ] # , (-92, -90)
         xtype = [ 'lat', 'lon', 'lat', 'lon', 'lon', 'lon']
 
+        # original eyewall distances when using tdr axis
         eyewall_dists = [ ( -12.5, 17.5), (-35, 12.5  ), (-10, 35),
             (-62.5, -10), (10, 85), ( -55, 25) ]
+        in_situ_eyewall_dists = [ (-12.5, 15), (-25, 30), (-20, 25),
+            (-35, 12.5), (10, 70), (-55, 30)]
 
         dates = [
             '08-18', '08-18', '08-18',
@@ -77,6 +84,16 @@ def all_data( tc='sam'):
         stretch = [ 1, 1, 1, 1, 1, 1]
         shift = [ 20, 0, 0, 0, 0, 10]
         tc_name = 'Grace'
+
+        shrd = [ 105, 105, 105, 81, 81, 81] # 0 utc the following day used for most cases
+        shtd = [ 135, 135, 135, 169, 169, 169]
+
+        shear_dir = shtd
+        shear_mag = shrd
+
+        crl_shear_inds = []
+        tc_center_lat = []
+        tc_center_lon = []
 
     elif tc.casefold() == 'henri':
         tdr_path = "/Users/etmu9498/research/data/tdr/henri/nc-files"
@@ -96,6 +113,8 @@ def all_data( tc='sam'):
 
         eyewall_dists = [(-22, 57), (-30, 75),
             (-12.5, 35), (-10, 30), (-20, 30)]
+        in_situ_eyewall_dists = [(-25, 55), (-30, 77.5),
+            (-10, 35), (-17.5, 25), (-20, 35)]
 
         dates = [ '08-20', '08-20',
             '08-21', '08-21', '08-21' ]
@@ -104,6 +123,16 @@ def all_data( tc='sam'):
 
         eye_pass = [ "1", "3", "1", "2", "3"]
         tc_name = 'Henri'
+
+        shrd = [ 128, 128, 60, 60, 60]
+        shtd = [ 179, 179, 240, 240, 240]
+        shear_dir = shtd
+        shear_mag = shrd
+
+        crl_shear_inds = []
+        tc_center_lat = []
+        tc_center_lon = []
+
 
     elif tc.casefold() == 'ida':
         tdr_path = "/Users/etmu9498/research/data/tdr/ida/nc-files"
@@ -118,6 +147,7 @@ def all_data( tc='sam'):
         # else, but worth a closer look... maybe 1 good eye dataset here!
 
         eyewall_dists = [(-15, 65), (-35, 15), (-30, 50), (-12.5, 10)]
+        in_situ_eyewall_dists = [(-25, 65), (-25, 35), (-15, 75), (-25, 20)]
 
         dates = [ '08-27', '08-27', '08-27', '08-29']
         stretch = [ 1, 1, 1, 1]
@@ -125,6 +155,17 @@ def all_data( tc='sam'):
 
         eye_pass = [ "1", "2", "7", "2"]
         tc_name = 'Ida'
+
+        shrd = [ 115, 115, 115, 112] # 18 utc used for last case
+        shtd = [ 61, 61, 61, 127]
+
+        crl_shear_inds = []
+
+        shear_dir = shtd
+        shear_mag = shrd
+
+        tc_center_lat = []
+        tc_center_lon = []
 
     elif tc.casefold() == 'sam':
         tdr_path = "/Users/etmu9498/research/data/tdr/sam/nc-files"
@@ -144,6 +185,8 @@ def all_data( tc='sam'):
         eyewall_dists = [( -5, 15), (-10, 15), (-30, 12.5),
             (-5, 30), (-20, 10),
             (-25, 20), (-15, 35) ]
+        in_situ_eyewall_dists = [ (-5, 30), (-5, 30), (-40, 5),
+            (-5, 35), (-20, 12.5), (-35, 30), (-20, 35)]
 
         dates = [
             '09-26', '09-26', '09-26', '09-27', '09-27', '09-29', '09-29']
@@ -152,6 +195,50 @@ def all_data( tc='sam'):
 
         eye_pass = [ "1", "2", "3", "2", "3", "1", "2"]
         tc_name = 'Sam'
+        # shear direction taken at 0 UTC the following day for each case
+        # Ex: sam 9/26 passes ran from 22 to 25 UTC, closest shear values at 0
+        # UTC on 9/27
+
+        # possible value headers:
+        # SHDC: : Same as SHRD but with vortex removed and averaged from 0-500 km relative
+        # to 850 hPa vortex center
+        # SDDC: heading of SHDC. Westerly shear == 90 degrees
+        shdc = [78, 78, 78, 54, 54, 56, 56 ]
+        sddc = [48, 48, 48, 12, 12, 25, 25 ]
+
+        # SHRD: 850-200 hPa shear magnitude (kt *10) vs time (200-800 km)
+        # SHTD: heading of SHRD
+        shrd = [ 90, 90, 90, 85, 85, 103, 103 ]
+        shtd = [ 64, 64, 64, 44, 44, 57, 57]
+
+        # SHRS: 850-500 hPa shear magnitude (kt *10) vs time
+        # SHTS: heading of SHRS
+        shrs = [ 33, 33, 33, 7, 7, 36, 36]
+        shts = [126, 126, 126, 41, 41, 96, 96]
+
+        # SHRG: Generalized 850-200 hPa shear magnitude (kt *10) vs time (takes
+        # into account all levels from 1000 to 100 hPa
+        # SHGC: Same as SHRG but with vortex removed and averaged from 0-500 km relative
+        # to 850 hPa vortex center
+        # should I use shrs and shts for this first test since most obs data are in the
+        # lower tropsophere?
+
+        # this value clips off problematic indices from the P-3 track for
+        # the shear angle calculation. The first value is added to the lowest index, while
+        # the second index is subtracted from the highest crl index
+        # not really that necessary
+        crl_shear_inds = ( (100, 400 ), ( 50, 50), ( 0, 0), (0, 0), (0, 0),
+                ( 0, 400), ( 50, 0))
+
+        shear_mag = shrd
+        shear_dir = shtd
+
+        ships_lat = [ 14.5, 14.5, 14.5, 16.5, 16.5, 20.3, 20.3]
+        ships_lon = [ 50.6, 50.6, 50.6, 52.9, 52.9, 58.0, 58.0]
+        ships_tlat = [ 14.4, 14.4, 14.4, 16.4, 16.4, 20.4, 20.4]
+        ships_tlon = [ 50.6, 50.6, 50.6, 52.9, 52.9, 52.9, 58.0, 58.0]
+        tc_center_lat = ships_tlat
+        tc_center_lon = ships_tlon
 
     else:
         tcdata = "selected TC name is not yet implemented"
@@ -160,10 +247,16 @@ def all_data( tc='sam'):
     tcdata = {
         'crl_path': crl_path, 'tdr_path': tdr_path, 'in_situ_path': in_situ_path,
         'crl_list': crl_list, 'tdr_list': tdr_list, 'in_situ_list': in_situ_list,
-        'new_crl_path': new_crl_path, 'new_tdr_path': new_tdr_path, 'eyewall_dists': eyewall_dists,
+        'new_crl_path': new_crl_path, 'new_tdr_path': new_tdr_path,
+        'new_flight_data_path': new_flight_data_path,
+        'eyewall_dists': eyewall_dists, 'in_situ_eyewall_dists': in_situ_eyewall_dists,
         'crl_range': crl_range, 'xlims': xlims, 'xtype': xtype,
         'dates': dates, 'eye_pass': eye_pass, 'tc_name': tc_name,
-        'shift': shift, 'stretch': stretch}
+        'shift': shift, 'stretch': stretch,
+        'shear_dir': shear_dir, 'shear_mag': shear_mag, 'tc_center_lat': tc_center_lat,
+        'tc_center_lon': tc_center_lon,
+        'crl_shear_inds': crl_shear_inds,
+        'um_crl_path': updated_matrices_crl_path}
     return tcdata
 
 
@@ -578,3 +671,22 @@ def choose_new_data( tc_name, counter):
         print( 'update if statement!')
         return 1, 1
     return tdr_data[ counter], crl_data[ counter]
+
+def choose_new_in_situ_name( tc_name, counter):
+    path = "/Users/etmu9498/research/data/in-situ-new"
+    list = make_plots.load_flight_level( path, print_files=False)
+
+    if tc_name.casefold() == 'grace':
+        name = [ list[ 0], list[ 1], list[ 2],
+            list[ 3], list[ 4], list[ 5] ]
+    elif tc_name.casefold() == 'henri':
+        name = [ list[ 6], list[ 7], list[ 8], list[ 9], list[ 10] ]
+    elif tc_name.casefold() == 'ida':
+        name = [ list[ 11], list[ 12], list[ 13], list[ 14]]
+    elif tc_name.casefold() == 'sam':
+        name = [ list[ 15], list[ 16], list[ 17], list[ 18],
+            list[ 19], list[ 20], list[ 21] ]
+    else:
+        print( 'update if statement!')
+        return 1, 1
+    return name[ counter]

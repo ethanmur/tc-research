@@ -3,8 +3,25 @@ import xarray as xr
 import numpy as np
 
 def in_situ_helper( crl_path, crl_name, cutoff_indices, return_var, float_time):
-    # convert strings to floats
-    return_var = [ float( line) for line in return_var]
+
+    # old way to convert strings to floats
+    # faster but there's an error with empty strings
+    # return_var = [ float( line) for line in return_var]
+
+    # get rid of empty strings in height dataset
+    # slower than code above but doesn't crash when there's an empty string
+    return_var_temp = np.zeros( len( return_var))
+    for line_ind in range( len( return_var)):
+        if return_var[ line_ind] == '':
+            return_var_temp[line_ind] = np.nan
+        else:
+            return_var_temp[ line_ind] = float( return_var[ line_ind])
+
+    # print( len( return_var))
+    # print( len( return_var_temp))
+    # print( type( return_var_temp))
+
+    return_var = return_var_temp.tolist()
 
     # load crl data to find the times corresponding to i1 and i2
     os.chdir( crl_path)

@@ -132,16 +132,23 @@ def plot_T(data_path, data_file, index1, index2, xaxis_name, show_colorbar=True)
     warnings.filterwarnings("default")
 
 
-def plot_new_T( data_path, data_file, xlims=None, show_colorbar=True):
+def plot_new_T( data_path, data_file, data_source = 'none', xlims=None, show_colorbar=True):
     warnings.filterwarnings("ignore")
     # get data
     os.chdir( data_path)
     new_crl = xr.open_dataset( data_file)
     color_map = plt.cm.get_cmap( "RdYlBu").reversed()
 
-    temp = new_crl.T[ 0 : len( new_crl.distance), :]
-    temp = temp.where( temp < 50).transpose()
-    plt.pcolormesh( new_crl.distance, - new_crl.H, temp, cmap = color_map, vmin=5, vmax=35 )
+    if data_source == 'tdr':
+        temp = new_crl.T[ 0 : len( new_crl.tdr_distance), :]
+        temp = temp.where( temp < 50).transpose()
+        plt.pcolormesh( new_crl.tdr_distance, - new_crl.H, temp, cmap = color_map, vmin=5, vmax=35 )
+    elif data_source == 'in-situ':
+        temp = new_crl.T[ 0 : len( new_crl.in_situ_distance), :]
+        temp = temp.where( temp < 50).transpose()
+        plt.pcolormesh( new_crl.in_situ_distance, - new_crl.H, temp, cmap = color_map, vmin=5, vmax=35 )
+    else:
+        print( "Please choose either 'tdr' or 'in-situ' for the data_source input for the plot_new_power_ch1() function")
 
     if show_colorbar:
         plt.colorbar(label="Temperature ( C)")
@@ -296,18 +303,32 @@ def plot_power_ch1(data_path, data_file, index1, index2, xaxis_name, cutoff=-30,
     warnings.filterwarnings("default")
 
 
-def plot_new_power_ch1( data_path, data_file, cutoff=-30, xlims=None, show_colorbar=True):
+def plot_new_power_ch1( data_path, data_file, data_source='none', cutoff=-30, xlims=None, show_colorbar=True):
     warnings.filterwarnings("ignore")
+
+
     # get data
     os.chdir( data_path)
     new_crl = xr.open_dataset( data_file)
-
+    # manipulate data
     step1 = 10 * np.log10( new_crl.P_ch1 )
     step2 = step1.where( step1.values > cutoff)
-    # cut off the last ind to fit the x axis!
-    crl_pch1 = step2[0 : len( new_crl.distance) , : ].transpose()
 
-    plt.pcolormesh(  new_crl.distance, - new_crl.H, crl_pch1, vmin = cutoff, vmax =-10)
+    if data_source == 'tdr':
+        # cut off the last ind to fit the x axis!
+        crl_pch1 = step2[0 : len( new_crl.tdr_distance) , : ].transpose()
+        plt.pcolormesh(  new_crl.tdr_distance, - new_crl.H, crl_pch1, vmin = cutoff, vmax =-10)
+    elif data_source == 'in-situ':
+        # cut off the last ind to fit the x axis!
+        crl_pch1 = step2[0 : len( new_crl.in_situ_distance) , : ].transpose()
+
+        # check if there's a nan in the distance array
+        if np.isnan( new_crl.in_situ_distance).any() :
+            print( 'nan!')
+
+        plt.pcolormesh(  new_crl.in_situ_distance, - new_crl.H, crl_pch1, vmin = cutoff, vmax =-10)
+    else:
+        print( "Please choose either 'tdr' or 'in-situ' for the data_source input for the plot_new_power_ch1() function")
 
     if show_colorbar:
         plt.colorbar(label="Backscattered Ch 1 power ( dBz)")
@@ -351,9 +372,22 @@ def plot_rh(data_path, data_file, index1, index2, xaxis_name):
     e_s = e_0 * np.exp(  ( b * ( temp - T_1) ) / (temp - T_2) )
     # find relative humidity!
     saturation_wvmr = 1000 * (epsilon * e_s ) / ( pressure - e_s) # multiply by 1000 to get to g/kg like wvmr (above)
+
     crl_rh = 100 * wvmr / saturation_wvmr
     crl_rh = crl_rh.where( crl_rh.values <= 100)
     crl_rh = crl_rh.where( crl_rh.values >= 0)
+
+    print( 'temp: ' + str( type( temp)))
+    print( 'temp: ' + str( np.shape( temp)))
+    print( 'wvmr: ' + str( type( wvmr)))
+    print( 'wvmr: ' + str( np.shape( wvmr)))
+    print( 'pressure: ' + str( type( pressure)))
+    print( 'pressure: ' + str( np.shape( pressure)))
+    print( 'es: ' + str( type( e_s)))
+    print( 'es: ' + str( np.shape( e_s)))
+    print( 'rh: ' + str( type( crl_rh)))
+    print( 'rh: ' + str( np.shape( crl_rh)))
+
 
     # plot things
     plt.pcolormesh( xaxis, - crl_data.H, crl_rh)
@@ -720,6 +754,29 @@ def plot_temps_wv(data_path, data_file, title, index1, index2, xaxis):
 
     warnings.filterwarnings("default")
 
+def plot_some(data_path, data_file, title, index1, index2, xaxis):
+
+    warnings.filterwarnings("ignore")
+
+    fig = plt.figure( figsize=(20, 8))
+    plt.subplot(211)
+    plot_T(data_path, data_file, index1, index2, xaxis)
+    plt.title( title)
+
+    plt.subplot(212)
+    plot_power_ch1(data_path, data_file, index1, index2, xaxis)
+
+    # choose x axis type
+    if xaxis == 'lon':
+        plt.xlabel( 'longitude (degrees)')
+    elif xaxis == 'lat':
+        plt.xlabel('latitude (degrees)' )
+    elif xaxis == 'time':
+        plt.xlabel( 'Time (UTC)' )
+    elif xaxis == 'dist':
+        plt.xlabel( 'Distance (km)')
+
+    warnings.filterwarnings("default")
 
 
 def plot_full_dataset_one_day( data_path, data_file, xaxis, title=None):

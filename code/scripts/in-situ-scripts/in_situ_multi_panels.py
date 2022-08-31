@@ -58,7 +58,7 @@ def plot_multi_passes( tc='all'):
             # xlims = [ metadata['xlims'][dataset][0], metadata['xlims'][dataset][1] ]
             xname = metadata['xtype'][dataset]
             xlim = metadata['xlims'][dataset]
-            title = "CRL and In Situ Data, TC " + metadata['tc_name'] + ", " + metadata['dates'][ dataset] + ", Eye Pass " + metadata['eye_pass'][ dataset]
+            title = "In Situ Data, TC " + metadata['tc_name'] + ", " + metadata['dates'][ dataset] + ", Eye Pass " + metadata['eye_pass'][ dataset]
 
             helper_fns.change_font_sizes()
             plot_one_cross_section( metadata['crl_path'], crl_data, metadata['in_situ_path'], in_situ_data, metadata['crl_range'][dataset], axis, xlim, xname, title)
@@ -112,16 +112,9 @@ def plot_one_cross_section( crl_path, crl_name, flight_data_path, flight_name, c
     # find tangential wind speed and p-3 height minima! plot them to compare
     wsmin = np.nanmin( ws)
     wsmin_ind = np.nanargmin( ws)
-    print( 'wind speed:')
-    print( wsmin)
-    print( wsmin_ind)
 
     heightmin = np.nanmin( height)
     heightmin_ind = np.nanargmin( height)
-    print( 'height:')
-    print( heightmin)
-    print( heightmin_ind)
-
 
     fig = plt.figure( figsize=(14, 16) )
     ax1 = fig.add_subplot(311)
@@ -131,8 +124,8 @@ def plot_one_cross_section( crl_path, crl_name, flight_data_path, flight_name, c
     ax1.set_ylabel('Tangential Wind Speed (m/s)', color='r')
 
     # plot vertical lines representing wind speed and height minima
-    ax1.axvline( x= xaxis_data[ wsmin_ind], c='r')
-    ax1.axvline( x=xaxis_data[ heightmin_ind], c='y')
+    # ax1.axvline( x= xaxis_data[ wsmin_ind], c='r')
+    # ax1.axvline( x=xaxis_data[ heightmin_ind], c='y')
 
     ax1.xaxis.grid( )
     ax1.yaxis.grid( )
@@ -163,11 +156,11 @@ def plot_one_cross_section( crl_path, crl_name, flight_data_path, flight_name, c
     ax5.set_ylabel('P-3 Height (m)', c='y')
     ax5.xaxis.grid( )
     ax5.yaxis.grid( )
-    ax5.set_ylim( [ 2500, 3300])
+    # ax5.set_ylim( [ 2500, 3300])
 
     # plot vertical lines representing wind speed and height minima
-    ax5.axvline( x= xaxis_data[ wsmin_ind], c='r')
-    ax5.axvline( x=xaxis_data[ heightmin_ind], c='y')
+    # ax5.axvline( x= xaxis_data[ wsmin_ind], c='r')
+    # ax5.axvline( x=xaxis_data[ heightmin_ind], c='y')
 
 
     ax6 = ax5.twinx()
@@ -184,5 +177,46 @@ def plot_one_cross_section( crl_path, crl_name, flight_data_path, flight_name, c
         ax5.set_xlabel( "Time (UTC, Hours)")
     elif xname == 'lat':
         ax5.set_xlabel( "Latitude (Degrees)")
+
+    warnings.filterwarnings("ignore")
+
+
+
+def make_one_subplot( crl_path, crl_name, flight_data_path, flight_name, cutoff_indices):
+
+    warnings.filterwarnings("ignore")
+
+    # load and process the data
+
+    os.chdir( flight_data_path)
+    xr_in_situ = xr.open_dataset( flight_name)
+
+    # rename variables from xarray for convenience
+    str_time = xr_in_situ.str_time
+    float_time = xr_in_situ.float_time
+
+    keyList = [ 'distance', 'WS.d', 'HT.d']
+    # make an empty dict that will be filled soon!
+    datatrim = {key: None for key in keyList}
+
+
+    for key in keyList:
+        datatrim[ key] = clip_old_data.in_situ_helper( crl_path, crl_name, cutoff_indices, xr_in_situ[ key].values, float_time)
+
+    xaxis_data, ws, height = datatrim['distance'], datatrim['WS.d'], datatrim['HT.d']
+
+
+    fig = plt.gcf()
+    ax1 = fig.add_subplot(414)
+
+    ax1.plot( xaxis_data, height, c='y')
+    ax1.set_ylabel('P-3 Height (m)', c='y')
+    # ax1.set_ylim( [ 2500, 3300])
+    ax1.xaxis.grid( )
+    ax1.yaxis.grid( )
+
+    ax2 = ax1.twinx()
+    ax2.plot( xaxis_data, ws, c='c')
+    ax2.set_ylabel( 'Tangential Wind Speed (m/s)', c='c')
 
     warnings.filterwarnings("ignore")

@@ -215,7 +215,7 @@ def distance_plots( padding=250, tc='all', shift_crl_dist=True, in_situ=False):
             os.chdir( new_crl_path)
             new_crl = xr.open_dataset( new_crl_name)
             # make a new distance array using the new method
-            new_dist = new_crl.distance # find_dist_new_tdr( tcname, dataset)
+            new_dist = new_crl.tdr_distance # find_dist_new_tdr( tcname, dataset)
 
             xtype = metadata[ 'xtype'][dataset]
             if xtype == 'lat':
@@ -255,11 +255,11 @@ def distance_plots( padding=250, tc='all', shift_crl_dist=True, in_situ=False):
 
                 plt.subplot(412)
                 # calculate power backscattered to channel 1
-                make_plots.plot_new_power_ch1( new_crl_path, new_crl_name)
+                make_plots.plot_new_power_ch1( new_crl_path, new_crl_name, data_source='tdr')
                 plt.xlim( [padding, - padding])
 
                 plt.subplot( 413)
-                make_plots.plot_new_T( new_crl_path, new_crl_name)
+                make_plots.plot_new_T( new_crl_path, new_crl_name, data_source = 'tdr')
                 plt.xlim( [ padding, - padding])
 
                 plt.subplot( 414)
