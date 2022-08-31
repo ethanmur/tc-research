@@ -357,7 +357,9 @@ def cta_prominence_in_situ( power, cutoff_power, xaxis, H_index_matrix, p3_heigh
 
 
 
-# the same algorithm as above, except that it works for new in situ data!
+# the same algorithm as above, except that it returns lists of values for each x axis position,
+# not individual values. This lets us return multiple cloud top heights for each position!
+# this function also returns a count for each number of cloud layers (1 layer, 2, etc...)
 def cta_prominence_many_cloud_layers( power, cutoff_power, xaxis, H_index_matrix, p3_heights, H, grace_case):
 
     # filter the power and power indices from H_index_matrix
@@ -367,24 +369,22 @@ def cta_prominence_many_cloud_layers( power, cutoff_power, xaxis, H_index_matrix
 
     # get rid of nans in the power matrix, they were causing errors for some reason.
     # -200 is far below every max peak.
+    # not sure why I need to do this really
     power = np.where( np.isnan( power) , -200, power)
 
     # this empty will be returned at the end of the function call
+    # using lists instead of numpy arrays here
     power_index = []
-
-    # cycle through each column until the last power value within cutoff is found: this is the cloud top height!
+    # cycle through each column and find cloud heights
     for column_index in range( len( xaxis)):
-
         # select the current column from power and power_ind_matrix. Then, get rid of all 0s
         power_column = power[ column_index, :]
         power_ind_column = power_ind_matrix[ column_index, :]
         power_ind_column = power_ind_column[ power_ind_column > 0]
 
-
         # check for empty list: no backscattered values at all
         # in this case, the height should have an index of 0 aka the top value
         if np.size( power_ind_column) == 0:
-
             # wrap all index values with parentheses to differentiate between the different runs!
             power_index += [ [0]]
             continue
@@ -394,20 +394,16 @@ def cta_prominence_many_cloud_layers( power, cutoff_power, xaxis, H_index_matrix
         splits = np.split( power_ind_column, np.where(np.diff( power_ind_column) != 1)[0] + 1)
         # only look at the first clear air patch
         first_consec_inds = splits[0]
-
         # trim the power column to the size of the first clear air patch
         power_column = power_column[ first_consec_inds[0] : first_consec_inds[-1] ]
 
         # try to find peaks in this dataset!
         peaks = find_peaks( power_column, prominence= 5, wlen=100, height=-25) # , width = 5)
-
         # if no peaks exist, pick the end of the first clear cloud layer
         if np.size( peaks[0]) == 0:
-
             # annoying grace case
             if grace_case:
                 ind_first_power_val = ( np.abs( np.subtract( H, p3_heights[ column_index] - .65))).argmin()
-
                 # wrap all index values with parentheses to differentiate between the different runs!
                 power_index += [[ first_consec_inds[ -1] - ind_first_power_val.values]]
             # normal case
@@ -425,9 +421,6 @@ def cta_prominence_many_cloud_layers( power, cutoff_power, xaxis, H_index_matrix
         # case where local peaks exist! Use the prominence output from find_peaks
         else:
             # return ALL peaks here!
+            # peaks[0] returns all peaks, peaks[0][0] would return only the first peak
             power_index += [ peaks[0] ]
-
-
-    # print( type( power_index))
-    # print( power_index)
     return power_index

@@ -126,15 +126,14 @@ def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time', crl_path =
 # the same as the function above, but it finds multiple cloud layers, not just the highest!
 def find_multi_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='in-situ-dist', crl_path = "/Users/etmu9498/research/data/crl-new-matrices"):
     warnings.filterwarnings("ignore")
-
+    # load data
     os.chdir( crl_path)
     data = xr.open_dataset( crl_name)
-
+    # load x axis data
     if xaxis == 'in-situ-dist':
         axis = data.in_situ_distance[ i1: i2]
     else:
         print( "update find_multi_cloud_heights() if statement!")
-    print( 'Number of x axis points: ' + str( len( axis)))
 
     # new data case: updated height values and corrected power values
     H = data.H_new
@@ -142,12 +141,15 @@ def find_multi_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='in-situ-dis
 
     # an index for each of the height values
     H_index = range( len( H))
-    # a matrix of height indices, to be used later. 594 height values x 300 repeats
+    # a matrix of height indices, to be used in cloud top algorithm helper fn
     H_index_matrix = np.repeat(np.array( H_index)[None, :], len( axis), axis=0)
-
-
+    # get p3 heights
     p3_heights = data.p3_heights[ i1:i2].values / 1000 # convert to km
-    # special case for troublesome grace 8/18 data
+
+    # account for 'blank values', aka the nans below the p-3 height, to properly scale
+    # the cloud top heights.
+    # special case for troublesome grace 8/18 data: this dataset was shifted by .65 km,
+    # so we also need to shift height values by the same amount
     if crl_name[0:15] == 'crl-grace-08-18':
         blank_vals = - p3_heights + np.nanmax( -H) + .65 # this value matches the one in get_p3_heights.py
         grace_case = True
@@ -157,46 +159,33 @@ def find_multi_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='in-situ-dis
         # blank_vals should be close to - 3.25 + 4.0 = .75
         blank_vals = - p3_heights + np.nanmax( -H)
 
-
+    # call the helper function to get cloud height locations
     power_index = cta.cta_prominence_many_cloud_layers( power, cutoff_power, axis, H_index_matrix, p3_heights, -H, grace_case)
 
-    cloud_heights = []
-    new_xaxis = []
+    # initialize variables for returns later!
+    cloud_heights = [] # height of clouds at each x axis value
+    new_xaxis = [] # x axis values, with repeating values for multiple cloud height cases
+    cloud_counts = np.zeros( 100).tolist() # number of cases with 0, 1, 2, etc cloud layers
 
-    cloud_counts = np.zeros( 100).tolist()
-
+    # Find cloud heights and x axis values for each index... the for loop is needed
+    # to account for multiple values at each layer!
     for i in range( len( power_index)):
         cloud_heights += [ -H[ power_index[i] ].values - blank_vals[ i] ]
         new_xaxis += np.full( shape=len(power_index[i]), fill_value= axis[i] ).tolist()
 
-        # print( power_index[ i])
-        # print( len( power_index[ i]))
-
+        # also, count the numebr of cloud layers!
         cloud_number_i = len( power_index[ i])
         cloud_counts[ cloud_number_i] += 1
 
-    print( cloud_counts)
-
-    '''
-    for i in range( len( power_index)):
-        print( 'index: ' + str( i))
-        print( power_index[ i])
-        print( cloud_heights[ i])
-    '''
+    # trim the huge number of trailing zeros off the array!
+    cloud_counts = np.trim_zeros( np.array( cloud_counts), trim='b').tolist()
 
     # try flattening all of the lists for easier plotting
+    # this turns things from a list of lists into one flattened list!
     flat_power_index = [item for sublist in power_index for item in sublist]
     flat_cloud_heights = [item for sublist in cloud_heights for item in sublist]
 
-    # print( new_xaxis)
-    # print( flat_power_index)
-    # print( flat_cloud_heights)
-
-#    cloud_heights = -H[ power_index] - blank_vals
-#    cloud_heights = np.where( cloud_heights < 0, 0, cloud_heights)
-
     warnings.filterwarnings("default")
-
     return flat_cloud_heights, new_xaxis, cloud_counts
 
 
