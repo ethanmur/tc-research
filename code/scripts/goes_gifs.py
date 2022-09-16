@@ -31,30 +31,33 @@ def load_goes( gif_path, print_files=True):
     return helper_fns.display_data_files( gif_path, 'goes', print_files)
 
 def print_dates():
-    goes_folders = [ '0818', '0819', '0820', '0821', '0827', '0926', '0927', '0929']
+    goes_folders = [ '0812am', '0812pm', '0813', '0816', '0817', '0818', '0819', '0820', '0821', '0827', '0926', '0927', '0929']
     for i in range( len( goes_folders)):
         print( "Dataset "+ str( i) + ": " + str( goes_folders[ i]))
 
 def one_in_situ_plot( dataset):
 
     # a list of helper information
-    goes_folders = [ '0818', '0819', '0820', '0821', '0827', '0926', '0927', '0929']
+    goes_folders = [ '0812am', '0812pm', '0813', '0816', '0817', '0818', '0819', '0820', '0821', '0827', '0926', '0927', '0929']
 
     # load crl data
     crl_path = "/Users/etmu9498/research/data/CRL_data/2021"
     crl_list = make_plots.load_crl( crl_path, print_files=False)
-    crl_numbers = [ 7, 8, 9, 11, 12, 16, 17, 18]
+    crl_numbers = [ 1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 16, 17, 18]
 
     in_situ_path = "/Users/etmu9498/research/data/in-situ"
     in_situ_list = make_plots.load_flight_level(in_situ_path, print_files=False)
-    in_situ_numbers = [ 9, 12, 14, 16, 17, 31, 32, 34]
+    in_situ_numbers = [ 4, 5, 6, 7, 8, 9, 12, 14, 16, 17, 31, 32, 34]
 
-    dataset_list = [ 0, 3, 0, 2, 0, 0, 3, 5]
-    name_list = [ 'grace', 'grace', 'henri', 'henri', 'ida', 'sam', 'sam', 'sam']
-    extent_list = [ [ -89, -80, 17, 23], [ -95, -85, 18, 25], [ -77, -71, 28, 35],
-            [ -75, -67, 34, 40] , [ -87, -81, 19.5, 25.5], [ -55, -46, 12, 18], [ -57, -49, 13, 19],
-            [ -61, -54, 16, 24] ] # the original extent
+    dataset_list = [ 0, 3,        0, 2, 0, 0, 3, 5] # fix this!! need to edit metadata if arrows are needed
+    name_list = [ 'fred', 'fred', 'grace', 'grace', 'grace', 'grace', 'henri', 'henri', 'ida', 'sam', 'sam', 'sam']
+    extent_list = [ [ -80, -70, 16, 24], [ -80, -70, 16, 24], [-90, -74, 18, 25], # fred zoomed in: [ -77, -73, 20, 24], [ -80, -74, 20, 25],
+            [ -76, -68, 15, 20], [ -80, -72, 15, 21], [ -89, -80, 17, 23], [ -95, -85, 18, 25],
+            [ -77, -71, 28, 35], [ -75, -67, 34, 40],
+            [ -87, -81, 19.5, 25.5],
+            [ -55, -46, 12, 18], [ -57, -49, 13, 19], [ -61, -54, 16, 24] ] # the original extent
             # [ -58.5, -57, 19.5, 21] ] # the new, zoom in extent
+
     # rename the input dataset as i becuase I'm lazy and don't want to change my old code lol
     i = dataset
 
@@ -70,7 +73,7 @@ def one_in_situ_plot( dataset):
     dataset = dataset_list[ i]
     name = name_list[ i]
     extent = extent_list[ i]
-    goes_gifs.goes_in_situ( goes_names, goes_data_path, crl_name, crl_path, extent, in_situ_path, in_situ_name, tcname=name, dataset=dataset)
+    goes_gifs.goes_in_situ( goes_names, goes_data_path, crl_name, crl_path, extent, in_situ_path, in_situ_name, tcname=name, dataset=dataset, goes_folders= goes_folders[ i])
 
 
 def all_in_situ_plots():
@@ -109,24 +112,35 @@ def all_in_situ_plots():
         goes_gifs.goes_in_situ( goes_names, goes_data_path, crl_name, crl_path, extent, in_situ_path, in_situ_name, tcname=name, dataset=dataset)
 
 
-def goes_in_situ( goes_names, goes_data_path, flight_name, flight_path, extent, p, n, tcname=None, dataset = None): # flight_line):
+def goes_in_situ( goes_names, goes_data_path, flight_name, flight_path, extent, p, n, tcname=None, dataset = None, goes_folders= None): # flight_line):
     """
     goes_wv_upper_gif generates images from satellite data (located in a folder
     specified by the user), and saves them automatically to a unique folder.
     The output folder can be found under research/figures/goes-gifs. The clean IR
     band on the goes satellite is used for this analysis.
     """
-    channel_name = "CMI_C10" # "CMI_C13"
-    channel_full_name = "GOES-16 Lower Water Vapor Channel"# "GOES-16 Clean IR Channel"
+    channel_name = "CMI_C13" # "CMI_C10" #
+    channel_full_name = "GOES-16 Clean IR Channel" # "GOES-16 Lower Water Vapor Channel"#
     os.chdir( goes_data_path)
     first_dataset = xr.open_dataset( goes_names[ 0])
     scan_start_first_dataset = datetime.strptime( first_dataset.time_coverage_start, '%Y-%m-%dT%H:%M:%S.%fZ')
-    output_folder = scan_start_first_dataset.strftime('%m%d%Y') + "_in_situ"
+
+    # special cases for fred am and pm flights
+    show_in_situ = True
+
+    if goes_folders == '0812am':
+        output_folder = '08122021am_in_situ'
+        show_in_situ = False
+    elif goes_folders == '0812pm':
+        output_folder = '08122021pm_in_situ'
+    else:
+        output_folder = scan_start_first_dataset.strftime('%m%d%Y') + "_in_situ"
+
     plot_color = 'RdYlBu' # 'Greys'
     flight_line_color = 'g'
     goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name, channel_full_name, goes_names,
-        goes_data_path, flight_name, flight_path, extent=extent, show_in_situ=True, in_situ_data_path=p, in_situ_name=n,
-        shear_arrow = True, tcname=tcname, dataset = dataset)
+        goes_data_path, flight_name, flight_path, extent=extent, show_in_situ=show_in_situ, in_situ_data_path=p, in_situ_name=n,
+        shear_arrow = False, tcname=tcname, dataset = dataset)
 
 
 
@@ -250,7 +264,7 @@ def goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name,
 
 
     # load tc data, if applicable
-    if tcname:
+    if tcname and tcname != 'fred':
         metadata = tc_metadata.all_data( tc= tcname)
     else:
         metadata = None
@@ -425,13 +439,14 @@ def goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name,
 
             # print( 'colorbar added')
 
-        '''
         # otherwise, just use a solid line to denote the flight path
         else:
+            lon = crl_data.Lon.values
+            lat = crl_data.Lat.values
             track = sgeom.LineString(zip(lon, lat))
             ax.add_geometries([track], ccrs.PlateCarree(),
                             facecolor='none', edgecolor= flight_line_color, linewidth=1)
-        '''
+
 
         # add the ships derived center last for optimal overlap
         # if add_center:

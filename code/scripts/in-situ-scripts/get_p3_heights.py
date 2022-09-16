@@ -145,10 +145,16 @@ def interp_data2(matrix, original_crl_heights, p3_heights, grace_case=False, tem
         # and no shift might get rid of 10 m of valid data, but is the best
         # method I can think of for trimming data
 
-        # special case for grace data which is inexplicably shifted up by 950 m...
-        if grace_case:
+        # need to shift data down by an extra 400 m
+        if grace_case == 17:
+            hdiff = orig_maxh - p3h - shift - .4 # old shift was .95
+            trim_h = np.linspace( - p3h - .4 , 0.0 + hdiff, np.size( matrix, 1))
+
+        # need to shift data up by an extra 650 m
+        elif grace_case == 18:
             hdiff = orig_maxh - p3h - shift + .65 # old shift was .95
             trim_h = np.linspace( - p3h + .65 , 0.0 + hdiff, np.size( matrix, 1))
+
         else:
             hdiff = orig_maxh - p3h - shift # the - shift is a lil extra padding to see what's going on
             # make a new height profile for this column, from 0 to p-3 height

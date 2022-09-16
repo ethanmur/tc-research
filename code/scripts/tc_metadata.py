@@ -24,37 +24,62 @@ def all_data( tc='sam'):
     crl_list = make_plots.load_crl(crl_path, print_files=False)
     in_situ_list = make_plots.load_flight_level(in_situ_path, print_files=False)
 
-    if tc.casefold() == 'grace':
+    if tc.casefold() == 'fred':
+        tdr_path = "/Users/etmu9498/research/data/tdr/fred/nc-files"
+        tdr_list = make_plots.load_tdr(tdr_path, print_files=False)
+        xlims = [
+            ( -77, -72), ( -77, -72), (24, 18),
+            ( -77, -73.5), (-77, -73.5 ),
+            (-79, -75), (-79, -75) ]
+        dates = [
+            '08-12-am', '08-12-am', '08-12-am',
+            '08-12-pm', '08-12-pm',
+            '08-13', '08-13' ]
+        eye_pass = [ "1", "2", "3", "1", "2", "1", "2"]
+        tc_name = 'Fred'
+
+    elif tc.casefold() == 'grace':
         tdr_path = "/Users/etmu9498/research/data/tdr/grace/nc-files"
         tdr_list = make_plots.load_tdr(tdr_path, print_files=False)
 
-        crl_range = [
+        crl_range = [ ( 0, 1800), (2250, 4100), (4800, 6550), # 8/17
             (0, 2100), (2800, 3570, 3655, 4400), (5000, 6200), # 8/18
             # eye 2 had a spiral, 4 indices get rid of it
             (0, 1600), (2100, 3300), (4000, 5700) ] # 8/19 # eye 2 (2100, 3900) removed... add it again!
-        xlims = [
-            ( 22, 18), (-86.5, -82.5 ), (21, 18 ),
-            (-92, -89), (-92, -90), (-93, -89) ] # , (-92, -90)
-        xtype = [ 'lat', 'lon', 'lat', 'lon', 'lon', 'lon']
+
+        xlims = [ (20, 16), (-78.5, -74), (20, 17), # 8/17
+            ( 22, 18), (-86.5, -82.5 ), (21, 18 ), # 8/18
+            (-92, -89), (-92, -90), (-93, -89) ] # 8/19
+        xtype = ['lat', 'lon', 'lat', 'lat', 'lon', 'lat', 'lon', 'lon', 'lon']
 
         # original eyewall distances when using tdr axis
         eyewall_dists = [ ( -12.5, 17.5), (-35, 12.5  ), (-10, 35),
             (-62.5, -10), (10, 85), ( -55, 25) ]
-        in_situ_eyewall_dists = [ (-12.5, 15), (-25, 30), (-20, 25),
-            (-35, 12.5), (10, 70), (-55, 30)]
+        # new eyewall distances for height corrected data with an x axis based on in situ data
+        # new, precise limits
+        in_situ_eyewall_dists = [ (-65, 72.5), (-75, 57.5), (-48, 53),
+                (-11.5, 17), (-22.0, 7.5), (-12.5, 26),
+                (-32.5, 11), ( 10, 70), (-55.5, 29.5)]
+
+        # old limits
+        # [ (-12.5, 15), (-25, 10), (-20, 25),
+        #     (-35, 12.5), (10, 70), (-55, 30)]
+
 
         dates = [
+            '08-17', '08-17', '08-17',
             '08-18', '08-18', '08-18',
             '08-19', '08-19', '08-19' ]
-        eye_pass = [ "1", "2", "3", "1", "2", "3"]
+        eye_pass = [ "1", "2", "3", "1", "2", "3", "1", "2", "3"]
 
         # parameters used for getting an accurate distance axis in new crl data
         stretch = [ 1, 1, 1, 1, 1, 1]
         shift = [ 20, 0, 0, 0, 0, 10]
+
         tc_name = 'Grace'
 
-        shrd = [ 105, 105, 105, 81, 81, 81] # 0 utc the following day used for most cases
-        shtd = [ 135, 135, 135, 169, 169, 169]
+        shrd = [ 107, 107, 107, 105, 105, 105, 81, 81, 81] # 0 utc the following day used for most cases
+        shtd = [ 142, 142, 142, 135, 135, 135, 169, 169, 169]
 
         shear_dir = shtd
         shear_mag = shrd
@@ -64,7 +89,7 @@ def all_data( tc='sam'):
         tc_center_lon = []
 
         # tc intensity (kts) at time of flight, taken from noaa summary docs
-        intensity = [70, 70, 70, 55, 55, 55 ]
+        intensity = [45, 45, 45, 70, 70, 70, 55, 55, 55 ]
         intensity_cat = find_cat( intensity)
 
     elif tc.casefold() == 'henri':
@@ -85,8 +110,14 @@ def all_data( tc='sam'):
 
         eyewall_dists = [(-22, 57), (-30, 75),
             (-12.5, 35), (-10, 30), (-20, 30)]
-        in_situ_eyewall_dists = [(-25, 55), (-30, 77.5),
-            (-10, 35), (-17.5, 25), (-20, 35)]
+
+        # a lot of these values need to be improved :(
+        in_situ_eyewall_dists = [( 5, 45), (5, 36), # fix only positive dists!
+            (-11, 21), (-17.5, 25), (-21, 36)]
+
+            # [(-25, 55), (-30, 77.5),
+            # (-10, 20), (-17.5, 25), (-20, 35)]
+
 
         dates = [ '08-20', '08-20',
             '08-21', '08-21', '08-21' ]
@@ -121,7 +152,10 @@ def all_data( tc='sam'):
         # else, but worth a closer look... maybe 1 good eye dataset here!
 
         eyewall_dists = [(-15, 65), (-35, 15), (-30, 50), (-12.5, 10)]
-        in_situ_eyewall_dists = [(-25, 65), (-25, 35), (-15, 75), (-25, 20)]
+        in_situ_eyewall_dists = [(-25, 60), (-26, 34), (-15, 75), (-7, 20)]
+
+        # older in situ eyewalls: new values are more accurate
+        # [(-25, 65), (-25, 35), (-15, 75), (-25, 20)]
 
         dates = [ '08-27', '08-27', '08-27', '08-29']
         stretch = [ 1, 1, 1, 1]
@@ -162,8 +196,16 @@ def all_data( tc='sam'):
         eyewall_dists = [( -5, 15), (-10, 15), (-30, 12.5),
             (-5, 30), (-20, 10),
             (-25, 20), (-15, 35) ]
-        in_situ_eyewall_dists = [ (-5, 30), (-5, 30), (-40, 5),
-            (-5, 35), (-20, 12.5), (-35, 30), (-20, 35)]
+
+        # case 9/26 eye 3 is hard here: wind speed max is around -40, but cloud towers continue to around -47 km...
+        in_situ_eyewall_dists = [ (-3, 31), (-2, 28), (-40, 5),
+                # case 2 is hard... moved eyewall back to match plume
+                (-2, 37), (-22, 12.5),
+                (-33, 33), (-21, 34)]
+
+        # older in situ eyewalls: new values are more accurate
+        # [ (-5, 30), (-5, 30), (-40, 5),
+        #     (-5, 35), (-20, 12.5), (-35, 30), (-20, 35)]
 
         dates = [
             '09-26', '09-26', '09-26', '09-27', '09-27', '09-29', '09-29']
@@ -320,9 +362,11 @@ def choose_in_situ_date( date, insitu_list):
 
 def choose_tdr_data( tc_name, tdr_list, counter):
     if tc_name.casefold() == 'grace':
-        inbound_data = [ tdr_list[ 10], tdr_list[ 12], tdr_list[ 14],
+        inbound_data = [ tdr_list[ 4], tdr_list[ 6], tdr_list[ 8],
+            tdr_list[ 10], tdr_list[ 12], tdr_list[ 14],
             tdr_list[ 16], tdr_list[ 18], tdr_list[ 20] ]
-        outbound_data = [ tdr_list[ 11], tdr_list[ 13], tdr_list[ 15],
+        outbound_data = [ tdr_list[ 5], tdr_list[ 7], tdr_list[ 9],
+            tdr_list[ 11], tdr_list[ 13], tdr_list[ 15],
             tdr_list[ 17], tdr_list[ 19], tdr_list[ 21] ]
     elif tc_name.casefold() == 'henri':
         inbound_data = [ tdr_list[ 0], tdr_list[ 4], tdr_list[ 6], tdr_list[ 8], tdr_list[ 10] ]
@@ -354,25 +398,28 @@ def choose_new_data( tc_name, counter):
     crl_list = make_plots.load_crl( crl_path, print_files=False)
 
     if tc_name.casefold() == 'grace':
-        tdr_data = [ tdr_list[ 0], tdr_list[ 1], tdr_list[ 2],
+        tdr_data = [  tdr_list[ 0], tdr_list[ 0], tdr_list[ 0], # this dataset hasn't been created for 8/17 yet :(
+            tdr_list[ 0], tdr_list[ 1], tdr_list[ 2],
             tdr_list[ 3], tdr_list[ 4], tdr_list[ 5] ]
         crl_data = [ crl_list[ 0], crl_list[ 1], crl_list[ 2],
-            crl_list[ 3], crl_list[ 4], crl_list[ 5] ]
+            crl_list[ 3], crl_list[ 4], crl_list[ 5],
+            crl_list[ 6], crl_list[ 7], crl_list[ 8]  ]
     elif tc_name.casefold() == 'henri':
         tdr_data = [ tdr_list[ 6], tdr_list[ 7], tdr_list[ 8], tdr_list[ 9], tdr_list[ 10]  ]
-        crl_data = [ crl_list[ 6], crl_list[ 7], crl_list[ 8], crl_list[ 9], crl_list[ 10] ]
+        crl_data = [ crl_list[ 9], crl_list[ 10], crl_list[ 11], crl_list[ 12], crl_list[ 13] ]
     elif tc_name.casefold() == 'ida':
         tdr_data = [ tdr_list[ 11], tdr_list[ 12], tdr_list[ 13], tdr_list[ 14]]
-        crl_data = [ crl_list[ 11], crl_list[ 12], crl_list[ 13], crl_list[ 14]]
+        crl_data = [ crl_list[ 14], crl_list[ 15], crl_list[ 16], crl_list[ 17]]
     elif tc_name.casefold() == 'sam':
         tdr_data = [ tdr_list[ 15], tdr_list[ 16], tdr_list[ 17], tdr_list[ 18],
             tdr_list[ 19], tdr_list[ 20], tdr_list[ 21] ]
-        crl_data = [ crl_list[ 15], crl_list[ 16], crl_list[ 17], crl_list[ 18],
-            crl_list[ 19], crl_list[ 20], crl_list[ 21] ]
+        crl_data = [ crl_list[ 18], crl_list[ 19], crl_list[ 20], crl_list[ 21],
+            crl_list[ 22], crl_list[ 23], crl_list[ 24] ]
     else:
         print( 'update if statement!')
         return 1, 1
     return tdr_data[ counter], crl_data[ counter]
+
 
 def choose_new_in_situ_name( tc_name, counter):
     path = "/Users/etmu9498/research/data/in-situ-new"
@@ -380,14 +427,15 @@ def choose_new_in_situ_name( tc_name, counter):
 
     if tc_name.casefold() == 'grace':
         name = [ list[ 0], list[ 1], list[ 2],
-            list[ 3], list[ 4], list[ 5] ]
+            list[ 3], list[ 4], list[ 5],
+            list[ 6], list[ 7], list[ 8] ]
     elif tc_name.casefold() == 'henri':
-        name = [ list[ 6], list[ 7], list[ 8], list[ 9], list[ 10] ]
+        name = [ list[ 9], list[ 10], list[ 11], list[ 12], list[ 13] ]
     elif tc_name.casefold() == 'ida':
-        name = [ list[ 11], list[ 12], list[ 13], list[ 14]]
+        name = [ list[ 14], list[ 15], list[ 16], list[ 17]]
     elif tc_name.casefold() == 'sam':
-        name = [ list[ 15], list[ 16], list[ 17], list[ 18],
-            list[ 19], list[ 20], list[ 21] ]
+        name = [ list[ 18], list[ 19], list[ 20], list[ 21],
+            list[ 22], list[ 23], list[ 24] ]
     else:
         print( 'update if statement!')
         return 1, 1

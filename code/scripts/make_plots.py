@@ -377,6 +377,7 @@ def plot_rh(data_path, data_file, index1, index2, xaxis_name):
     crl_rh = crl_rh.where( crl_rh.values <= 100)
     crl_rh = crl_rh.where( crl_rh.values >= 0)
 
+    '''
     print( 'temp: ' + str( type( temp)))
     print( 'temp: ' + str( np.shape( temp)))
     print( 'wvmr: ' + str( type( wvmr)))
@@ -387,7 +388,7 @@ def plot_rh(data_path, data_file, index1, index2, xaxis_name):
     print( 'es: ' + str( np.shape( e_s)))
     print( 'rh: ' + str( type( crl_rh)))
     print( 'rh: ' + str( np.shape( crl_rh)))
-
+    '''
 
     # plot things
     plt.pcolormesh( xaxis, - crl_data.H, crl_rh)

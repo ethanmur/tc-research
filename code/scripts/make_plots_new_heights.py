@@ -28,10 +28,21 @@ def x_axis_helper( data_path, data_file, xaxis):
         return xaxis
     elif xaxis == 'time':
         xaxis = crl_data.time
+        return xaxis
     elif xaxis == 'tdr-dist':
         xaxis = crl_data.tdr_distance
+        return xaxis
     elif xaxis == 'in-situ-dist':
         xaxis = crl_data.in_situ_distance
+        return xaxis
+    elif xaxis == 'rmw':
+        # xaxis = [ str( value) for value in crl_data.rmw]
+        xaxis = crl_data.rmw
+        return xaxis
+    elif xaxis == 'rmw-negatives':
+        # xaxis = [ str( value) for value in crl_data.rmw]
+
+        xaxis = np.ma.masked_invalid( crl_data.rmw_negatives.values)
         return xaxis
     else:
         print("Error: Please Choose 'lat', 'lon', 'time', 'in-situ-dist' or 'tdr-dist' for the x axis")

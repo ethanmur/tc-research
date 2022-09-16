@@ -50,7 +50,6 @@ def save_one_in_situ(tcname, dataset, metadata, shift_crl_dist, add_dist_coords)
 
     # load the actual data for editing
     in_situ_data = load_in_situ_data.load_in_situ( metadata['in_situ_path'], insitu_name)
-    # make a copy of the crl data: this will eventually become the new, full dataset!
     newData = in_situ_data.copy()
 
     # use a helper script to find the new distance array for the in situ data!

@@ -1,5 +1,16 @@
+# Author: Ethan Murray
+# Date: 9/8/22
+
+# methods used to load and process in situ data
+
+import pandas as pd
+import os
+import xarray as xr
+
 flight_path = "/Path/to/data"
 flight_name = '20210816H1_iwg1.txt'
+
+# load data-
 os.chdir( flight_path)
 in_situ_data = pd.read_csv( flight_name, header=None)
 

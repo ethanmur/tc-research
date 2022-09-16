@@ -333,8 +333,11 @@ def cta_prominence_in_situ( power, cutoff_power, xaxis, H_index_matrix, p3_heigh
         # if no peaks exist, pick the end of the first clear cloud layer
         if np.size( peaks[0]) == 0:
 
-            # annoying grace case
-            if grace_case:
+            # annoying grace cases
+            if grace_case == 1:
+                ind_first_power_val = ( np.abs( np.subtract( H, p3_heights[ column_index] + .4))).argmin()
+                power_index[ column_index] = first_consec_inds[ -1] - ind_first_power_val
+            elif grace_case == 2:
                 ind_first_power_val = ( np.abs( np.subtract( H, p3_heights[ column_index] - .65))).argmin()
                 power_index[ column_index] = first_consec_inds[ -1] - ind_first_power_val
             # normal case
@@ -397,30 +400,50 @@ def cta_prominence_many_cloud_layers( power, cutoff_power, xaxis, H_index_matrix
         # trim the power column to the size of the first clear air patch
         power_column = power_column[ first_consec_inds[0] : first_consec_inds[-1] ]
 
+
         # try to find peaks in this dataset!
-        peaks = find_peaks( power_column, prominence= 5, wlen=100, height=-25) # , width = 5)
-        # if no peaks exist, pick the end of the first clear cloud layer
-        if np.size( peaks[0]) == 0:
-            # annoying grace case
-            if grace_case:
-                ind_first_power_val = ( np.abs( np.subtract( H, p3_heights[ column_index] - .65))).argmin()
-                # wrap all index values with parentheses to differentiate between the different runs!
-                power_index += [[ first_consec_inds[ -1] - ind_first_power_val.values]]
-            # normal case
+
+        # first, try to do this with a minimal distance between cloud layer threshold
+        peaks = find_peaks( power_column, prominence= 5, wlen=100, height=-25, distance=50) # , width = 5)
+
+        # if only one peak is left, the algorithm might have gotten rid of the top point
+        # because its magnitude was smaller. This would remove the top cloud layer!
+        # To prevent this, run the find peaks function again without the height requirement
+        if np.size( peaks[0]) <= 1:
+            peaks = find_peaks( power_column, prominence=5, wlen=100, height=-25)
+
+            # if no peaks exist, pick the end of the first clear cloud layer
+            if np.size( peaks[0]) == 0:
+                # annoying grace case
+                if grace_case:
+                    ind_first_power_val = ( np.abs( np.subtract( H, p3_heights[ column_index] - .65))).argmin()
+                    # wrap all index values with parentheses to differentiate between the different runs!
+                    power_index += [[ first_consec_inds[ -1] - ind_first_power_val.values]]
+                # normal case
+                else:
+                    # look at the last value in the first array of non NaN values: this represents
+                    # the end of the first clear air chunk beneath the plane! Aka the cloud top
+                    # this value actually needs to get shifted up by the distance of the blank
+                    # space! This line of code was causing some problems with the new in situ data
+                    ind_first_power_val = ( np.abs( np.subtract( H, p3_heights[ column_index]))).argmin()
+
+                    # shift values up by the distance contained in the blank space!
+                    # wrap all index values with parentheses to differentiate between the different runs!
+                    power_index += [[ first_consec_inds[ -1] - ind_first_power_val.values]]
+
+            # case where local peaks exist! Use the prominence output from find_peaks
             else:
-                # look at the last value in the first array of non NaN values: this represents
-                # the end of the first clear air chunk beneath the plane! Aka the cloud top
-                # this value actually needs to get shifted up by the distance of the blank
-                # space! This line of code was causing some problems with the new in situ data
-                ind_first_power_val = ( np.abs( np.subtract( H, p3_heights[ column_index]))).argmin()
+                # return only the first peak! Since only one cloud layer passed the
+                # distance test above, pick the highest cloud
 
-                # shift values up by the distance contained in the blank space!
-                # wrap all index values with parentheses to differentiate between the different runs!
-                power_index += [[ first_consec_inds[ -1] - ind_first_power_val.values]]
+                # the parentheses are to allow the item to be added to the index, while keeping
+                # it as its own list!
+                power_index += [[ peaks[0][0]]]
 
-        # case where local peaks exist! Use the prominence output from find_peaks
+        # two or more peaks exist, even with the distance sorting: return them all!
         else:
             # return ALL peaks here!
             # peaks[0] returns all peaks, peaks[0][0] would return only the first peak
             power_index += [ peaks[0] ]
+
     return power_index

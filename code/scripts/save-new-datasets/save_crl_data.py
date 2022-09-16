@@ -25,7 +25,11 @@ def save_all_crl(tcname='all', shift_crl_dist=False, add_dist_coords=False):
         # load the metadata for this tc
         metadata = tc_metadata.all_data( tc= tcname)
         # look at one specific cross section from this tc
+
+        print( range( len( metadata['dates'])))
+
         for dataset in range( len( metadata['dates'])):
+
             # use the function below to process and clean up the tdr data!
             crl_data = save_one_crl( tcname, dataset, metadata, shift_crl_dist, add_dist_coords)
 
@@ -46,9 +50,29 @@ def save_all_crl(tcname='all', shift_crl_dist=False, add_dist_coords=False):
 def save_one_crl(tcname, dataset, metadata, shift_crl_dist, add_dist_coords):
     # load the data names for this case
     crl_name = tc_metadata.choose_crl_date( metadata[ 'dates'][ dataset], metadata[ 'crl_list'])
+
+    # special 4 ind case: use datasets that have already chopped out microphysical spiral
+    # the function that creates these datasets is under save-new-datasets/trim_spiral
+    if len( metadata[ 'crl_range'][dataset]) == 4:
+        path = "/Users/etmu9498/research/data/crl-spiral-cases" # path to previously created data
+    # general 2 ind case: use original dataset
+    else:
+        path = metadata[ 'crl_path']
+
     # load the actual crl data for editing
-    os.chdir( metadata[ 'crl_path'])
+    os.chdir( path)
     crl_data = xr.open_dataset( crl_name)
+
+    # special 4 ind case: use datasets that have already chopped out microphysical spiral
+    if len( metadata[ 'crl_range'][dataset]) == 4:
+        # i1 and i2 are different in this case because this dataset has already been trimmed down!
+        i1 = 0
+        i2 = len( crl_data.time)
+    # general 2 ind case: use original dataset
+    else:
+        # define i1 and i2 locally for convenience
+        i1 = metadata[ 'crl_range'][dataset][0]
+        i2 = metadata[ 'crl_range'][dataset][1]
 
     # make a copy of the crl data: this will eventually become the new, full dataset!
     crl_new = crl_data.copy()
@@ -59,20 +83,14 @@ def save_one_crl(tcname, dataset, metadata, shift_crl_dist, add_dist_coords):
     disclaimer = 'This Dataset is a subset of the full CRL dataset for ' + metadata['dates'][dataset] + '-2021. Please see the file ' + crl_name + ' for the full dataset.'
     crl_new.attrs[ 'global_att4'] = disclaimer
 
-    # define i1 and i2 locally for convenience
-    i1 = metadata[ 'crl_range'][dataset][0]
-
-    # special 4 ind case to chop out
-    if len( metadata[ 'crl_range'][dataset]) == 4:
-        i2 = metadata[ 'crl_range'][dataset][3]
-    # general 2 ind case
-    else:
-        i2 = metadata[ 'crl_range'][dataset][1]
+    disclaimer2 = "Microphysical spirals in the eyes of TC Grace, 8/18, Pass 2 and TC Henri, 8/21, Pass 1 were removed for data continuity purposes. "
+    crl_new.attrs[ 'global_att5'] = disclaimer2
 
     # add time and height as coordinates, not variables!
-    cliptime = crl_data.time[ i1 : i2 ]
+    cliptime = crl_data.time[ i1:i2]
     crl_new = crl_new.assign_coords( {'time': cliptime })
     crl_new = crl_new.assign_coords( {'H': crl_data.H }) # leaving this name as H to keep consistent with old code
+
 
     # you might have to comment out the next four lines of code to get things to work!
     # find_dist_new_tdr implicitly looks at the current new_crl dataset, so if it's
@@ -82,17 +100,12 @@ def save_one_crl(tcname, dataset, metadata, shift_crl_dist, add_dist_coords):
         # use a helper function to determine distance coords from lat / lon values!
         # new_dist is from tdr based conversions, while new_dist2 is from in situ data
         new_dist = find_crl_distance.find_dist_new_tdr( tcname, dataset)
+        print( "TDR Distance axis created")
         new_dist2 = find_crl_distance.find_crl_dist_in_situ( tcname, dataset, returnval='crl')
+        print( "In Situ Distance axis created")
 
         if new_dist2 is None:
             return
-
-        # shifting the crl center point distances using metadata stored in all_plots
-        # this is optional and defaults to False
-        if shift_crl_dist:
-            shift = metadata[ 'shift'][ dataset]
-            stretch = metadata[ 'stretch'][ dataset]
-            new_dist = new_dist * stretch + shift
 
         # save the newly created distance array as a coordinate in the crl file!
         crl_new = crl_new.assign_coords( {'tdr_distance': new_dist })
@@ -116,7 +129,7 @@ def save_one_crl(tcname, dataset, metadata, shift_crl_dist, add_dist_coords):
             # put everything into numpy form using .data to avoid xr error
             dataclip = currentdata [ i1:i2].data
             # add data to the new, smaller xarray file
-            crl_new = crl_new.assign( { var_list[ key_ind]: ( ('height', 'time'), dataclip) })
+            crl_new = crl_new.assign( { var_list[ key_ind]: ( ('time', 'H'), dataclip) }) # used to be ('height':'time')
 
             # add all the attribute metadata to each variable in the new dataset!
             # get the old metadata
@@ -153,7 +166,7 @@ def save_one_crl(tcname, dataset, metadata, shift_crl_dist, add_dist_coords):
 
 
 
-def save_all_new_matrices( tcname='all'):
+def save_all_new_matrices( tcname='all', add_rmw = False, dist_lim=False):
     if tcname == 'all':
         tcname_list = ['grace', 'henri', 'ida', 'sam']
     else:
@@ -165,7 +178,7 @@ def save_all_new_matrices( tcname='all'):
         # look at one specific cross section from this tc
         for dataset in range( len( metadata['dates'])):
             # use the function below to process and clean up the tdr data!
-            crl_data = save_one_p3_height_matrix( tcname, dataset)
+            crl_data = save_one_p3_height_matrix( tcname, dataset, add_rmw, dist_lim)
 
             if crl_data is None:
                 return
@@ -179,7 +192,7 @@ def save_all_new_matrices( tcname='all'):
     return
 
 
-def save_one_p3_height_matrix(tcname, dataset):
+def save_one_p3_height_matrix(tcname, dataset, add_rmw, dist_lim=False):
     warnings.filterwarnings("ignore")
 
     metadata = tc_metadata.all_data( tc= tcname)
@@ -194,6 +207,31 @@ def save_one_p3_height_matrix(tcname, dataset):
                 ' Results are based on the original file ' + crl_name + '.')
     crl_data.attrs[ 'global_att5'] = disclaimer
 
+    # code to add radius of maximum winds!
+    if add_rmw:
+        # use a helper function to add rmw data
+        new_dist3, new_dist4 = find_crl_distance.find_crl_rmw( tcname, dataset, dist_lim)
+        print( "RMW axis created")
+
+        # save the in rmw array in a separate variable
+        crl_data = crl_data.assign_coords( {'rmw': new_dist3 })
+        crl_data.in_situ_distance.attrs['long_name'] = 'rmw'
+        crl_data.in_situ_distance.attrs['units'] = 'unitless'
+        crl_data.in_situ_distance.attrs['description'] = 'TC center: RMW = 0. Distance from the TC center to the max in situ wind speed: RMW = 1'
+
+        # the same as rmw above, but with negative values on axes, too!
+        crl_data = crl_data.assign_coords( {'rmw_negatives': new_dist4 })
+        crl_data.in_situ_distance.attrs['long_name'] = 'rmw_negatives'
+        crl_data.in_situ_distance.attrs['units'] = 'unitless'
+        crl_data.in_situ_distance.attrs['description'] = 'TC center: RMW = 0. Distance from the TC center to the max in situ wind speed: RMW = 1 or -1'
+
+        '''
+        # also save rmw values as floats! this will be convenient for plotting, etc
+        crl_data = crl_data.assign_coords( {'rmw': new_dist3 })
+        crl_data.in_situ_distance.attrs['long_name'] = 'rmw'
+        crl_data.in_situ_distance.attrs['units'] = 'unitless'
+        crl_data.in_situ_distance.attrs['description'] = 'TC center: RMW = 0. Distance from the TC center to the max in situ wind speed: RMW = 1'
+        '''
 
     # add new matrices that account for changes in P-3 height!
 
@@ -238,13 +276,19 @@ def save_one_p3_height_matrix(tcname, dataset):
     '''
     # new function
     # this case accounts for the annoying extra 1 km of noise in grace 8/18 data ;/
+    # fix this line again if adding 8/16 data too!
     if tcname == 'grace' and dataset < 3:
-        newh, T_2d = get_p3_heights.interp_data2( T_2d, crl_data.H, p3_heights, grace_case=True)
-        newh, power_2d = get_p3_heights.interp_data2( power_2d, crl_data.H, p3_heights, grace_case=True)
-        newh, wv_2d = get_p3_heights.interp_data2( wv_2d, crl_data.H, p3_heights, grace_case=True)
-        newh, lsr_2d = get_p3_heights.interp_data2( lsr_2d, crl_data.H, p3_heights, grace_case=True)
+        newh, T_2d = get_p3_heights.interp_data2( T_2d, crl_data.H, p3_heights, grace_case=17)
+        newh, power_2d = get_p3_heights.interp_data2( power_2d, crl_data.H, p3_heights, grace_case=17)
+        newh, wv_2d = get_p3_heights.interp_data2( wv_2d, crl_data.H, p3_heights, grace_case=17)
+        newh, lsr_2d = get_p3_heights.interp_data2( lsr_2d, crl_data.H, p3_heights, grace_case=17)
 
-        print
+    elif tcname == 'grace' and dataset > 2 and dataset < 6:
+        newh, T_2d = get_p3_heights.interp_data2( T_2d, crl_data.H, p3_heights, grace_case=18)
+        newh, power_2d = get_p3_heights.interp_data2( power_2d, crl_data.H, p3_heights, grace_case=18)
+        newh, wv_2d = get_p3_heights.interp_data2( wv_2d, crl_data.H, p3_heights, grace_case=18)
+        newh, lsr_2d = get_p3_heights.interp_data2( lsr_2d, crl_data.H, p3_heights, grace_case=18)
+
     else:
         newh, T_2d = get_p3_heights.interp_data2( T_2d, crl_data.H, p3_heights)
         newh, power_2d = get_p3_heights.interp_data2( power_2d, crl_data.H, p3_heights)

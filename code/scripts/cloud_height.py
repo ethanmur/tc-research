@@ -78,10 +78,14 @@ def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time', crl_path =
     if new_heights:
         p3_heights = data.p3_heights[ i1:i2].values / 1000 # convert to km
 
-        # special case for troublesome grace 8/18 data
-        if crl_name[0:15] == 'crl-grace-08-18':
+        # special cases for troublesome grace 8/17 and 8/18 data
+        if crl_name[0:15] == 'crl-grace-08-17':
+            blank_vals = - p3_heights + np.nanmax( -H) -.4 # this value matches the one in get_p3_heights.py
+            grace_case = 1
+
+        elif crl_name[0:15] == 'crl-grace-08-18':
             blank_vals = - p3_heights + np.nanmax( -H) + .65 # this value matches the one in get_p3_heights.py
-            grace_case = True
+            grace_case = 2
 
         # normal case
         else:

@@ -116,7 +116,7 @@ def pdf_one_tc_eye( new_crl_path, new_crl_name, eyewall_dists, title):
     a0.set_xlim( eyewall_dists)
     a0.legend(loc='lower left')
     a0.set_title( title)
-    a0.set_ylim( [ 0, 3.2])
+    a0.set_ylim( [ 0, 3.8])
 
     # view simple histogram of cloud top heights!
     nbins = 25 # number of bins
@@ -131,7 +131,7 @@ def pdf_one_tc_eye( new_crl_path, new_crl_name, eyewall_dists, title):
     a1.set_xlabel( 'Probability of a Given Height Occurence')
     a1.set_ylabel( 'Height from Surface (Km)')
     # plt.title( "TC Sam, 09/26/22, Eye 1, Cloud Top Height Histogram")
-    a1.set_ylim( [-0.2, 3.2])
+    a1.set_ylim( [-0.2, 3.8])
     a1.set_xlim( [0, 2])
     a1.grid(True)
 
@@ -303,9 +303,17 @@ def cloud_height_vs_intensity( ):
 
             # setup
             # load data from new sources
+
+            # use clipped data for 4 ind cases
+            # normal case
+            # if metadata['crl_range'][dataset] == 2:
             tdr_name, new_crl_name = tc_metadata.choose_new_data( tcname, dataset)
             new_crl_path = metadata[ 'um_crl_path']
-            # new code for in situ eyewall distances!
+            # elif metadata['crl_range'][dataset] == 4:
+            #     new_crl_path = metadata[ 'um_crl_path']
+
+
+            # new code for in situ eyewall distances! aka where the eyewall starts and ends
             eyewall_dists = metadata[ 'in_situ_eyewall_dists'][ dataset]
 
             title = ( "CRL Data, TC " + metadata['tc_name'] + ", "
@@ -354,25 +362,37 @@ def cloud_height_vs_intensity( ):
         # no cases for this category (only applies to td's because Fred case hasn't been added yet)
         if len( height) != 0:
             fig, (a0, a1) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 12), facecolor='w')
-            helper_fns.change_font_sizes(small=11, medium=11 )
+
+            helper_fns.change_font_sizes(small=15, medium=15 )
+
             # create a histogram
             plt.sca( a0)
-            sns.distplot( height, bins=25, hist=True, vertical=True, color='y')
-            a0.set_xlabel( 'Probability of a Given Height Occurence')
+
+            # sns.displot( x=height, kind='kde')
+            sns.set_theme(style="white", palette=None)
+            sns.set_context(rc = {'patch.linewidth': 0.0})
+            sns.histplot( y=height, kde=True, bins=25, color = 'y')
+            a0.set_xlabel( 'Count of Given Cloud Height')
             a0.set_ylabel( 'Height from Surface (Km)')
             a0.set_title( "Histogram of All Cloud Heights for " + fig_title[ i])
             a0.set_ylim( [-.2, 3.5])
-            a0.set_xlim( [0, 1.3])
+            a0.set_xlim( [0, 250])
             a0.grid(True)
             a0.axhline( y=height.mean(), c='g', label="Mean height value", linewidth=3)
             a0.axhline( y=np.median(height), c='b', label="Median height value", linewidth=3)
             a0.legend(loc='upper right')
 
+            '''
+            # a0.set_xlim( [0, 1.3])
+            sns.distplot( height, bins=25, hist=True, vertical=True, color='y')
+            a0.set_xlabel( 'Probability of a Given Height Occurence')
+            '''
+
             # print out some useful statistics
             a1.text( 0, 1, ("Number of data points:  " + str( len( height))))
             a1.text( 0, .8, ("Height value range:     " + str( height.min()) + " km to " + str( height.max()) + " km"))
             a1.text( 0, .6, ("Height value mean:      " + str( height.mean()) + " km"))
-            a1.text( 0, .4, ("Height value median:    " + str( np.median( height)) + " km\n"))
+            a1.text( 0, .3, ("Height value median:    " + str( np.median( height)) + " km\n"))
             a1.text( 0, .2, ("Number of cases: " + str( cases[ i])))
             a1.set_axis_off()
             # save the histogram

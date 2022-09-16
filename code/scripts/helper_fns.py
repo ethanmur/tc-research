@@ -1,6 +1,9 @@
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import cm
+from matplotlib.colors import ListedColormap
+import matplotlib
 
 def display_data_files( path, data_type, print_files):
     """
@@ -69,3 +72,24 @@ def closest_val( arg1, arg2):
     index = ( np.abs( np.subtract( arg1, arg2))).argmin()
     value = arg1[ index]
     return index, value
+
+def add_blank_colorbar():
+    # add an empty colorbar to make everything fit in line... kinda a
+    # messy solution but it's ok for now!
+    viridis = cm.get_cmap('viridis', 256)
+    newcolors = viridis(np.linspace(0, 1, 256))
+    white = np.array([ 1, 1, 1, 1])
+    newcolors[:, :] = white
+    white_cmap = ListedColormap(newcolors)
+
+    map = matplotlib.cm.ScalarMappable(cmap= white_cmap, norm=matplotlib.colors.Normalize( vmin= 0, vmax= 1))
+    cbar = plt.colorbar( mappable= map)
+    cbar.set_ticks([])
+    cbar.outline.set_visible(False)
+
+def white_background():
+    plt.rcParams['axes.facecolor']='default'
+    plt.rcParams['savefig.facecolor']='w'
+
+def mpl_defaults():
+    plt.rcdefaults()
