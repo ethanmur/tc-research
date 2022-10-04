@@ -46,13 +46,15 @@ def pdf_all_tc_eyes( tc='all'):
             # new code for in situ eyewall distances!
             eyewall_dists = metadata[ 'in_situ_eyewall_dists'][ dataset]
 
+            shear_quad = metadata['shear_quads'][dataset]
+
             title = ( "CRL Data, TC " + metadata['tc_name'] + ", "
                     + metadata['dates'][ dataset] + ", Eye Pass " + metadata['eye_pass'][ dataset] )
 
             # print out the current dataset for the user!
             print( "TC " + metadata['tc_name'] + ", " + metadata['dates'][ dataset] + ", Eye Pass " + metadata['eye_pass'][ dataset])
 
-            H_dataset = pdf_one_tc_eye( new_crl_path, new_crl_name, eyewall_dists, title)
+            H_dataset = pdf_one_tc_eye( new_crl_path, new_crl_name, eyewall_dists, title, shear_quad)
 
             os.chdir( "/Users/etmu9498/research/figures/pdfs-v1-in-situ/")
             plt.savefig( metadata['tc_name'].casefold() + "-" + str( dataset+1) + ".png", bbox_inches='tight', dpi=300 )
@@ -85,7 +87,7 @@ def pdf_all_tc_eyes( tc='all'):
     return
 
 # use the new crl datasets; working with distance coordinates will be much easier!
-def pdf_one_tc_eye( new_crl_path, new_crl_name, eyewall_dists, title):
+def pdf_one_tc_eye( new_crl_path, new_crl_name, eyewall_dists, title, shear_quad):
 
     # load data
     os.chdir( new_crl_path)
@@ -104,7 +106,7 @@ def pdf_one_tc_eye( new_crl_path, new_crl_name, eyewall_dists, title):
 
     # plot the crl backscattered power figure for helpful testing
     # plt.figure( figsize=(18, 5))
-    fig, (a0, a1, a2) = plt.subplots(3, 1, gridspec_kw={'height_ratios': [1, 2, .5]}, figsize=(12, 17), facecolor='w')
+    fig, (a0, a1, a2) = plt.subplots(3, 1, gridspec_kw={'height_ratios': [1, 2, .75]}, figsize=(12, 18), facecolor='w')
     helper_fns.change_font_sizes(small=14, medium=16 )
 
     plt.sca( a0)
@@ -118,6 +120,46 @@ def pdf_one_tc_eye( new_crl_path, new_crl_name, eyewall_dists, title):
     a0.set_title( title)
     a0.set_ylim( [ 0, 3.8])
 
+    # add shear info as text!
+
+    label0 = '0'
+    label1 = '1'
+
+    if shear_quad[0] == 'UL':
+        label0 = 'Upshear Left'
+    elif shear_quad[0] == 'UR':
+        label0 = 'Upshear Right'
+    elif shear_quad[0] == 'DL':
+        label0 = 'Downshear Left'
+    elif shear_quad[0] == 'DR':
+        label0 = 'Downshear Right'
+
+    if shear_quad[1] == 'UL':
+        label1 = 'Upshear Left'
+    elif shear_quad[1] == 'UR':
+        label1 = 'Upshear Right'
+    elif shear_quad[1] == 'DL':
+        label1 = 'Downshear Left'
+    elif shear_quad[1] == 'DR':
+        label1 = 'Downshear Right'
+
+    print( label0)
+    print( label1)
+
+
+    # only add first label if axis contains negative values ( to the left of 0 km)
+    if eyewall_dists[0] < 0: # 3.25
+        a0.text( .025, .9, label0, color='k', fontsize=12,
+                bbox={'facecolor': 'w', 'alpha': 0.85, 'pad': 10},
+                verticalalignment='bottom', horizontalalignment='left',
+                transform=a0.transAxes)
+
+    a0.text( .975, .9, label1, color='k', fontsize=12,
+            bbox={'facecolor': 'w', 'alpha': 0.85, 'pad': 10},
+            verticalalignment='bottom', horizontalalignment='right',
+            transform=a0.transAxes)
+
+
     # view simple histogram of cloud top heights!
     nbins = 25 # number of bins
 
@@ -125,6 +167,8 @@ def pdf_one_tc_eye( new_crl_path, new_crl_name, eyewall_dists, title):
 
     plt.sca( a1)
     sns.distplot( H, bins=nbins, hist=True, vertical=True, color='y', norm_hist=False)
+
+    # print( H)
 
     # plt.axvline( x=H.mean(), c='g', label="Mean height value", linewidth=3)
 
@@ -135,11 +179,18 @@ def pdf_one_tc_eye( new_crl_path, new_crl_name, eyewall_dists, title):
     a1.set_xlim( [0, 2])
     a1.grid(True)
 
+    # a clear surface is considered when the "clouds" are 10m tall or less- this could
+    # just be a tall wave or sea spray
+    cloud_frac = ( len( np.where( H < .01 )[0]) / len( H) )
+    cloud_percent = cloud_frac * 100
+
     # save some basic stats from the height dataset to image!
-    a2.text( 0, 1, ("Number of data points:  " + str( i2 - i1)))
-    a2.text( 0, .75, ("Height value range:     " + str( H.min()) + " km to " + str( H.max()) + " km"))
-    a2.text( 0, .5, ("Height value mean:      " + str( H.mean()) + " km"))
-    a2.text( 0, .1, ("Height value median:    " + str( np.median( H)) + " km\n"))
+    a2.text( 0, .95, ("Number of data points:  " + str( i2 - i1)))
+    a2.text( 0, .8, ("Number of clear air data points:  " + str( len( np.where( H < .01 )[0]) )))
+    a2.text( 0, .6, ("Height value range:     " + str( H.min()) + " km to " + str( H.max()) + " km"))
+    a2.text( 0, .4, ("Height value mean:      " + str( H.mean()) + " km"))
+    a2.text( 0, .2, ("Height value median:    " + str( np.median( H)) + " km\n"))
+    a2.text( 0, .1, ("Cloud cover percentage: " + str( cloud_percent) + " %"))
     a2.set_axis_off()
 
     return H

@@ -140,7 +140,7 @@ def goes_in_situ( goes_names, goes_data_path, flight_name, flight_path, extent, 
     flight_line_color = 'g'
     goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name, channel_full_name, goes_names,
         goes_data_path, flight_name, flight_path, extent=extent, show_in_situ=show_in_situ, in_situ_data_path=p, in_situ_name=n,
-        shear_arrow = False, tcname=tcname, dataset = dataset)
+        shear_arrow = True, tcname=tcname, dataset = dataset)
 
 
 
@@ -387,12 +387,35 @@ def goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name,
             y_tail = 0.7
             x_head = x_tail + np.cos( np.deg2rad( shear_dir)) * arrow_mag
             y_head = y_tail + np.sin( np.deg2rad( shear_dir)) * arrow_mag
+
+
             arrow = mpatches.FancyArrowPatch((x_tail, y_tail), (x_head, y_head),
                                  mutation_scale=100,
                                  transform=ax.transAxes, color='k')
             ax.add_patch(arrow)
+            
 
-            # print( 'arrow added')
+            '''
+            # transform=ax.transAxes
+            a0 = plt.axes(projection=ccrs.Mercator())
+            crs = ccrs.PlateCarree()
+            transform0 = crs._as_mpl_transform(a0)
+
+            transform0 = ax.transAxes
+
+            ax.annotate('hi', xy=(x_head, y_head), xycoords=transform0,
+                ha='right', va='top')
+
+            ax.annotate('hi2', xy=(x_tail, y_tail), xytext=( x_tail, y_tail),
+            arrowprops=dict(facecolor='gray',
+                            arrowstyle="simple",
+                            connectionstyle="arc3,rad=-0.2",
+                            alpha=1),
+            xycoords=transform0,
+            ha='right', va='top')
+            '''
+
+            print( 'arrow added')
 
             shear_label = 'Shear (Black Arrow): ' + str( shear_mag / 10) + ' kt'
             # add text showing shear mag!

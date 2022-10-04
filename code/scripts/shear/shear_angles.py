@@ -7,12 +7,16 @@ os.chdir( "/Users/etmu9498/research/code/scripts")
 import tc_metadata
 
 
-
-def two_shear_quadrants( tcname, dataset):
+# using the environmental shear data saved in the tc_metadata.py file and the determined
+# p3 flight direction, figure out which shear quadrants are crossed. The first returned
+# value is the quadrant entered, while the second is the exit quadrant!
+def two_shear_quadrants( tcname, dataset, close_warn=False):
     # load metadata and dataset names for this case
     metadata = tc_metadata.all_data( tcname)
     tdr_name, crl_name = tc_metadata.choose_new_data( tcname, dataset)
     in_situ_name = tc_metadata.choose_new_in_situ_name( tcname, dataset)
+
+    print( in_situ_name)
 
     # load data path info
     crl_path = metadata[ 'new_crl_path']
@@ -50,6 +54,18 @@ def two_shear_quadrants( tcname, dataset):
         late_quad = 'DL'
     else:
         print( 'error! something is wrong with the if statement in two_shear_quadrants()')
+
+    # Optional code to test to see if the flight path is within 10 degrees of a shear quadrant limit
+    # If so, print a warning for the user
+    if close_warn:
+
+        abs_angle = np.abs( difference)
+        print( abs_angle)
+
+        quad_angles = [ 0, 90, 180, 270]
+        for qa in quad_angles:
+            if abs_angle - qa < 10 and abs_angle - qa > 0:
+                print( "Warning: Flight path is within 10 degrees of shear quadrant boundary.")
 
     return early_quad, late_quad
 

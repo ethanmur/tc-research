@@ -81,6 +81,10 @@ def all_data( tc='sam'):
         shrd = [ 107, 107, 107, 105, 105, 105, 81, 81, 81] # 0 utc the following day used for most cases
         shtd = [ 142, 142, 142, 135, 135, 135, 169, 169, 169]
 
+        shear_quads = [ ('UL', "DR"), ('DL', 'UR'), ('DL', 'UR'),
+                    ('UR', 'DL'), ('DL', 'UR'), ('DR', 'UL'),
+                    ('UL', 'DR'), ('DL', 'UR'), ('DR', 'UL')] # determined with shear_angles.py scripts! saved here for convenience
+
         shear_dir = shtd
         shear_mag = shrd
 
@@ -131,6 +135,9 @@ def all_data( tc='sam'):
         shtd = [ 179, 179, 240, 240, 240]
         shear_dir = shtd
         shear_mag = shrd
+        shear_quads = [ ('DR', 'UL'), ('UL', 'DR'),
+                ('DL', 'UR'), ('DR', 'UL'), ('UL', 'DR')]
+
 
         crl_shear_inds = []
         tc_center_lat = []
@@ -171,6 +178,7 @@ def all_data( tc='sam'):
 
         shear_dir = shtd
         shear_mag = shrd
+        shear_quads = [ ('UL', 'DR'), ('DL', 'UR'), ('DL', 'UR'), ('DL', 'UR')]
 
         tc_center_lat = []
         tc_center_lon = []
@@ -251,6 +259,8 @@ def all_data( tc='sam'):
 
         shear_mag = shrd
         shear_dir = shtd
+        shear_quads = [ ('UL', 'DR'), ('DL', 'UR'), ('DR', 'UL'),
+                ('DL', 'UR'), ('UR', 'DL'), ('DR', 'UL'), ('UL', 'DR')]
 
         ships_lat = [ 14.5, 14.5, 14.5, 16.5, 16.5, 20.3, 20.3]
         ships_lon = [ 50.6, 50.6, 50.6, 52.9, 52.9, 58.0, 58.0]
@@ -280,7 +290,8 @@ def all_data( tc='sam'):
         'tc_center_lon': tc_center_lon,
         'crl_shear_inds': crl_shear_inds,
         'um_crl_path': updated_matrices_crl_path,
-        'intensity': intensity, 'intensity_cat': intensity_cat}
+        'intensity': intensity, 'intensity_cat': intensity_cat,
+        'shear_quads': shear_quads}
 
     return tcdata
 

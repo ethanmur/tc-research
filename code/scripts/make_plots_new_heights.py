@@ -162,6 +162,21 @@ def plot_T_anomaly(data_path, data_file, xaxis):
     ax.set_facecolor('k')
 
 
+# plot regions of rainfall in green to highlight these spots! And to eventually use them
+# for statistics
+def plot_rainfall( data_path, data_file, xaxis):
+
+    plt.figure( figsize=(16, 6))
+
+    # make a base power plot
+    plot_power_ch1(data_path, data_file, xaxis)
+    # get data
+    os.chdir( data_path)
+    crl_data = xr.open_dataset( data_file)
+
+    # run and plot rainfall locations
+
+
 def plot_all(data_path, data_file, xaxis, padding, title=None):
 
     # get data
