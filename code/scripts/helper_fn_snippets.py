@@ -28,3 +28,19 @@ np.isinf()
 # split crl distances into positive and negative segments
 dist_pos = crl_data.in_situ_distance[ np.where( crl_data.in_situ_distance > 0.0)].values
 dist_neg = crl_data.in_situ_distance[ np.where( crl_data.in_situ_distance <= 0.0)].values
+
+# add a box around a text() object!
+bbox={'facecolor': 'w', 'alpha': 0.85, 'pad': 10},
+verticalalignment='bottom', horizontalalignment='left',
+transform=a0.transAxes)
+
+
+# change number of x axis labels / grid lines
+plt.locator_params(axis='x', nbins=11)
+
+# make subplots different sizes!
+fig, (a0, a1, a2) = plt.subplots(3, 1, gridspec_kw={'height_ratios': [1, 2, .75]}, figsize=(12, 18), facecolor='w')
+
+# hide an axis to prevent overlapping axes!
+plt.grid(False)
+plt.axis('off')

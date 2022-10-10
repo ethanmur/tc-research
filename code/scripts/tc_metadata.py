@@ -57,7 +57,7 @@ def all_data( tc='sam'):
             (-62.5, -10), (10, 85), ( -55, 25) ]
         # new eyewall distances for height corrected data with an x axis based on in situ data
         # new, precise limits
-        in_situ_eyewall_dists = [ (-65, 72.5), (-75, 57.5), (-48, 53),
+        in_situ_eyewall_dists = [ (-65, 72.5), (11, 57), (-12.5, 53), # old pass 2 and 3 eyewalls: (-75, 57.5), (-48, 53),
                 (-11.5, 17), (-22.0, 7.5), (-12.5, 26),
                 (-32.5, 11), ( 10, 70), (-55.5, 29.5)]
 
