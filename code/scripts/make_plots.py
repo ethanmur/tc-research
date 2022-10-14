@@ -287,7 +287,7 @@ def plot_power_ch1(data_path, data_file, index1, index2, xaxis_name, cutoff=-30,
     # color_map = plt.cm.get_cmap( "Spectral").reversed()
     plt.pcolormesh(  xaxis, - crl_data.H, crl_pch1, vmin = cutoff, vmax =-10)
     if show_colorbar:
-        plt.colorbar(label="Backscattered Ch 1 power ( dBz)")
+        plt.colorbar(label="CRL Return Power (dBz)")
     plt.ylabel( 'Height (km)')
     # plt.xlabel( x_label)
     if xlims:

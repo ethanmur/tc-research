@@ -269,7 +269,7 @@ def all_data( tc='sam'):
         tc_center_lat = ships_tlat
         tc_center_lon = ships_tlon
 
-        intensity = [135, 135, 135, 105, 105, 120, 120 ]
+        intensity = [135, 135, 135, 105, 105, 115, 115 ]
         intensity_cat = find_cat( intensity)
 
 
@@ -292,6 +292,61 @@ def all_data( tc='sam'):
         'um_crl_path': updated_matrices_crl_path,
         'intensity': intensity, 'intensity_cat': intensity_cat,
         'shear_quads': shear_quads}
+
+    return tcdata
+
+
+
+
+# this separate dictionary creation script is used in plot_all_in_situ_one_day.py
+# it's able to print earlier grace data and all the fred data!
+# it needs a lot fewer of the fields specified in the all_data script above
+def all_in_situ_metadata( tc='sam'):
+    # choose proper paths to data and formatting options
+    # casefold() allows for any capitalization variation to work here
+    # paths to data
+
+    # load a list of available data to these variables
+    crl_path = "/Users/etmu9498/research/data/CRL_data/2021"
+    crl_list = make_plots.load_crl(crl_path, print_files=False)
+
+    if tc.casefold() == 'fred':
+        dates = [
+            '08-12-am', '08-12-am', '08-12-am',
+            '08-12-pm', '08-12-pm',
+            '08-13', '08-13' ]
+        tc_name = 'Fred'
+
+    elif tc.casefold() == 'grace':
+        dates = [
+            '08-16', '08-16', '08-16',
+            '08-17', '08-17', '08-17',
+            '08-18', '08-18', '08-18',
+            '08-19', '08-19', '08-19' ]
+        tc_name = 'Grace'
+
+    elif tc.casefold() == 'henri':
+
+        dates = [ '08-20', '08-20',
+            '08-21', '08-21', '08-21' ]
+        tc_name = 'Henri'
+
+    elif tc.casefold() == 'ida':
+
+        dates = [ '08-27', '08-27', '08-27', '08-29']
+        tc_name = 'Ida'
+
+    elif tc.casefold() == 'sam':
+        dates = [
+            '09-26', '09-26', '09-26', '09-27', '09-27', '09-29', '09-29']
+        tc_name = 'Sam'
+
+    else:
+        tcdata = "selected TC name is not yet implemented"
+        return tcdata
+
+    tcdata = {
+        'crl_list': crl_list, 'dates': dates, 'tc_name': tc_name}
 
     return tcdata
 
@@ -341,7 +396,15 @@ def choose_crl_date( date, crl_list):
 
 
 def choose_in_situ_date( date, insitu_list):
-    if date == '08-16':
+    if date == '08-11':
+        insitu_data = insitu_list[ 3]
+    elif date == '08-12-am':
+        insitu_data = insitu_list[ 4]
+    elif date == '08-12-pm':
+        insitu_data = insitu_list[ 5]
+    elif date == '08-13':
+        insitu_data = insitu_list[ 6]
+    elif date == '08-16':
         insitu_data = insitu_list[ 7]
     elif date == '08-17':
         insitu_data = insitu_list[ 8]

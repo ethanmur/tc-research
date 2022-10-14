@@ -56,7 +56,7 @@ def pdf_all_tc_eyes( tc='all'):
 
             H_dataset = pdf_one_tc_eye( new_crl_path, new_crl_name, eyewall_dists, title, shear_quad)
 
-            os.chdir( "/Users/etmu9498/research/figures/pdfs-v1-in-situ/")
+            os.chdir( "/Users/etmu9498/research/figures/prob-dist-results/pdfs-v1-in-situ/")
             plt.savefig( metadata['tc_name'].casefold() + "-" + str( dataset+1) + ".png", bbox_inches='tight', dpi=300 )
 
             # save height values from this run
@@ -81,7 +81,7 @@ def pdf_all_tc_eyes( tc='all'):
         plt.grid('on')
 
         # save the histogram
-        os.chdir( "/Users/etmu9498/research/figures/pdfs-v1-in-situ/")
+        os.chdir( "/Users/etmu9498/research/figures/prob-dist-results/pdfs-v1-in-situ/")
         plt.savefig( metadata['tc_name'].casefold() + "-total.png", bbox_inches='tight', dpi=300 )
 
     return
@@ -181,12 +181,12 @@ def pdf_one_tc_eye( new_crl_path, new_crl_name, eyewall_dists, title, shear_quad
 
     # a clear surface is considered when the "clouds" are 10m tall or less- this could
     # just be a tall wave or sea spray
-    cloud_frac = ( len( np.where( H < .01 )[0]) / len( H) )
+    cloud_frac = ( len( np.where( H < .05 )[0]) / len( H) )
     cloud_percent = cloud_frac * 100
 
     # save some basic stats from the height dataset to image!
     a2.text( 0, .95, ("Number of data points:  " + str( i2 - i1)))
-    a2.text( 0, .8, ("Number of clear air data points:  " + str( len( np.where( H < .01 )[0]) )))
+    a2.text( 0, .8, ("Number of clear air data points:  " + str( len( np.where( H < .05 )[0]) )))
     a2.text( 0, .6, ("Height value range:     " + str( H.min()) + " km to " + str( H.max()) + " km"))
     a2.text( 0, .4, ("Height value mean:      " + str( H.mean()) + " km"))
     a2.text( 0, .2, ("Height value median:    " + str( np.median( H)) + " km\n"))
@@ -325,9 +325,11 @@ def number_of_layers_one_eye( new_crl_path, new_crl_name, eyewall_dists, title):
 
 
 
+
+
 # this function finds statistics on cloud heights depending on the tc intensity!
 # it outputs figures summarizing these values for each intensity category
-def cloud_height_vs_intensity( ):
+def cloud_height_vs_intensity( csu_poster_case=False):
     warnings.filterwarnings("ignore")
 
     # empty lists that will hold all the height datasets for each intensity category
@@ -404,53 +406,103 @@ def cloud_height_vs_intensity( ):
     # create histograms for every TC intensity
     # put things in lists for easier looping
     fig_title = [ 'tropical-depressions', 'tropical-storms', 'weak-hurricanes', 'strong-hurricanes']
+    # nicely formatted titles for plots, as opposed to saving
+    fig_title_nice = [ 'Tropical Depressions', 'Tropical Storms', 'Weak Hurricanes', 'Strong Hurricanes']
+
     cases = [ td_cases, ts_cases, wh_cases, sh_cases]
     heights = [ td_heights, ts_heights, wh_heights, sh_heights]
     # loop through each case
     for i in range( 4):
         height = np.array( heights[ i])
 
-        # no cases for this category (only applies to td's because Fred case hasn't been added yet)
-        if len( height) != 0:
-            fig, (a0, a1) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 12), facecolor='w')
+        # make pretty figures for csu poster conference!
+        if csu_poster_case:
 
-            helper_fns.change_font_sizes(small=15, medium=15 )
+            # remove 0 km heights from figure!
+            plot_height = height[ np.where( height > .05)[0] ]
 
-            # create a histogram
-            plt.sca( a0)
+            # no cases for this category (only applies to td's because Fred case hasn't been added yet)
+            if len( height) != 0:
 
-            # sns.displot( x=height, kind='kde')
-            sns.set_theme(style="white", palette=None)
-            sns.set_context(rc = {'patch.linewidth': 0.0})
-            sns.histplot( y=height, kde=True, bins=25, color = 'y')
-            a0.set_xlabel( 'Count of Given Cloud Height')
-            a0.set_ylabel( 'Height from Surface (Km)')
-            a0.set_title( "Histogram of All Cloud Heights for " + fig_title[ i])
-            a0.set_ylim( [-.2, 3.5])
-            a0.set_xlim( [0, 250])
-            a0.grid(True)
-            a0.axhline( y=height.mean(), c='g', label="Mean height value", linewidth=3)
-            a0.axhline( y=np.median(height), c='b', label="Median height value", linewidth=3)
-            a0.legend(loc='upper right')
+                helper_fns.change_font_sizes(small=18, medium=18 )
+                fig, a0 = plt.subplots(1, 1, figsize=( 12, 12) )
 
-            '''
-            # a0.set_xlim( [0, 1.3])
-            sns.distplot( height, bins=25, hist=True, vertical=True, color='y')
-            a0.set_xlabel( 'Probability of a Given Height Occurence')
-            '''
+                # set the figure background (not plot background!) to transparent!!
+                fig.patch.set_facecolor('blue')
+                fig.patch.set_alpha(0)
 
-            # print out some useful statistics
-            a1.text( 0, 1, ("Number of data points:  " + str( len( height))))
-            a1.text( 0, .8, ("Height value range:     " + str( height.min()) + " km to " + str( height.max()) + " km"))
-            a1.text( 0, .6, ("Height value mean:      " + str( height.mean()) + " km"))
-            a1.text( 0, .3, ("Height value median:    " + str( np.median( height)) + " km\n"))
-            a1.text( 0, .2, ("Number of cases: " + str( cases[ i])))
-            a1.set_axis_off()
-            # save the histogram
-            os.chdir( "/Users/etmu9498/research/figures/pdfs-intensity/")
-            plt.savefig( fig_title[i] + ".png", bbox_inches='tight', dpi=300 )
-            print( fig_title[i] + ' figure created.')
+                # create a histogram
+                plt.sca( a0)
+
+                # sns.displot( x=height, kind='kde')
+                sns.set_theme(style="white", palette=None)
+
+                # the line below was probs causing the annoying lack of plot space!!!
+                # sns.set_context(rc = {'patch.linewidth': 0.0})
+                sns.histplot( y= plot_height, kde=True, binwidth=.175, edgecolor='k', linewidth=2, color = 'g') # color = 'g', element='poly') # hist_kws=dict(edgecolor="black", linewidth=2))
+                a0.set_xlabel( 'Count for Each Cloud Height')
+                a0.set_ylabel( 'Height from Surface (Km)')
+                a0.set_title( "Cloud Height Distribution for " + fig_title_nice[ i], fontsize=18)
+                a0.set_ylim( [-.2, 3.75])
+                a0.set_xlim( [0, 200])
+                a0.grid(True)
+
+                # save the histogram
+                os.chdir( "/Users/etmu9498/research/figures/csu-poster/")
+                plt.savefig( fig_title[i] + ".png", bbox_inches='tight', dpi=300 )
+                print( fig_title[i] + ' figure created.')
+
+            else:
+                print( "The tropical depression case hasn't yet been added!")
+                continue
+
+        # normal figure creation case
         else:
-            print( "The tropical depression case hasn't yet been added!")
-            continue
-    return
+            # no cases for this category (only applies to td's because Fred case hasn't been added yet)
+            if len( height) != 0:
+                fig, (a0, a1) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 12), facecolor='w')
+
+                helper_fns.change_font_sizes(small=18, medium=18 )
+
+                # create a histogram
+                plt.sca( a0)
+
+                # sns.displot( x=height, kind='kde')
+                sns.set_theme(style="white", palette=None)
+                sns.set_context(rc = {'patch.linewidth': 0.0})
+                sns.histplot( y=height, kde=True, bins=25, color = 'y')
+                a0.set_xlabel( 'Count of Given Cloud Height')
+                a0.set_ylabel( 'Height from Surface (Km)')
+                a0.set_title( "Histogram of All Cloud Heights for " + fig_title_nice[ i])
+                a0.set_ylim( [-.2, 3.5])
+                a0.set_xlim( [0, 250])
+                a0.grid(True)
+                a0.axhline( y=height.mean(), c='g', label="Mean height value", linewidth=3)
+                a0.axhline( y=np.median(height), c='b', label="Median height value", linewidth=3)
+                a0.legend(loc='upper right')
+
+                '''
+                # a0.set_xlim( [0, 1.3])
+                sns.distplot( height, bins=25, hist=True, vertical=True, color='y')
+                a0.set_xlabel( 'Probability of a Given Height Occurence')
+                '''
+
+                # print out some useful statistics
+                clear_points  = len( height[ np.where( height < .05)[0] ])
+
+                a1.text( 0, 1, ("Number of data points:  " + str( len( height))))
+                a1.text( 0, .8, ("Number of clear air points: " + str( clear_points )))
+                # a1.text( 0, .8, ("Height value range:     " + str( height.min()) + " km to " + str( height.max()) + " km"))
+                a1.text( 0, .6, ("Height value mean:      " + str( height.mean()) + " km"))
+                # a1.text( 0, .3, ("Height value median:    " + str( np.median( height)) + " km\n"))
+                a1.text( 0, .3, ("clear air fraction:    " + str( 100 * ( clear_points / len(height) ))))
+                a1.text( 0, .2, ("Number of eye passes: " + str( cases[ i])))
+                a1.set_axis_off()
+                # save the histogram
+                os.chdir( "/Users/etmu9498/research/figures/prob-dist-results/pdfs-intensity/")
+                plt.savefig( fig_title[i] + ".png", bbox_inches='tight', dpi=300 )
+                print( fig_title[i] + ' figure created.')
+
+            else:
+                print( "The tropical depression case hasn't yet been added!")
+                continue
