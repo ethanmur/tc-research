@@ -73,16 +73,21 @@ def closest_val( arg1, arg2):
     value = arg1[ index]
     return index, value
 
-def add_blank_colorbar():
+def add_blank_colorbar(color=False):
     # add an empty colorbar to make everything fit in line... kinda a
     # messy solution but it's ok for now!
     viridis = cm.get_cmap('viridis', 256)
     newcolors = viridis(np.linspace(0, 1, 256))
-    white = np.array([ 1, 1, 1, 1])
+
+    if color == 'gray':
+        white = np.array([ .92, .92, .92, .92])
+    else:
+        white = np.array([ 1, 1, 1, 1])
+
     newcolors[:, :] = white
     white_cmap = ListedColormap(newcolors)
 
-    map = matplotlib.cm.ScalarMappable(cmap= white_cmap, norm=matplotlib.colors.Normalize( vmin= 0, vmax= 1))
+    map = matplotlib.cm.ScalarMappable(cmap= white_cmap, norm=matplotlib.colors.Normalize( vmin= 0, vmax= 1) )
     cbar = plt.colorbar( mappable= map)
     cbar.set_ticks([])
     cbar.outline.set_visible(False)

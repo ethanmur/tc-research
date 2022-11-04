@@ -44,3 +44,13 @@ fig, (a0, a1, a2) = plt.subplots(3, 1, gridspec_kw={'height_ratios': [1, 2, .75]
 # hide an axis to prevent overlapping axes!
 plt.grid(False)
 plt.axis('off')
+
+
+# add a mask to data with nans and then fit with linear regression!
+mask = ~np.isnan(varx) & ~np.isnan(vary)
+slope, intercept, r_value, p_value, std_err = stats.linregress(varx[mask], vary[mask])
+
+
+# wrap code in these two lines to get rid of warnings!
+warnings.filterwarnings("ignore")
+warnings.filterwarnings("default")

@@ -48,6 +48,7 @@ def distance_plots( padding=250, tc='all'):
             # load data from new and old sources
             crl_name = tc_metadata.choose_crl_date( metadata[ 'dates'][ dataset], metadata[ 'crl_list'])
             inbound_name, outbound_name = tc_metadata.choose_tdr_data( tcname, metadata[ 'tdr_list'], dataset)
+
             tdr_name, new_crl_name = tc_metadata.choose_new_data( tcname, dataset)
 
             flight_data_path = metadata['in_situ_path']
@@ -55,7 +56,6 @@ def distance_plots( padding=250, tc='all'):
             flight_name = tc_metadata.choose_in_situ_date( metadata['dates'][dataset], flight_data_list)
 
             new_tdr_path = "/Users/etmu9498/research/data/tdr-new"
-
             new_crl_path =  "/Users/etmu9498/research/data/crl-new"
 
             # load crl data
@@ -80,7 +80,7 @@ def distance_plots( padding=250, tc='all'):
                     + metadata['dates'][ dataset] + ", Eye Pass " + metadata['eye_pass'][ dataset] )
 
             # comparing lat / lon crl and tdr plots to new distance plots!
-            plt.figure( figsize=(18, 18), facecolor='w')
+            plt.figure( figsize=(14, 14), facecolor='w')
 
             # make plots for crl and tdr distance datasets using new tdr dataset
             plt.subplot( 411)
@@ -121,7 +121,7 @@ def distance_plots( padding=250, tc='all'):
 
             # save the plots
             os.chdir( "/Users/etmu9498/research/figures/in-situ-calculated-distance/")
-            plt.savefig( metadata['tc_name'].casefold() + "-" + str( dataset+1) + ".png", bbox_inches='tight', dpi=300 )
+            plt.savefig( metadata['tc_name'].casefold() + "-" + str( dataset+1) + ".png", bbox_inches='tight', dpi=200 )
             print( "Plot " + str( dataset + 1) + " saved\n" )
 
     warnings.filterwarnings("default")

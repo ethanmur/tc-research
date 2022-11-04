@@ -8,9 +8,13 @@ import tc_metadata
 import make_plots
 import helper_fns
 
-def save_all_tdr():
+def save_all_tdr(tcname='all'):
 
-    tcname_list = ['grace', 'henri', 'ida', 'sam']
+    if tcname == 'all':
+        tcname_list = ['grace', 'henri', 'ida', 'sam']
+    else:
+        tcname_list = [ tcname]
+        
     for tcname in tcname_list:
         # load the metadata for this tc
         metadata = tc_metadata.all_data( tc= tcname)

@@ -12,7 +12,7 @@ import tc_metadata
 import helper_fns
 
 
-def pdf_all_tc_eyes( tc='all'):
+def pdf_all_tc_eyes( tc='all', no_eyewalls=False):
     warnings.filterwarnings("ignore")
 
     # put tcname into a list to make the for loop work correctly
@@ -43,8 +43,13 @@ def pdf_all_tc_eyes( tc='all'):
             # new_tdr_path = metadata[ 'new_tdr_path']
             new_crl_path = metadata[ 'um_crl_path']
 
-            # new code for in situ eyewall distances!
-            eyewall_dists = metadata[ 'in_situ_eyewall_dists'][ dataset]
+            # new code for eyewall vs no eyewall in situ distances!
+            if no_eyewalls:
+                eyewall_dists = metadata[ 'eyewall_dists_no_eyewalls'][ dataset]
+                save_path = "/Users/etmu9498/research/figures/prob-dist-results/pdfs-v1-no-eyewalls/"
+            else:
+                save_path = "/Users/etmu9498/research/figures/prob-dist-results/pdfs-v1-in-situ/"
+                eyewall_dists = metadata[ 'in_situ_eyewall_dists'][ dataset]
 
             shear_quad = metadata['shear_quads'][dataset]
 
@@ -56,7 +61,7 @@ def pdf_all_tc_eyes( tc='all'):
 
             H_dataset = pdf_one_tc_eye( new_crl_path, new_crl_name, eyewall_dists, title, shear_quad)
 
-            os.chdir( "/Users/etmu9498/research/figures/prob-dist-results/pdfs-v1-in-situ/")
+            os.chdir( save_path)
             plt.savefig( metadata['tc_name'].casefold() + "-" + str( dataset+1) + ".png", bbox_inches='tight', dpi=300 )
 
             # save height values from this run
@@ -81,7 +86,7 @@ def pdf_all_tc_eyes( tc='all'):
         plt.grid('on')
 
         # save the histogram
-        os.chdir( "/Users/etmu9498/research/figures/prob-dist-results/pdfs-v1-in-situ/")
+        os.chdir( save_path)
         plt.savefig( metadata['tc_name'].casefold() + "-total.png", bbox_inches='tight', dpi=300 )
 
     return
@@ -97,6 +102,9 @@ def pdf_one_tc_eye( new_crl_path, new_crl_name, eyewall_dists, title, shear_quad
     # find the indices and values in the crl distance dataset closest to the eyewall_dists limits
     i1, x1 = helper_fns.closest_val( xaxis_data, eyewall_dists[ 0])
     i2, x2 = helper_fns.closest_val( xaxis_data, eyewall_dists[ 1])
+
+    # print( "i1 and x1: " + str( i1) + " " + str(x1))
+    # print( "i2 and x2: " + str( i2) + " " + str(x2))
 
     # print( 'i1 and x1: ' + str( i1) + ' ' + str( x1))
     # print( 'i2 and x2: ' + str( i2) + ' ' + str( x2))
@@ -143,10 +151,6 @@ def pdf_one_tc_eye( new_crl_path, new_crl_name, eyewall_dists, title, shear_quad
     elif shear_quad[1] == 'DR':
         label1 = 'Downshear Right'
 
-    print( label0)
-    print( label1)
-
-
     # only add first label if axis contains negative values ( to the left of 0 km)
     if eyewall_dists[0] < 0: # 3.25
         a0.text( .025, .9, label0, color='k', fontsize=12,
@@ -179,19 +183,23 @@ def pdf_one_tc_eye( new_crl_path, new_crl_name, eyewall_dists, title, shear_quad
     a1.set_xlim( [0, 2])
     a1.grid(True)
 
-    # a clear surface is considered when the "clouds" are 10m tall or less- this could
-    # just be a tall wave or sea spray
-    cloud_frac = ( len( np.where( H < .05 )[0]) / len( H) )
-    cloud_percent = cloud_frac * 100
+    # a clear surface is considered when the "clouds" are 50m tall or less- this could
+    # just be p-3 flight errors or aerosols or tall waves?
+    if len( H) > 0:
+        cloud_frac = ( len( np.where( H < .05 )[0]) / len( H) )
+        cloud_percent = cloud_frac * 100
 
-    # save some basic stats from the height dataset to image!
-    a2.text( 0, .95, ("Number of data points:  " + str( i2 - i1)))
-    a2.text( 0, .8, ("Number of clear air data points:  " + str( len( np.where( H < .05 )[0]) )))
-    a2.text( 0, .6, ("Height value range:     " + str( H.min()) + " km to " + str( H.max()) + " km"))
-    a2.text( 0, .4, ("Height value mean:      " + str( H.mean()) + " km"))
-    a2.text( 0, .2, ("Height value median:    " + str( np.median( H)) + " km\n"))
-    a2.text( 0, .1, ("Cloud cover percentage: " + str( cloud_percent) + " %"))
-    a2.set_axis_off()
+        # save some basic stats from the height dataset to image!
+        a2.text( 0, .95, ("Number of data points:  " + str( i2 - i1)))
+        a2.text( 0, .8, ("Number of clear air data points:  " + str( len( np.where( H < .05 )[0]) )))
+        a2.text( 0, .6, ("Height value range:     " + str( H.min()) + " km to " + str( H.max()) + " km"))
+        a2.text( 0, .4, ("Height value mean:      " + str( H.mean()) + " km"))
+        a2.text( 0, .2, ("Height value median:    " + str( np.median( H)) + " km\n"))
+        a2.text( 0, .1, ("Clear air percentage: " + str( cloud_percent) + " %"))
+        a2.set_axis_off()
+    else:
+        a2.text( 0, .95, "Error when calculating cloud heights :(")
+
 
     return H
 
@@ -329,7 +337,7 @@ def number_of_layers_one_eye( new_crl_path, new_crl_name, eyewall_dists, title):
 
 # this function finds statistics on cloud heights depending on the tc intensity!
 # it outputs figures summarizing these values for each intensity category
-def cloud_height_vs_intensity( csu_poster_case=False):
+def cloud_height_vs_intensity( csu_poster_case=False, no_eyewalls=False):
     warnings.filterwarnings("ignore")
 
     # empty lists that will hold all the height datasets for each intensity category
@@ -366,8 +374,11 @@ def cloud_height_vs_intensity( csu_poster_case=False):
             #     new_crl_path = metadata[ 'um_crl_path']
 
 
-            # new code for in situ eyewall distances! aka where the eyewall starts and ends
-            eyewall_dists = metadata[ 'in_situ_eyewall_dists'][ dataset]
+            # new code for eyewall vs no eyewall in situ distances!
+            if no_eyewalls:
+                eyewall_dists = metadata[ 'eyewall_dists_no_eyewalls'][ dataset]
+            else:
+                eyewall_dists = metadata[ 'in_situ_eyewall_dists'][ dataset]
 
             title = ( "CRL Data, TC " + metadata['tc_name'] + ", "
                     + metadata['dates'][ dataset] + ", Eye Pass " + metadata['eye_pass'][ dataset] )
@@ -424,8 +435,8 @@ def cloud_height_vs_intensity( csu_poster_case=False):
             # no cases for this category (only applies to td's because Fred case hasn't been added yet)
             if len( height) != 0:
 
-                helper_fns.change_font_sizes(small=18, medium=18 )
-                fig, a0 = plt.subplots(1, 1, figsize=( 12, 12) )
+                helper_fns.change_font_sizes(small=24, medium=24 )
+                fig, a0 = plt.subplots(1, 1, figsize=( 8.5, 7) )
 
                 # set the figure background (not plot background!) to transparent!!
                 fig.patch.set_facecolor('blue')
@@ -442,14 +453,17 @@ def cloud_height_vs_intensity( csu_poster_case=False):
                 sns.histplot( y= plot_height, kde=True, binwidth=.175, edgecolor='k', linewidth=2, color = 'g') # color = 'g', element='poly') # hist_kws=dict(edgecolor="black", linewidth=2))
                 a0.set_xlabel( 'Count for Each Cloud Height')
                 a0.set_ylabel( 'Height from Surface (Km)')
-                a0.set_title( "Cloud Height Distribution for " + fig_title_nice[ i], fontsize=18)
+                a0.set_title( "Cloud Height Distribution for " + fig_title_nice[ i], fontsize=24)
                 a0.set_ylim( [-.2, 3.75])
                 a0.set_xlim( [0, 200])
                 a0.grid(True)
 
                 # save the histogram
                 os.chdir( "/Users/etmu9498/research/figures/csu-poster/")
-                plt.savefig( fig_title[i] + ".png", bbox_inches='tight', dpi=300 )
+                if no_eyewalls:
+                    plt.savefig( fig_title[i] + "-no-eyewalls.png", bbox_inches='tight', dpi=500, transparent=False )
+                else:
+                    plt.savefig( fig_title[i] + "-new.png", bbox_inches='tight', dpi=500, transparent=False )
                 print( fig_title[i] + ' figure created.')
 
             else:
@@ -500,7 +514,10 @@ def cloud_height_vs_intensity( csu_poster_case=False):
                 a1.set_axis_off()
                 # save the histogram
                 os.chdir( "/Users/etmu9498/research/figures/prob-dist-results/pdfs-intensity/")
-                plt.savefig( fig_title[i] + ".png", bbox_inches='tight', dpi=300 )
+                if no_eyewalls:
+                    plt.savefig( fig_title[i] + "-no-eyewalls.png", bbox_inches='tight', dpi=300 )
+                else:
+                    plt.savefig( fig_title[i] + "-new.png", bbox_inches='tight', dpi=300 )
                 print( fig_title[i] + ' figure created.')
 
             else:

@@ -77,7 +77,7 @@ def plot_wvmr(data_path, data_file, xaxis):
     xaxis = x_axis_helper( data_path, data_file, xaxis)
 
     # plot things
-    plt.pcolormesh( xaxis, - crl_data.H_new, crl_data.wvmr_new.transpose(), vmin = 0, vmax =20)
+    plt.pcolormesh( xaxis, - crl_data.H_new, crl_data.wvmr_new.transpose(), vmin = 0, vmax =20, cmap="viridis")
     plt.colorbar(label="WVMR ( g/kg)")
     plt.ylabel( 'Height (km)')
     plt.grid( 'on')
@@ -113,7 +113,7 @@ def plot_power_ch1(data_path, data_file, xaxis):
     xaxis = x_axis_helper( data_path, data_file, xaxis)
 
     # plot things
-    plt.pcolormesh(  xaxis, - crl_data.H_new, crl_data.power_new.transpose(), vmin = -30, vmax =-10)
+    plt.pcolormesh(  xaxis, - crl_data.H_new, crl_data.power_new.transpose(), vmin = -30, vmax =-10, cmap='viridis')
     plt.ylabel( 'Height (km)')
     plt.colorbar(label="Backscattered Power ( dBz)")
     plt.grid( 'on')
