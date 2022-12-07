@@ -629,6 +629,53 @@ def plot_tdr_radial_vel( tdr_path, inbound_name, outbound_name, xaxis):
     warnings.filterwarnings("default")
 
 
+def plot_new_radial_vel( tdr_path, tdr_name, xaxis='dist'):
+    warnings.filterwarnings("ignore")
+    # get data
+    os.chdir( tdr_path)
+    tdr_data = xr.open_dataset( tdr_name)
+
+    # choose x axis type
+    if xaxis == 'lon':
+        x_label = 'longitude (degrees)'
+        xaxis = tdr_data.longitude[ ~np.isnan( tdr_data.longitude)]
+    elif xaxis == 'lat':
+        x_label = 'latitude (degrees)'
+        xaxis = tdr_data.latitude[ ~np.isnan( tdr_data.latitude)]
+
+    elif xaxis == 'dist':
+        xaxis = tdr_data.distance
+        x_label = 'distance (km)'
+    else:
+        print("Error: Please Choose 'lat', 'lon', or 'dist' for the x axis")
+        return
+
+    # make plot
+    color_map = plt.cm.get_cmap( "RdBu").reversed()
+    # set 0 as the central point of the pcolormesh!
+    divnorm = colors.TwoSlopeNorm(vmin=-20, vcenter=0, vmax=20)
+
+    # plot all data
+    # get rid of nans and resize array to get rid of overlapping data
+    vel = tdr_data.Radial_wind[ :, 0:len( xaxis)] # .transpose()
+    plt.pcolormesh( xaxis, tdr_data.height, vel, cmap = color_map, norm=divnorm )
+
+    # making things prettier
+    plt.colorbar( label="Radial Velocity (m/s)")
+    plt.ylabel( 'Height from Surface (km)')
+    plt.xlabel( x_label)
+    plt.grid( 'on')
+    # plt.gca().invert_xaxis()
+
+    warnings.filterwarnings("default")
+
+
+
+
+
+
+
+
 
 def plot_tdr_vertical_vel( tdr_path, inbound_name, outbound_name, xaxis):
     warnings.filterwarnings("ignore")
@@ -684,6 +731,55 @@ def plot_tdr_vertical_vel( tdr_path, inbound_name, outbound_name, xaxis):
     # plt.gca().invert_xaxis()
 
     warnings.filterwarnings("default")
+
+
+
+
+
+
+def plot_new_vertical_vel( tdr_path, tdr_name, xaxis='dist'):
+    warnings.filterwarnings("ignore")
+    # get data
+    os.chdir( tdr_path)
+    tdr_data = xr.open_dataset( tdr_name)
+
+    # choose x axis type
+    if xaxis == 'lon':
+        x_label = 'longitude (degrees)'
+        xaxis = tdr_data.longitude[ ~np.isnan( tdr_data.longitude)]
+    elif xaxis == 'lat':
+        x_label = 'latitude (degrees)'
+        xaxis = tdr_data.latitude[ ~np.isnan( tdr_data.latitude)]
+
+    elif xaxis == 'dist':
+        xaxis = tdr_data.distance
+        x_label = 'distance (km)'
+    else:
+        print("Error: Please Choose 'lat', 'lon', or 'dist' for the x axis")
+        return
+
+    # make plot
+    color_map = plt.cm.get_cmap( "RdBu").reversed()
+    # set 0 as the central point of the pcolormesh!
+    divnorm = colors.TwoSlopeNorm(vmin=-10, vcenter=0, vmax=10)
+
+    # plot all data
+    # get rid of nans and resize array to get rid of overlapping data
+    vel = tdr_data.Vertical_wind[ :, 0:len( xaxis)] # .transpose()
+    plt.pcolormesh( xaxis, tdr_data.height, vel, cmap = color_map, norm=divnorm )
+
+    # making things prettier
+    plt.colorbar( label="Vertical Velocity (m/s)")
+    plt.ylabel( 'Height from Surface (km)')
+    plt.xlabel( x_label)
+    plt.grid( 'on')
+    # plt.gca().invert_xaxis()
+
+    warnings.filterwarnings("default")
+
+
+
+
 
 
 

@@ -203,8 +203,8 @@ def cta_prominence( power, cutoff_power, xaxis, H_index_matrix):
         power_ind_column = power_ind_matrix[ column_index, :]
         power_ind_column = power_ind_column[ power_ind_column > 0]
 
-        print( power_column)
-        print( power_ind_column)
+        # print( power_column)
+        # print( power_ind_column)
 
         # check for empty list: no backscattered values at all
         # in this case, the height should have an index of 0 aka the top value
@@ -212,6 +212,8 @@ def cta_prominence( power, cutoff_power, xaxis, H_index_matrix):
             power_index[ column_index] = 0
 
             # print( 'true at :' + str( column_index))
+
+            # print(column_index)
 
             continue
 
@@ -227,8 +229,12 @@ def cta_prominence( power, cutoff_power, xaxis, H_index_matrix):
         # idk why it's even here really?
         # if the first clear air patch is below heavy attenuation (no signal until 51st height value),
         # just return an index of 0 aka top value
+
+        # only do this for non height corrected matrices!! Will break if height correction has
+        # been applied (more than 50 nans right under flight level)
         if first_consec_inds[ 0] > 50:
             power_index[ column_index] = 0
+
             continue
 
         # trim the power column to the size of the first clear air patch
@@ -248,10 +254,11 @@ def cta_prominence( power, cutoff_power, xaxis, H_index_matrix):
         # 7/21/22 update: the short but sharp peaks are ok, so the width parameter has been removed
         peaks = find_peaks( power_column, prominence= 5, wlen=100, height=-25) # , width = 5)
 
+
         # if no peaks exist, pick the end of the first clear cloud layer
         if np.size( peaks[0]) == 0:
 
-            print( 'no peak at: ' + str( xaxis[ column_index].values))
+            print( 'no peak at i = ' + str( column_index) + ' or xaxis = ' + str( xaxis[ column_index].values))
             # look at the last value in the first array of non NaN values: this represents
             # the end of the first clear air chunk beneath the plane! Aka the cloud top
             power_index[ column_index] = first_consec_inds[ -1]

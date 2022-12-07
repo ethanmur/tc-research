@@ -26,7 +26,7 @@ def save_all_crl(tcname='all', shift_crl_dist=False, add_dist_coords=False):
         metadata = tc_metadata.all_data( tc= tcname)
         # look at one specific cross section from this tc
 
-        print( range( len( metadata['dates'])))
+        # print( range( len( metadata['dates'])))
 
         for dataset in range( len( metadata['dates'])):
 

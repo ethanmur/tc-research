@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import cm
 from matplotlib.colors import ListedColormap
+import matplotlib.colors as colors
+
 import matplotlib
 
 def display_data_files( path, data_type, print_files):
@@ -98,3 +100,11 @@ def white_background():
 
 def mpl_defaults():
     plt.rcdefaults()
+
+
+# cut down on colors for colormap! only look at middle portion or one end
+def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
+    new_cmap = colors.LinearSegmentedColormap.from_list(
+        'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
+        cmap(np.linspace(minval, maxval, n)))
+    return new_cmap

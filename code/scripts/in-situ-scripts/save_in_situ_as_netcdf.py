@@ -39,7 +39,7 @@ def save_as_netcdf():
         # cut pandas dataframe down to only the values that are of interest
         # this will hopefully save some time when saving and transitioning to xr?
         # keylist was taken from simple_flight_level_plot.plot()... shoud be all I need!
-        keylist = [ 'TIME', 'WS.d', 'WD.d', 'UWZ.d', 'ASfmrRainRate.1', 'LATref', 'LONref', 'TAS.d', 'HT.d', 'PITCHref', 'ROLLref']
+        keylist = [ 'TIME', 'WS.d', 'WD.d', 'UWZ.d', 'ASfmrRainRate.1', 'LATref', 'LONref', 'TAS.d', 'PSURF.d', 'HT.d', 'PITCHref', 'ROLLref']
         in_situ_data_trim = in_situ_data[ keylist]
 
         print( "Pandas dataset trimmed for file " + str( dataset))
@@ -49,7 +49,7 @@ def save_as_netcdf():
         in_situ_data_trim['time'] = [dt_object.time() for dt_object in in_situ_data_trim.dt ]
 
         # this snippet turns all relevant quantities from strings into floats for easier use later
-        keylist2 = [ 'WS.d', 'WD.d', 'UWZ.d', 'ASfmrRainRate.1', 'LATref', 'LONref', 'TAS.d', 'HT.d', 'PITCHref', 'ROLLref']
+        keylist2 = [ 'WS.d', 'WD.d', 'UWZ.d', 'ASfmrRainRate.1', 'LATref', 'LONref', 'TAS.d', 'PSURF.d', 'HT.d', 'PITCHref', 'ROLLref']
         for key in keylist2:
 
             in_situ_data_trim[ key] = in_situ_data_trim[ key].astype( float)

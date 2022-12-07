@@ -108,7 +108,7 @@ def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time', crl_path =
         cloud_heights = -H[ power_index] - blank_vals
         cloud_heights = np.where( cloud_heights < 0, 0, cloud_heights)
     else:
-        power_index = ta.cta_prominence( power, cutoff_power, axis, H_index_matrix)
+        power_index = cta.cta_prominence( power, cutoff_power, axis, H_index_matrix)
         cloud_heights = -H[ power_index]
 
     '''
@@ -123,6 +123,41 @@ def find_cloud_heights( crl_name, cutoff_power, i1, i2, xaxis='time', crl_path =
 
     return cloud_heights, axis
 
+
+
+
+
+def find_heights_from_matrix( heights, power, axis, p3_heights, cutoff_power):
+
+    warnings.filterwarnings("ignore")
+
+    H = heights
+
+    # print( np.shape( power))
+    # print( np.shape( power)[0])
+
+    # an index for each of the 594 height values
+    H_index = range( len( H))
+    # a matrix of height indices, to be used later. 594 height values x 300 repeats
+    H_index_matrix = np.repeat(np.array( H_index)[None, :], np.shape( power)[0], axis=0)
+
+    np.set_printoptions(threshold=np.inf)
+    # print( power[3, :])
+    np.set_printoptions(threshold=1000)
+
+
+    # taken from find_cloud_heights() function above! the new heights case
+    p3_heights = np.array( p3_heights) / 1000
+    blank_vals = - p3_heights + np.nanmax( -H)
+
+    power_index = cta.cta_prominence_in_situ( xr.DataArray( power), cutoff_power, axis, H_index_matrix, p3_heights, - H, grace_case=False)
+
+    cloud_heights = -H[ power_index] - blank_vals
+    cloud_heights = np.where( cloud_heights < 0, 0, cloud_heights)
+
+    warnings.filterwarnings("default")
+
+    return cloud_heights, axis
 
 
 

@@ -11,18 +11,33 @@ import tc_metadata
 os.chdir( "/Users/etmu9498/research/code/scripts/in-situ-scripts")
 import load_in_situ_data
 
-def geth( tcname, dataset):
+
+# this function finds p-3 heights for either a specific tc pass or for
+# every crl data point at a specific date!
+# use the all_data flag to do this
+def geth( tcname, dataset, all_data=False):
     metadata = tc_metadata.all_data( tc= tcname)
-    tdr_name, crl_name = tc_metadata.choose_new_data( tcname, dataset)
     in_situ_name = tc_metadata.choose_new_in_situ_name( tcname, dataset)
 
     # load data
     in_situ_path = "/Users/etmu9498/research/data/in-situ-new"
-    crl_path = "/Users/etmu9498/research/data/crl-new"
     os.chdir( in_situ_path)
     in_situ_data = xr.open_dataset( in_situ_name)
-    os.chdir( crl_path)
-    crl_data = xr.open_dataset( crl_name)
+
+    # load new crl data (default)
+    if not all_data:
+        crl_path = "/Users/etmu9498/research/data/crl-new"
+        os.chdir( crl_path)
+        tdr_name, crl_name = tc_metadata.choose_new_data( tcname, dataset)
+        crl_data = xr.open_dataset( crl_name)
+
+    # special case: calculate distances for all crl values; use original dataset!
+    else:
+        crl_path = "/Users/etmu9498/research/data/CRL_data/2021"
+        crl_name = tc_metadata.choose_crl_date( metadata['dates'][dataset], metadata['crl_list'])
+        os.chdir( crl_path)
+        crl_data = xr.open_dataset( crl_name)
+
 
     # in situ time in hours
     is_time_hours = in_situ_data.float_time
@@ -56,6 +71,11 @@ def geth( tcname, dataset):
         height_list += [ height_i]
 
     return height_list
+
+
+
+
+
 
 # this function interprets the data in the following way:
 # it creates a new height matrix from 0 to the p_3 height and 'squishes'

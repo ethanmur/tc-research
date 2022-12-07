@@ -66,12 +66,19 @@ def all_data( tc='sam'):
                 (-11.5, 17), (-22.0, 7.5), (-12.5, 26),
                 (-32.5, 11), ( 10, 70), (-55.5, 29.5)]
 
-
+        # the first bit of the sloping eyewall is removed, but once there's a sharp drop,
+        # that's considered a part of the eye
         # the same limits as above, but with sloping eyewalls removed from the datasets!
         eyewall_dists_no_eyewalls = [ (-53, -36), (25, 55),
-                            (-65, 63), (14, 52), (-7, 48),
-                            (-9, 16), (-12, 6), (-7, 16),
-                            (-31, 10), (12.5, 68), (-40, 27)]
+                            (-65, 70), (14, 54), (-11, 48), # passes 2 and 3 are tough... look at again
+                            (-9, 16), (-12.5, 6.5), (-9, 24),
+                            (-31, 11), (10, 68), (-52, 27)]
+
+        # old no eyewall limits, cutting off whole eyewall... too aggressive
+        # eyewall_dists_no_eyewalls = [ (-53, -36), (25, 55),
+        #                     (-65, 63), (14, 52), (-7, 48),
+        #                     (-9, 16), (-12, 6), (-7, 16),
+        #                     (-31, 10), (12.5, 68), (-40, 27)]
 
         dates = [
             '08-16', '08-16',
@@ -130,7 +137,11 @@ def all_data( tc='sam'):
 
         # the same limits as above, but with sloping eyewalls removed from the datasets!
         eyewall_dists_no_eyewalls = [ (5, 45), ( 5, 36),
-                            (-3, 12.5), (-7.5, 10.5), (-15, 24)]
+                            (-3, 12.5), (-12.5, 21), (-15, 32)]
+
+        # old no eyewall limits... keep these values!
+        # eyewall_dists_no_eyewalls = [ (5, 45), ( 5, 36),
+        #                     (-3, 12.5), (-7.5, 10.5), (-15, 24)]
 
 
         dates = [ '08-20', '08-20',
@@ -173,8 +184,12 @@ def all_data( tc='sam'):
         in_situ_eyewall_dists = [(-25, 60), (-26, 34), (-20, 25), (-15, 75), (-7, 20)]
 
         # the same limits as above, but with sloping eyewalls removed from the datasets!
-        eyewall_dists_no_eyewalls = [ (-11, 57.5), (-14, 20), (-7, 8), (8, 63),
-                             (-1, 15)]
+        eyewall_dists_no_eyewalls = [ (-12.5, 57.5), (-20, 31), (-7, 19), (7, 63),
+                             (-2.5, 15)]
+
+        # old no eyewall limits... keep these values!
+        # eyewall_dists_no_eyewalls = [ (-11, 57.5), (-14, 20), (-7, 8), (8, 63),
+        #                      (-1, 15)]
 
         dates = [ '08-27', '08-27', '08-27', '08-27', '08-29']
         stretch = [ 1, 1, 1, 1]
@@ -217,6 +232,7 @@ def all_data( tc='sam'):
             (-5, 30), (-20, 10),
             (-25, 20), (-15, 35) ]
 
+
         # case 9/26 eye 3 is hard here: wind speed max is around -40, but cloud towers continue to around -47 km...
         in_situ_eyewall_dists = [ (-3, 31), (-2, 28), (-40, 5),
                 # case 2 is hard... moved eyewall back to match plume
@@ -224,9 +240,14 @@ def all_data( tc='sam'):
                 (-33, 33), (-21, 34)]
 
         # the same limits as above, but with sloping eyewalls removed from the datasets!
-        eyewall_dists_no_eyewalls = [ (0, 26), (-1, 22), (-36, -6),
-                            (0, 27.5), (-13, 2.5),
-                            (-23, 24), (-16, 24)]
+        eyewall_dists_no_eyewalls = [ (0, 29), (-1, 22), (-36, -2.5),
+                            (0, 31), (-15, 5),
+                            (-23, 24), (-17, 25)]
+
+        # old no eyewall limits... keep these values!
+        # eyewall_dists_no_eyewalls = [ (0, 26), (-1, 22), (-36, -6),
+        #                     (0, 27.5), (-13, 2.5),
+        #                     (-23, 24), (-16, 24)]
 
         dates = [
             '09-26', '09-26', '09-26', '09-27', '09-27', '09-29', '09-29']

@@ -68,15 +68,15 @@ def plot( tc='all'):
 
             warnings.filterwarnings("ignore")
 
-            fig = plt.figure( figsize=(30, 16), facecolor='w')
+            fig = plt.figure( figsize=(27, 13), facecolor='w') # 34, 16
 
             # plot temperature with original distance axis
-            plt.subplot(711)
+            plt.subplot(811)
             plt.title( title)
             make_plots.plot_power_ch1(crl_path, crl_name, index1=0, index2= len( crl_data.time) - 1, xaxis_name='time')
 
             # plot power with original distance axis
-            plt.subplot(712)
+            plt.subplot(812)
             make_plots.plot_T(crl_path, crl_name, index1=0, index2= len( crl_data.time) - 1, xaxis_name='time')
 
             # get xlims to use later!
@@ -96,7 +96,7 @@ def plot( tc='all'):
             xaxis_data = flight_data.time
             fig = plt.gcf()
 
-            ax1 = fig.add_subplot( 713)
+            ax1 = fig.add_subplot( 813)
             ax1.set_ylabel('Total Wind Speed (m/s)', c='c')
             ax1.plot( xaxis_data, flight_data['WS.d'], c='c', linewidth=.5)
             ax1.yaxis.tick_right()
@@ -108,7 +108,7 @@ def plot( tc='all'):
             # add an empty colorbar to make everything fit in line
             helper_fns.add_blank_colorbar()
 
-            ax2 = fig.add_subplot( 714)
+            ax2 = fig.add_subplot( 814)
             degree_symbol = u'\N{DEGREE SIGN}'
             ax2.set_ylabel( 'Wind Dir (' + degree_symbol + ' from ...)')
             ax2.plot( xaxis_data, flight_data['WD.d'], c='g', linewidth=.5)
@@ -117,7 +117,7 @@ def plot( tc='all'):
             plt.locator_params(axis='x', nbins=10)
             helper_fns.add_blank_colorbar()
 
-            ax3 = fig.add_subplot( 715)
+            ax3 = fig.add_subplot( 815)
             ax3.set_ylabel( 'Vertical Wind Speed (m/s)', c='y')
             ax3.plot( xaxis_data, flight_data['UWZ.d'], c='y', linewidth=.5)
             ax3.yaxis.tick_right()
@@ -127,7 +127,7 @@ def plot( tc='all'):
             plt.locator_params(axis='x', nbins=10)
             helper_fns.add_blank_colorbar()
 
-            ax4 = fig.add_subplot( 716)
+            ax4 = fig.add_subplot( 816)
             ax4.set_ylabel( 'SFMR Rain Rate (mm/hr)', c='b')
             ax4.plot( xaxis_data, flight_data['ASfmrRainRate.1'], c='b', linewidth=.5)
             ax4.grid(True)
@@ -135,18 +135,69 @@ def plot( tc='all'):
             plt.locator_params(axis='x', nbins=10)
             helper_fns.add_blank_colorbar()
 
-            ax4 = fig.add_subplot( 717)
-            ax4.set_xlabel( 'Time (hours, UTC)')
+
+            ax4 = fig.add_subplot( 817)
             ax4.set_ylabel( 'P-3 Height (m)', c='r')
             ax4.plot( xaxis_data, flight_data['HT.d'], c='r', linewidth=.5)
             ax4.yaxis.tick_right()
             ax4.yaxis.set_label_position("right")
             ax4.grid(True)
+
+            # find good limits for the final plot
+            heights = flight_data['HT.d']
+
+            # new defintion: use surface pressures to choose p-3 height interval?!
+            # intense case
+            if np.nanmin( flight_data['PSURF.d']) < 850.0:
+                minh = 2500
+                maxh = np.nanmax( heights[ np.where( heights < 3300.0)]) + 200.0
+                continue
+            # moderate case
+            elif np.nanmin( flight_data['PSURF.d']) < 980.0:
+                minh = 2900
+                maxh = np.nanmax( heights[ np.where( heights < 3300.0)]) + 50.0
+            # weaker case
+            elif np.nanmin( flight_data['PSURF.d']) < 1000.0:
+                maxh = np.nanmax( heights[ np.where( heights < 3300.0)]) + 25.0
+                minh = 3000
+            # weak case
+            else:
+                maxh = np.nanmax( heights[ np.where( heights < 3300.0)]) + 10.0
+                minh = 3150
+
+            # the definition below didn't work because the p-3 starts at 0m at takeoff :(
+            # so all tcs have a p-3 height of 1000m
+            # minh = np.nanmin( heights[ np.where( heights > 1000.0)])
+            ax4.set_ylim( [minh, maxh ])# [2900, 3300]) # use 2500 m as a lower limit for strong tcs to see full height dip!
+
+            # print( 'old min: ' + str( np.nanmin( heights[ np.where( heights > 1000.0)])))
+            # print( 'new min: ' + str( np.nanmin( heights[ np.where( heights > 2000.0)])))
+
             ax4.set_xlim(ax1lims)
-            ax4.set_ylim( [2900, 3300]) # use 2500 m as a lower limit for strong tcs to see full height dip!
             plt.locator_params(axis='x', nbins=10)
             helper_fns.add_blank_colorbar()
 
+            # surface pressure data
+            ax4 = fig.add_subplot( 818)
+            ax4.set_xlabel( 'Time (hours, UTC)')
+            ax4.set_ylabel( 'Surf Pressure (hPa)', c='k')
+            ax4.plot( xaxis_data, flight_data['PSURF.d'], c='k', linewidth=.5)
+            ax4.yaxis.tick_right()
+            ax4.yaxis.set_label_position("left")
+            ax4.grid(True)
+
+            # find good lower limit for pressure plot
+            p = flight_data['PSURF.d']
+            maxh = 1023.0 # add some padding to max pressure of 1013.0 hpa
+            minh = np.nanmin( p[ np.where( p > 850.0)])
+            ax4.set_ylim( [minh - 10.0, maxh])# [2900, 3300]) # use 2500 m as a lower limit for strong tcs to see full height dip!
+
+            ax4.set_xlim(ax1lims)
+            plt.locator_params(axis='x', nbins=10)
+            helper_fns.add_blank_colorbar()
+
+            print("Plots added")
+
             os.chdir( "/Users/etmu9498/research/figures/in-situ-all-data")
-            plt.savefig( metadata['tc_name'].casefold() + "-" + str( dataset) + ".png", dpi=200 ) # bbox_inches='tight',
+            plt.savefig( metadata['tc_name'].casefold() + "-" + str( dataset) + ".png", dpi=200, bbox_inches='tight')
             print( "Plot " + str( dataset + 1) + " saved\n" )

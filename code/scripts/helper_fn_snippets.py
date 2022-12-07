@@ -1,3 +1,4 @@
+
 # make plot background white
 plt.figure( figsize=(18, 18), facecolor='w')
 
@@ -14,7 +15,7 @@ rmw_lim2 = crl_data.rmw_negatives[idx2]
 # taken from find_crl_distance.py
 def nan_helper(y):
     return np.isnan(y), lambda z: z.nonzero()[0]
-nans, x = nan_helper( speed)
+nans, x = nan_helper( speed)F
 speed[ nans] = np.interp( x( nans), x( ~nans), speed[~nans])
 
 # print all numpy array values, and reset things back to the default!
@@ -54,3 +55,17 @@ slope, intercept, r_value, p_value, std_err = stats.linregress(varx[mask], vary[
 # wrap code in these two lines to get rid of warnings!
 warnings.filterwarnings("ignore")
 warnings.filterwarnings("default")
+
+# change font size of ticks for both axes!
+a0.tick_params(axis='both', which='major', labelsize=smallfont)
+
+# a nice succinct for loop!
+[ str( item) for item in center_dists]
+
+# take a slice aka truncate a colorbar! using a helper script saved locally
+cmap = plt.get_cmap('Greys')
+cmap = helper_fns.truncate_colormap(cmap, 0.2, 1.0)
+
+
+# keep only overlapping elements from two numpy arrays
+dist_inds = np.intersect1d( dist_inds1, dist_inds2)

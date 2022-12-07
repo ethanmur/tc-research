@@ -14,7 +14,7 @@ def save_all_tdr(tcname='all'):
         tcname_list = ['grace', 'henri', 'ida', 'sam']
     else:
         tcname_list = [ tcname]
-        
+
     for tcname in tcname_list:
         # load the metadata for this tc
         metadata = tc_metadata.all_data( tc= tcname)
@@ -85,6 +85,11 @@ def save_one_tdr(tcname, dataset, metadata):
             out_vals = outbound_data[ var_list[ key_ind]].isel(time=0).isel(heading=0).transpose().values
             out_vals = np.flip( out_vals, 1)
             in_vals = inbound_data[ var_list[ key_ind]].isel(time=0).isel(heading=0).transpose().values
+
+            # special case for velocities: need to flip sign of inbound data for correct plotting later!!!
+            if var_list[ key_ind] == 'Radial_wind' or var_list[ key_ind] == "Vertical_wind":
+                in_vals = in_vals # * -1
+                print( "vel case!")
 
             # add one empty vertical column of data to account for empty 0 km data point
             nan_pad = np.empty(  (len( outbound_data.height), 1) ) # create an empty array
