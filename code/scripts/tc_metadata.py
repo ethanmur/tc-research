@@ -1,8 +1,240 @@
-# a file containing x axes, dates, and other metadata for plotting tc data automatically!
-# other python scripts call these functions to load in data as dictionaries
+# tc_metadata.py
+# edited 12/16/22
+# a file containing x axes, dates, and other metadata for working with tc data automatically!
+# the top scripts choose and load in specific datasets as dictionaries
 import os
 os.chdir( "/Users/etmu9498/research/code/scripts/")
 import make_plots
+
+
+# this function simply looks at the date provided in the metadata dictionary and
+# returns the appropriate name of a given crl dataset.
+# this provides the original crl dataset names; see the choose_new_data()
+# function to load new crl names
+def choose_crl_date( date, crl_list):
+    if date == '08-11':
+        crl_data = crl_list[ 0]
+    elif date == '08-12-am':
+        crl_data = crl_list[ 1]
+    elif date == '08-12-pm':
+        crl_data = crl_list[ 2]
+    elif date == '08-13':
+        crl_data = crl_list[ 3]
+    elif date == '08-16':
+        crl_data = crl_list[ 4]
+    elif date == '08-17':
+        crl_data = crl_list[ 6]
+    elif date == '08-18':
+        crl_data = crl_list[ 7]
+    elif date == '08-19':
+        crl_data = crl_list[ 8]
+    elif date == '08-20':
+        crl_data = crl_list[ 9]
+    elif date == '08-21':
+        crl_data = crl_list[ 11]
+    elif date == '08-27':
+        crl_data = crl_list[ 12]
+    elif date == '08-28':
+        crl_data = crl_list[ 13]
+    elif date == '08-29':
+        crl_data = crl_list[ 14]
+    elif date == '09-25':
+        crl_data = crl_list[ 15]
+    elif date == '09-26':
+        crl_data = crl_list[ 16]
+    elif date == '09-27':
+        crl_data = crl_list[ 17]
+    elif date == '09-29':
+        crl_data = crl_list[ 18]
+    else:
+        print( 'update if statement!')
+        return
+    return crl_data
+
+
+# this function works like the one above, but loads filenames for in situ data
+def choose_in_situ_date( date, insitu_list):
+    if date == '08-11':
+        insitu_data = insitu_list[ 3]
+    elif date == '08-12-am':
+        insitu_data = insitu_list[ 4]
+    elif date == '08-12-pm':
+        insitu_data = insitu_list[ 5]
+    elif date == '08-13':
+        insitu_data = insitu_list[ 6]
+    elif date == '08-16':
+        insitu_data = insitu_list[ 7]
+    elif date == '08-17':
+        insitu_data = insitu_list[ 8]
+    elif date == '08-18':
+        insitu_data = insitu_list[ 9]
+    elif date == '08-19':
+        insitu_data = insitu_list[ 12]
+    elif date == '08-20':
+        insitu_data = insitu_list[ 14]
+    elif date == '08-21':
+        insitu_data = insitu_list[ 16]
+    elif date == '08-27':
+        insitu_data = insitu_list[ 17]
+    elif date == '08-28':
+        insitu_data = insitu_list[ 18]
+    elif date == '08-29':
+        insitu_data = insitu_list[ 20]
+    elif date == '09-26':
+        insitu_data = insitu_list[ 31]
+    elif date == '09-27':
+        insitu_data = insitu_list[ 32]
+    elif date == '09-29':
+        insitu_data = insitu_list[ 34]
+    else:
+        print( 'update if statement!')
+        return
+    return insitu_data
+
+
+# this function looks at a tc name, a list of all tdr datasets for that name,
+# and a counter to pick and return an inbound and outbound dataset.
+# The code for TC fred is new, easier to update, and more efficient; this code
+# should be applied to all other cases if possible!
+def choose_tdr_data( tc_name, tdr_list, counter):
+
+    if tc_name.casefold() == 'fred':
+        inbound_data = []
+        outbound_data = []
+
+        # manually choose i range to pick the correct tdr datasets
+        # 18 datasets, so 18 was chosen to be inclusive
+        # step = 2 spaces out the inbound / outbound datasets correctly!
+        # start on 4 to skip 8/11 data, not used in this analysis
+        for i in range( 4, 18, 2):
+            inbound_data.append( tdr_list[ i])
+            outbound_data.append( tdr_list[ i + 1])
+
+    # old way of doing things (inefficient)
+    # since each tc has its own folder, the code below was kept the same :)
+    elif tc_name.casefold() == 'grace':
+        inbound_data = [ tdr_list[ 0], tdr_list[ 2],
+            tdr_list[ 4], tdr_list[ 6], tdr_list[ 8],
+            tdr_list[ 10], tdr_list[ 12], tdr_list[ 14],
+            tdr_list[ 16], tdr_list[ 18], tdr_list[ 20] ]
+        outbound_data = [ tdr_list[ 1], tdr_list[ 3],
+            tdr_list[ 5], tdr_list[ 7], tdr_list[ 9],
+            tdr_list[ 11], tdr_list[ 13], tdr_list[ 15],
+            tdr_list[ 17], tdr_list[ 19], tdr_list[ 21] ]
+    elif tc_name.casefold() == 'henri':
+        inbound_data = [ tdr_list[ 0], tdr_list[ 4], tdr_list[ 6], tdr_list[ 8], tdr_list[ 10] ]
+        outbound_data = [tdr_list[ 1], tdr_list[ 5], tdr_list[ 7], tdr_list[ 9], tdr_list[ 11] ]
+    elif tc_name.casefold() == 'ida':
+        inbound_data = [ tdr_list[0], tdr_list[2], tdr_list[4], tdr_list[12], tdr_list[ 20]]
+        outbound_data = [ tdr_list[1], tdr_list[3], tdr_list[5], tdr_list[13], tdr_list[ 21]]
+    elif tc_name.casefold() == 'sam':
+        inbound_data = [ tdr_list[ 0], tdr_list[ 2], tdr_list[ 4], # tdr_list[ 6],
+            tdr_list[ 8], tdr_list[ 10], tdr_list[ 12], tdr_list[ 14] ]
+        outbound_data = [ tdr_list[ 1], tdr_list[ 3], tdr_list[ 5], # tdr_list[ 7],
+            tdr_list[9], tdr_list[ 11], tdr_list[ 13], tdr_list[ 15] ]
+    else:
+        print( 'update if statement!')
+        return 1, 1
+    return inbound_data[ counter], outbound_data[ counter]
+
+
+# the function below is useful for loading the new crl and tdr datasets created
+# by the scripts found in save-new-datasets!
+# they can be found under C:\Users\etmu9498\research\data\tdr-new or crl-new
+# inputs: tc_name is the name of the storm, and counter looks at a specific eye pass
+# from that storm.
+# this code was recently edited (12/15/22) to loop through datasets instead of
+# manually choosing each number. The old code snippets can be found in tc_metadata_old.py
+def choose_new_data( tc_name, counter):
+    tdr_path = "/Users/etmu9498/research/data/tdr-new"
+    tdr_list = make_plots.load_tdr( tdr_path, print_files=False)
+    crl_path = "/Users/etmu9498/research/data/crl-new"
+    crl_list = make_plots.load_crl( crl_path, print_files=False)
+
+    tdr_data = []
+    crl_data = []
+    if tc_name.casefold() == 'fred':
+        # the for loop cycles through elements in the list of new crl
+        # dataset names.
+        # the range of the cycle needs to be manually set, depending on the
+        # number of datasets present in the new data folders
+        for i in range( 7):
+            crl_data.append( crl_list[ i])
+            tdr_data.append( tdr_list[ i])
+    elif tc_name.casefold() == 'grace':
+        for i in range( 7, 18):
+            tdr_data.append( tdr_list[ i])
+            crl_data.append( crl_list[ i])
+    elif tc_name.casefold() == 'henri':
+        for i in range( 18, 23):
+            tdr_data.append( tdr_list[ i])
+            crl_data.append( crl_list[ i])
+    elif tc_name.casefold() == 'ida':
+        for i in range( 23, 28):
+            tdr_data.append( tdr_list[ i])
+            crl_data.append( crl_list[ i])
+    elif tc_name.casefold() == 'sam':
+        for i in range( 28, 35):
+            tdr_data.append( tdr_list[ i])
+            crl_data.append( crl_list[ i])
+    else:
+        print( 'update if statement!')
+        return 1, 1
+    return tdr_data[ counter], crl_data[ counter]
+
+
+# This code works like the function above, except that it looks at in situ data.
+# old code snippets are also located in tc_metadata_old.py
+def choose_new_in_situ_name( tc_name, counter):
+    path = "/Users/etmu9498/research/data/in-situ-new"
+    list = make_plots.load_flight_level( path, print_files=False)
+    data = []
+    if tc_name.casefold() == 'fred':
+        for i in range( 7):
+            data.append( list[ i])
+    elif tc_name.casefold() == 'grace':
+        for i in range( 7, 18):
+            data.append( list[ i])
+    elif tc_name.casefold() == 'henri':
+        for i in range( 18, 23):
+            data.append( list[ i])
+    elif tc_name.casefold() == 'ida':
+        for i in range( 23, 28):
+            data.append( list[ i])
+    elif tc_name.casefold() == 'sam':
+        for i in range( 28, 35):
+            data.append( list[ i])
+    else:
+        print( 'update if statement!')
+        return 1, 1
+    return data[ counter]
+
+
+# split tcs into four categories: tropical depression, tropical storm, weak hurricane, and strong hurricane
+# depending on their intensities from the NOAA document!
+# input: a list of intensity values for this particular tc
+def find_cat( intensity_list):
+    cat = []
+    for i in range( len( intensity_list)):
+        # tropical depression case (all values are in knots)
+        if intensity_list[ i] < 34:
+        # tropical storm
+            cat += ['td']
+        elif intensity_list[ i] >= 34 and intensity_list[ i] < 64:
+            cat += ['ts']
+        # weak hurricane (categories 1-2)
+        elif intensity_list[ i] >= 64 and intensity_list[ i] < 96:
+            cat += ['wh']
+        # strong hurricane (categories 3-5)
+        elif intensity_list[ i] >= 96:
+            cat += ['sh']
+        else:
+            print( 'Fix if statement in intensity_cat() function!')
+    return cat
+
+
+
+
 
 # main function holding metadata for each TC!
 # when called, this function returns a dictionary of values for each respective TC.
@@ -27,16 +259,62 @@ def all_data( tc='sam'):
     if tc.casefold() == 'fred':
         tdr_path = "/Users/etmu9498/research/data/tdr/fred/nc-files"
         tdr_list = make_plots.load_tdr(tdr_path, print_files=False)
+
+        crl_range = [ (0, 1650), (1650, 3300), (4200, 5500),
+                (0, 1900), (2900, 4500),
+                (0, 1750), (2300, 4000)]
+
         xlims = [
             ( -77, -72), ( -77, -72), (24, 18),
             ( -77, -73.5), (-77, -73.5 ),
             (-79, -75), (-79, -75) ]
-        dates = [
-            '08-12-am', '08-12-am', '08-12-am',
+        xtype = ['lon', 'lon', 'lat',
+            'lon', 'lon',
+            'lon', 'lon' ]
+
+        # placeholders that aren't totally relevant, need to initialize variables to
+        # avoid errors
+        eyewall_dists = []
+        stretch = []
+        shift = []
+        crl_shear_inds = []
+        tc_center_lat = []
+        tc_center_lon = []
+
+        # older, more inclusive eyewall definitions
+        in_situ_eyewall_dists = [ ( -65, 60), ( -70, 0), ( -55, 50),
+            ( -45, 47.5), ( -57.5, -5),
+            ( -60, 50), ( -55, 70) ]
+
+        eyewall_dists_no_eyewalls = [ ( -10, 40), ( -70, -16), ( -55, 50),
+            ( -45, 47.5), ( -52.5, -11),
+            ( -57.5, 40), ( -55, 50) ]
+
+        dates = [ '08-12-am', '08-12-am', '08-12-am',
             '08-12-pm', '08-12-pm',
             '08-13', '08-13' ]
+
         eye_pass = [ "1", "2", "3", "1", "2", "1", "2"]
+
         tc_name = 'Fred'
+
+        # Ships data used:
+        # 12 UTC on 08-12 for 08-12-am
+        # 0 UTC on 08-13 for 08-12-pm
+        # 12 UTC on 08-13 for 08-13
+        shrd = [ 187, 187, 187, 181, 181, 179, 179]
+        shtd = [ 109, 109, 109, 91, 91, 97, 97]
+        shear_dir = shtd
+        shear_mag = shrd
+
+        # found on 1/4/23. determined with shear_angles.py scripts! saved here for convenience
+        shear_quads = [('UL', 'DR'), ('DL', 'UR'), ('DR', 'UL'),
+                    ('UL', 'DR'), ('DL', 'UR'), ('UL', 'DR'), ('UL', 'DR')]
+
+
+        intensity = [ 30, 30, 30, 32.5, 32.5, 30, 30 ]
+        intensity_cat = find_cat( intensity)
+
 
     elif tc.casefold() == 'grace':
         tdr_path = "/Users/etmu9498/research/data/tdr/grace/nc-files"
@@ -93,13 +371,24 @@ def all_data( tc='sam'):
 
         tc_name = 'Grace'
 
-        shrd = [ 0, 0, 107, 107, 107, 105, 105, 105, 81, 81, 81] # 0 utc the following day used for most cases
-        shtd = [ 0, 0, 142, 142, 142, 135, 135, 135, 169, 169, 169] # need to replace temp 0s for 8/16
+        # Ships data used:
+        # 12 UTC on 08-16 for 08-16
+        # 12 UTC on 08-17 for 08-17
+        # 0 UTC on 08-19 for 08-18
+        # 0 UTC on 08-20 for 08-19
+        shrd = [ 160, 160, 107, 107, 107, 105, 105, 105, 81, 81, 81]
+        shtd = [ 154, 154, 142, 142, 142, 135, 135, 135, 169, 169, 169]
 
-        shear_quads = [ (0, 0), (0, 0), # need to update these values
-                    ('UL', "DR"), ('DL', 'UR'), ('DL', 'UR'),
+        # newly updated shear quads: 1/4/23
+        shear_quads = [('UR', 'DL'), ('UL', 'DR'),
+                    ('UL', 'DR'), ('DL', 'UR'), ('DL', 'UR'),
                     ('UR', 'DL'), ('DL', 'UR'), ('DR', 'UL'),
-                    ('UL', 'DR'), ('DL', 'UR'), ('DR', 'UL')] # determined with shear_angles.py scripts! saved here for convenience
+                    ('UL', 'DR'), ('DL', 'UR'), ('DR', 'UL')]
+
+        # shear_quads = [ (0, 0), (0, 0), # need to update these values
+        #             ('UL', "DR"), ('DL', 'UR'), ('DL', 'UR'),
+        #             ('UR', 'DL'), ('DL', 'UR'), ('DR', 'UL'),
+        #             ('UL', 'DR'), ('DL', 'UR'), ('DR', 'UL')] # determined with shear_angles.py scripts! saved here for convenience
 
         shear_dir = shtd
         shear_mag = shrd
@@ -152,10 +441,15 @@ def all_data( tc='sam'):
         eye_pass = [ "1", "3", "1", "2", "3"]
         tc_name = 'Henri'
 
+        # Ships data used:
+        # 0 UTC on 08-21 for 08-20
+        # 0 UTC on 08-22 for 08-21
         shrd = [ 128, 128, 60, 60, 60]
         shtd = [ 179, 179, 240, 240, 240]
         shear_dir = shtd
         shear_mag = shrd
+
+        # checked on 1/4/23: looks good!
         shear_quads = [ ('DR', 'UL'), ('UL', 'DR'),
                 ('DL', 'UR'), ('DR', 'UL'), ('UL', 'DR')]
 
@@ -198,14 +492,22 @@ def all_data( tc='sam'):
         eye_pass = [ "1", "2", "3", "7", "1"]
         tc_name = 'Ida'
 
-        shrd = [ 115, 115, 115, 115, 112] # 18 utc used for last case
+        # Ships data used:
+        # 0 UTC on 08-28 for 08-27
+        # 18 UTC on 08-29 for 08-29
+        shrd = [ 115, 115, 115, 115, 112]
         shtd = [ 61, 61, 61, 61, 127]
 
         crl_shear_inds = []
 
         shear_dir = shtd
         shear_mag = shrd
-        shear_quads = [ ('UL', 'DR'), ('DL', 'UR'), (0, 0), ('DL', 'UR'), ('DL', 'UR')]
+
+        # shear quads updated on 1/4/23
+        shear_quads = [('UL', 'DR'), ('DL', 'UR'), ('DR', 'UL'), ('DL', 'UR'), ('DL', 'UR')]
+
+
+        # shear_quads = [ ('UL', 'DR'), ('DL', 'UR'), (0, 0), ('DL', 'UR'), ('DL', 'UR')]
 
         tc_center_lat = []
         tc_center_lon = []
@@ -269,8 +571,17 @@ def all_data( tc='sam'):
 
         # SHRD: 850-200 hPa shear magnitude (kt *10) vs time (200-800 km)
         # SHTD: heading of SHRD
-        shrd = [ 90, 90, 90, 85, 85, 103, 103 ]
-        shtd = [ 64, 64, 64, 44, 44, 57, 57]
+
+        # Ships data used:
+        # 0 UTC on 09-28 for 09-27
+        # 0 UTC on 09-29 for 09-28
+        # 0 UTC on 09-30 for 09-29
+        shrd = [ 85, 85, 85, 110, 110, 103, 103]
+        shtd = [ 44, 44, 44, 74, 74, 57, 57]
+
+        # old but very wrong values!!! 0 UTC for the previous day was used for all cases, not the current day
+        # shrd = [ 90, 90, 90, 85, 85, 103, 103 ]
+        # shtd = [ 64, 64, 64, 44, 44, 57, 57]
 
         # SHRS: 850-500 hPa shear magnitude (kt *10) vs time
         # SHTS: heading of SHRS
@@ -293,8 +604,17 @@ def all_data( tc='sam'):
 
         shear_mag = shrd
         shear_dir = shtd
-        shear_quads = [ ('UL', 'DR'), ('DL', 'UR'), ('DR', 'UL'),
-                ('DL', 'UR'), ('UR', 'DL'), ('DR', 'UL'), ('UL', 'DR')]
+
+
+        # fixed shear quads found with correct shrd and shtd data
+        # only one quadrant determination for 9/28 pass 3 changed:
+        # it was within 16 degrees of the crossover point!
+        shear_quads = [ [('UL', 'DR'), ('DL', 'UR'), ('DR', 'UL'),
+            ('DL', 'UR'), ('DR', 'UL'), ('DR', 'UL'), ('UL', 'DR')]]
+
+        # old shear quads determined by too early shrd data, described above
+        # shear_quads = [ ('UL', 'DR'), ('DL', 'UR'), ('DR', 'UL'),
+        #         ('DL', 'UR'), ('UR', 'DL'), ('DR', 'UL'), ('UL', 'DR')]
 
         ships_lat = [ 14.5, 14.5, 14.5, 16.5, 16.5, 20.3, 20.3]
         ships_lon = [ 50.6, 50.6, 50.6, 52.9, 52.9, 58.0, 58.0]
@@ -306,11 +626,11 @@ def all_data( tc='sam'):
         intensity = [135, 135, 135, 105, 105, 115, 115 ]
         intensity_cat = find_cat( intensity)
 
-
     else:
         tcdata = "selected TC name is not yet implemented"
         return tcdata
 
+    # add metadata to a dictionary for a given tc case!
     tcdata = {
         'crl_path': crl_path, 'tdr_path': tdr_path, 'in_situ_path': in_situ_path,
         'crl_list': crl_list, 'tdr_list': tdr_list, 'in_situ_list': in_situ_list,
@@ -326,7 +646,6 @@ def all_data( tc='sam'):
         'um_crl_path': updated_matrices_crl_path,
         'intensity': intensity, 'intensity_cat': intensity_cat,
         'shear_quads': shear_quads}
-
     return tcdata
 
 
@@ -339,7 +658,6 @@ def all_in_situ_metadata( tc='sam'):
     # choose proper paths to data and formatting options
     # casefold() allows for any capitalization variation to work here
     # paths to data
-
     # load a list of available data to these variables
     crl_path = "/Users/etmu9498/research/data/CRL_data/2021"
     crl_list = make_plots.load_crl(crl_path, print_files=False)
@@ -350,7 +668,6 @@ def all_in_situ_metadata( tc='sam'):
             '08-12-pm', '08-12-pm',
             '08-13', '08-13' ]
         tc_name = 'Fred'
-
     elif tc.casefold() == 'grace':
         dates = [
             '08-16', '08-16', '08-16',
@@ -358,222 +675,20 @@ def all_in_situ_metadata( tc='sam'):
             '08-18', '08-18', '08-18',
             '08-19', '08-19', '08-19' ]
         tc_name = 'Grace'
-
     elif tc.casefold() == 'henri':
-
         dates = [ '08-20', '08-20',
             '08-21', '08-21', '08-21' ]
         tc_name = 'Henri'
-
     elif tc.casefold() == 'ida':
-
         dates = [ '08-27', '08-27', '08-27', '08-29']
         tc_name = 'Ida'
-
     elif tc.casefold() == 'sam':
         dates = [
             '09-26', '09-26', '09-26', '09-27', '09-27', '09-29', '09-29']
         tc_name = 'Sam'
-
     else:
         tcdata = "selected TC name is not yet implemented"
         return tcdata
-
     tcdata = {
         'crl_list': crl_list, 'dates': dates, 'tc_name': tc_name}
-
     return tcdata
-
-
-
-# this function simply looks at the date provided in the tcdata dictionary and
-# returns the appropriate name of the crl dataset
-def choose_crl_date( date, crl_list):
-    if date == '08-11':
-        crl_data = crl_list[ 0]
-    elif date == '08-12-am':
-        crl_data = crl_list[ 1]
-    elif date == '08-12-pm':
-        crl_data = crl_list[ 2]
-    elif date == '08-13':
-        crl_data = crl_list[ 3]
-    elif date == '08-16':
-        crl_data = crl_list[ 4]
-    elif date == '08-17':
-        crl_data = crl_list[ 6]
-    elif date == '08-18':
-        crl_data = crl_list[ 7]
-    elif date == '08-19':
-        crl_data = crl_list[ 8]
-    elif date == '08-20':
-        crl_data = crl_list[ 9]
-    elif date == '08-21':
-        crl_data = crl_list[ 11]
-    elif date == '08-27':
-        crl_data = crl_list[ 12]
-    elif date == '08-28':
-        crl_data = crl_list[ 13]
-    elif date == '08-29':
-        crl_data = crl_list[ 14]
-    elif date == '09-25':
-        crl_data = crl_list[ 15]
-    elif date == '09-26':
-        crl_data = crl_list[ 16]
-    elif date == '09-27':
-        crl_data = crl_list[ 17]
-    elif date == '09-29':
-        crl_data = crl_list[ 18]
-    else:
-        print( 'update if statement!')
-        return
-    return crl_data
-
-
-def choose_in_situ_date( date, insitu_list):
-    if date == '08-11':
-        insitu_data = insitu_list[ 3]
-    elif date == '08-12-am':
-        insitu_data = insitu_list[ 4]
-    elif date == '08-12-pm':
-        insitu_data = insitu_list[ 5]
-    elif date == '08-13':
-        insitu_data = insitu_list[ 6]
-    elif date == '08-16':
-        insitu_data = insitu_list[ 7]
-    elif date == '08-17':
-        insitu_data = insitu_list[ 8]
-    elif date == '08-18':
-        insitu_data = insitu_list[ 9]
-    elif date == '08-19':
-        insitu_data = insitu_list[ 12]
-    elif date == '08-20':
-        insitu_data = insitu_list[ 14]
-    elif date == '08-21':
-        insitu_data = insitu_list[ 16]
-    elif date == '08-27':
-        insitu_data = insitu_list[ 17]
-    elif date == '08-28':
-        insitu_data = insitu_list[ 18]
-    elif date == '08-29':
-        insitu_data = insitu_list[ 20]
-    elif date == '09-26':
-        insitu_data = insitu_list[ 31]
-    elif date == '09-27':
-        insitu_data = insitu_list[ 32]
-    elif date == '09-29':
-        insitu_data = insitu_list[ 34]
-    else:
-        print( 'update if statement!')
-        return
-    return insitu_data
-
-
-def choose_tdr_data( tc_name, tdr_list, counter):
-    if tc_name.casefold() == 'grace':
-        inbound_data = [ tdr_list[ 0], tdr_list[ 2],
-            tdr_list[ 4], tdr_list[ 6], tdr_list[ 8],
-            tdr_list[ 10], tdr_list[ 12], tdr_list[ 14],
-            tdr_list[ 16], tdr_list[ 18], tdr_list[ 20] ]
-        outbound_data = [ tdr_list[ 1], tdr_list[ 3],
-            tdr_list[ 5], tdr_list[ 7], tdr_list[ 9],
-            tdr_list[ 11], tdr_list[ 13], tdr_list[ 15],
-            tdr_list[ 17], tdr_list[ 19], tdr_list[ 21] ]
-    elif tc_name.casefold() == 'henri':
-        inbound_data = [ tdr_list[ 0], tdr_list[ 4], tdr_list[ 6], tdr_list[ 8], tdr_list[ 10] ]
-        outbound_data = [tdr_list[ 1], tdr_list[ 5], tdr_list[ 7], tdr_list[ 9], tdr_list[ 11] ]
-    elif tc_name.casefold() == 'ida':
-        inbound_data = [ tdr_list[0], tdr_list[2], tdr_list[4], tdr_list[12], tdr_list[ 20]]
-        outbound_data = [ tdr_list[1], tdr_list[3], tdr_list[5], tdr_list[13], tdr_list[ 21]]
-    elif tc_name.casefold() == 'sam':
-        inbound_data = [ tdr_list[ 0], tdr_list[ 2], tdr_list[ 4], # tdr_list[ 6],
-            tdr_list[ 8], tdr_list[ 10], tdr_list[ 12], tdr_list[ 14] ]
-        outbound_data = [ tdr_list[ 1], tdr_list[ 3], tdr_list[ 5], # tdr_list[ 7],
-            tdr_list[9], tdr_list[ 11], tdr_list[ 13], tdr_list[ 15] ]
-    else:
-        print( 'update if statement!')
-        return 1, 1
-    return inbound_data[ counter], outbound_data[ counter]
-
-
-# the function below is useful for loading the new crl and tdr datasets created
-# by the scripts found in save-new-datasets!
-# they can be found under C:\Users\etmu9498\research\data\tdr-new
-
-# inputs: tc_name is the name of the storm, and counter looks at a specific eye pass
-# from that storm
-def choose_new_data( tc_name, counter):
-    tdr_path = "/Users/etmu9498/research/data/tdr-new"
-    tdr_list = make_plots.load_tdr( tdr_path, print_files=False)
-    crl_path = "/Users/etmu9498/research/data/crl-new"
-    crl_list = make_plots.load_crl( crl_path, print_files=False)
-
-    if tc_name.casefold() == 'grace':
-        tdr_data = [ tdr_list[ 0], tdr_list[ 1],
-            tdr_list[ 2], tdr_list[ 3], tdr_list[ 4],
-            tdr_list[ 5], tdr_list[ 6], tdr_list[ 7],
-            tdr_list[ 8], tdr_list[ 9], tdr_list[ 10] ]
-        crl_data = [ crl_list[ 0], crl_list[ 1],
-            crl_list[ 2], crl_list[ 3], crl_list[ 4],
-            crl_list[ 5], crl_list[ 6], crl_list[ 7],
-            crl_list[ 8], crl_list[ 9], crl_list[ 10]  ]
-    elif tc_name.casefold() == 'henri':
-        tdr_data = [ tdr_list[ 11], tdr_list[ 12], tdr_list[ 13], tdr_list[ 14], tdr_list[ 15]  ]
-        crl_data = [ crl_list[ 11], crl_list[ 12], crl_list[ 13], crl_list[ 14], crl_list[ 15] ]
-    elif tc_name.casefold() == 'ida':
-        tdr_data = [ tdr_list[ 16], tdr_list[ 17], tdr_list[ 18], tdr_list[ 19], tdr_list[ 20]]
-        crl_data = [ crl_list[ 16], crl_list[ 17], crl_list[ 18], crl_list[19], crl_list[ 20] ]
-    elif tc_name.casefold() == 'sam':
-        tdr_data = [ tdr_list[ 21], tdr_list[ 22], tdr_list[ 23],
-                    tdr_list[ 24], tdr_list[ 25], tdr_list[ 26], tdr_list[ 27], ]
-        crl_data = [ crl_list[ 21], crl_list[ 22], crl_list[ 23],
-                     crl_list[ 24], crl_list[ 25], crl_list[ 26], crl_list[ 27] ]
-    else:
-        print( 'update if statement!')
-        return 1, 1
-    return tdr_data[ counter], crl_data[ counter]
-
-
-
-def choose_new_in_situ_name( tc_name, counter):
-    path = "/Users/etmu9498/research/data/in-situ-new"
-    list = make_plots.load_flight_level( path, print_files=False)
-
-    if tc_name.casefold() == 'grace':
-        name = [ list[ 0], list[ 1],
-            list[ 2], list[ 3], list[ 4],
-            list[ 5], list[ 6], list[ 7],
-            list[ 8], list[ 9], list[ 10] ]
-    elif tc_name.casefold() == 'henri':
-        name = [ list[ 11], list[ 12], list[ 13], list[ 14], list[ 15] ]
-    elif tc_name.casefold() == 'ida':
-        name = [ list[ 16], list[ 17], list[ 18], list[ 19], list[ 20]]
-    elif tc_name.casefold() == 'sam':
-        name = [ list[ 21], list[ 22], list[ 23],
-                 list[ 24], list[ 25],
-                 list[ 26], list[ 27] ]
-    else:
-        print( 'update if statement!')
-        return 1, 1
-    return name[ counter]
-
-# split tcs into four categories: tropical depression, tropical storm, weak hurricane, and strong hurricane
-# depending on their intensities from the NOAA document!
-# input: a list of intensity values for this particular tc
-def find_cat( intensity_list):
-    cat = []
-    for i in range( len( intensity_list)):
-        # tropical depression case (all values are in knots)
-        if intensity_list[ i] < 34:
-        # tropical storm
-            cat += ['td']
-        elif intensity_list[ i] >= 34 and intensity_list[ i] < 64:
-            cat += ['ts']
-        # weak hurricane (categories 1-2)
-        elif intensity_list[ i] >= 64 and intensity_list[ i] < 96:
-            cat += ['wh']
-        # strong hurricane (categories 3-5)
-        elif intensity_list[ i] >= 96:
-            cat += ['sh']
-        else:
-            print( 'Fix if statement in intensity_cat() function!')
-    return cat

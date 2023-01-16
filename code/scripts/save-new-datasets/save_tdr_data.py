@@ -11,7 +11,7 @@ import helper_fns
 def save_all_tdr(tcname='all'):
 
     if tcname == 'all':
-        tcname_list = ['grace', 'henri', 'ida', 'sam']
+        tcname_list = [ 'fred', 'grace', 'henri', 'ida', 'sam']
     else:
         tcname_list = [ tcname]
 
@@ -39,6 +39,7 @@ def save_one_tdr(tcname, dataset, metadata):
     inbound_name, outbound_name = tc_metadata.choose_tdr_data( tcname, metadata[ 'tdr_list'], dataset)
     # load the actual tdr data for editing
     os.chdir( metadata[ 'tdr_path'])
+
     inbound_data = xr.open_dataset( inbound_name)
     outbound_data = xr.open_dataset( outbound_name)
 
@@ -89,7 +90,7 @@ def save_one_tdr(tcname, dataset, metadata):
             # special case for velocities: need to flip sign of inbound data for correct plotting later!!!
             if var_list[ key_ind] == 'Radial_wind' or var_list[ key_ind] == "Vertical_wind":
                 in_vals = in_vals # * -1
-                print( "vel case!")
+                # print( "vel case!")
 
             # add one empty vertical column of data to account for empty 0 km data point
             nan_pad = np.empty(  (len( outbound_data.height), 1) ) # create an empty array

@@ -1,3 +1,58 @@
+# updated 12/16/22
+
+# old code snippet from choose_new_in_situ_name()
+'''
+elif tc_name.casefold() == 'grace':
+    name = [ list[ 0], list[ 1],
+        list[ 2], list[ 3], list[ 4],
+        list[ 5], list[ 6], list[ 7],
+        list[ 8], list[ 9], list[ 10] ]
+elif tc_name.casefold() == 'henri':
+    name = [ list[ 11], list[ 12], list[ 13], list[ 14], list[ 15] ]
+elif tc_name.casefold() == 'ida':
+    name = [ list[ 16], list[ 17], list[ 18], list[ 19], list[ 20]]
+elif tc_name.casefold() == 'sam':
+    name = [ list[ 21], list[ 22], list[ 23],
+             list[ 24], list[ 25],
+             list[ 26], list[ 27] ]
+'''
+
+# old code snippet from choose_new_data()
+'''
+elif tc_name.casefold() == 'grace':
+    tdr_data = [ tdr_list[ 0], tdr_list[ 1],
+        tdr_list[ 2], tdr_list[ 3], tdr_list[ 4],
+        tdr_list[ 5], tdr_list[ 6], tdr_list[ 7],
+        tdr_list[ 8], tdr_list[ 9], tdr_list[ 10] ]
+    crl_data = [ crl_list[ 0], crl_list[ 1],
+        crl_list[ 2], crl_list[ 3], crl_list[ 4],
+        crl_list[ 5], crl_list[ 6], crl_list[ 7],
+        crl_list[ 8], crl_list[ 9], crl_list[ 10]  ]
+elif tc_name.casefold() == 'henri':
+    tdr_data = [ tdr_list[ 11], tdr_list[ 12], tdr_list[ 13], tdr_list[ 14], tdr_list[ 15]  ]
+    crl_data = [ crl_list[ 11], crl_list[ 12], crl_list[ 13], crl_list[ 14], crl_list[ 15] ]
+elif tc_name.casefold() == 'ida':
+    tdr_data = [ tdr_list[ 16], tdr_list[ 17], tdr_list[ 18], tdr_list[ 19], tdr_list[ 20]]
+    crl_data = [ crl_list[ 16], crl_list[ 17], crl_list[ 18], crl_list[19], crl_list[ 20] ]
+elif tc_name.casefold() == 'sam':
+    tdr_data = [ tdr_list[ 21], tdr_list[ 22], tdr_list[ 23],
+                tdr_list[ 24], tdr_list[ 25], tdr_list[ 26], tdr_list[ 27], ]
+    crl_data = [ crl_list[ 21], crl_list[ 22], crl_list[ 23],
+                 crl_list[ 24], crl_list[ 25], crl_list[ 26], crl_list[ 27] ]
+else:
+    print( 'update if statement!')
+    return 1, 1
+return tdr_data[ counter], crl_data[ counter]
+'''
+
+
+
+
+
+
+
+
+
 # created 8/31/22
 # a bunch of code from tc_metadata.py that hasn't been used in a while.
 # I decided to throw all the extra bits into here to make the important file cleaner!

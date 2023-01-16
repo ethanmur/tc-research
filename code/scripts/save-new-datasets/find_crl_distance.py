@@ -72,7 +72,12 @@ def find_dist_new_tdr( tcname, dataset):
     # print( len( tdrx.to_dataframe().dropna( inplace=True)))
 
     # fit the data without nans to a line!
-    line_coefs = np.polyfit( inds_nonan, tdrx_nonan, 1)
+    if len( tdrx_nonan) > 0:
+        line_coefs = np.polyfit( inds_nonan, tdrx_nonan, 1)
+    # case with no tdr distance data
+    else:
+        return np.nan
+
     # print('line: y = ' + str( line_coefs[ 0]) + ' * x + ' + str( line_coefs[ 1]))
 
     # make a new line covering more values (aka extending the lat / lon range)
@@ -171,9 +176,6 @@ def find_crl_dist_in_situ( tcname, dataset, returnval='none'):
         crl_path = "/Users/etmu9498/research/data/crl-new"
         tdr_name, crl_name = tc_metadata.choose_new_data( tcname, dataset)
 
-    print( in_situ_name)
-    print( crl_name)
-
     os.chdir( crl_path)
     new_crl = xr.open_dataset( crl_name)
 
@@ -242,7 +244,7 @@ def find_crl_dist_in_situ( tcname, dataset, returnval='none'):
     print( distance_array[0:50])
     print( trimheight[0:50])
     '''
-    
+
     # find the min height in this trimmed down dataset
     heightmin = np.nanmin( trimheight)
     heightmin_ind = np.nanargmin( trimheight) # this index is for the trimmed dataset
@@ -400,6 +402,183 @@ def find_crl_dist_in_situ( tcname, dataset, returnval='none'):
         print( "Please select either 'crl' or 'in-situ' as a valid input for" +
         " the returnval parameter in the find_crl_dist_in_situ() function.")
         return None
+
+
+
+
+
+# created 12/16/22
+# pretty much the same as the function above, except that it looks at surface
+# pressures instead of p-3 heights to find tc centers. This function will eventually
+# have an optional smoothing feature too, to smooth pressures to better find the center.
+def find_crl_dist_psurf( tcname, dataset, returnval='none'):
+
+    warnings.filterwarnings("ignore")
+
+    # load data
+    metadata = tc_metadata.all_data( tc= tcname)
+
+    in_situ_path = metadata['in_situ_path']
+    in_situ_files = make_plots.load_flight_level( in_situ_path, print_files=False)
+    in_situ_name = tc_metadata.choose_in_situ_date( metadata['dates'][dataset], in_situ_files)
+    in_situ_data = load_in_situ_data.load_in_situ( in_situ_path, in_situ_name)
+
+
+    if len( metadata['crl_range'][dataset]) == 4:
+        crl_path = "/Users/etmu9498/research/data/crl-spiral-cases"
+        crl_name = tc_metadata.choose_crl_date( metadata[ 'dates'][ dataset], metadata[ 'crl_list'])
+    else:
+        crl_path = "/Users/etmu9498/research/data/crl-new"
+        tdr_name, crl_name = tc_metadata.choose_new_data( tcname, dataset)
+
+    os.chdir( crl_path)
+    new_crl = xr.open_dataset( crl_name)
+
+    # time in hours
+    float_time = in_situ_data.float_time
+    # time in seconds (UTC)
+    time = in_situ_data.float_time.values * 60 * 60
+
+    # define the surface pressure from flight level data
+    psurf = [ float( line) for line in in_situ_data["PSURF.d"].values ]
+
+    # true air speed of the P-3 (m/s)
+    speed = [float( line) for line in in_situ_data["TAS.d"].values ]
+    speed = np.array( speed)
+
+    # interpolate between nans in speed array; they were causing issues!
+    nans, x = nan_helper( speed)
+    speed[ nans] = np.interp( x( nans), x( ~nans), speed[~nans])
+
+    # Part 1: Make a distance array for just the in situ dataset
+
+    # This list will hold distance estimations for every in situ value, and it
+    # will eventually be turned into a numpy array.
+    # The first value of 0 establishes the baseline distance
+    distance_array = [ 0.0]
+    # do this for every data point in the numpy array, except the last value
+    for index in range( len( psurf) - 1):
+
+        speed_i = speed[ index]
+        speed_i1 = speed[ index + 1]
+        # most recent distance calculated
+        dist_ind = distance_array[ -1]
+        # average speed between indices
+        avg_v = ( speed_i + speed_i1) / 2
+        # distance gained during this time step
+        deltax = avg_v * ( time[ index + 1] - time[ index])
+        # make the new distance! and convert to km
+        new_dist = dist_ind + deltax / 1000
+        distance_array = distance_array + [ new_dist]
+
+    # part two: making new distance axes with 0 centered on the lowest p-3 height!
+    # this value corresponds to the lowest central pressure of the TC
+    # total wind speed would also work well for this step
+
+    # trim the data down to search the right section for the minimum value
+    # maybe a little inefficient, but I know it'll work this way
+
+    # trim height data down to the eye pass of interest
+    trimpsurf = height_helper( new_crl, metadata['crl_range'][dataset], in_situ_data[ "PSURF.d"].values, float_time)
+
+
+    # find the min height in this trimmed down dataset
+    psurfmin = np.nanmin( trimpsurf)
+    psurfmin_ind = np.nanargmin( trimpsurf) # this index is for the trimmed dataset
+
+    # find the min height index for the full dataset!
+    # the old way to find this index was flawed: it either just picked the first or
+    # last occurence of the index and called that the min. but, this led to overlaps!
+    # to fix this, we need to find the in situ index closest to the crl's starting index
+    # and then add the trimheight index to it...
+    idx1 = (np.abs(float_time.values - new_crl.time[ 0].values)).argmin()
+    heightmin_fullind = psurfmin_ind + idx1
+
+
+    # part two: find center distance value and subtract it to make it new 0 km
+    center_dist = distance_array[ heightmin_fullind]
+    center_dist_array = np.subtract( np.array( distance_array), center_dist)
+
+
+    # part 3: add new in situ distances to crl data
+    time1 = new_crl.time[ 0]
+    time2 = new_crl.time[ -1]
+
+    # find the in situ times nearest the crl times
+    idx1 = (np.abs(float_time - time1)).argmin()
+    idx2 = (np.abs(float_time - time2)).argmin()
+
+
+    # empty array that will hold new crl distances!
+    crl_dist_array = []
+    # new change 9/6/22
+    # original case
+    if len( metadata['crl_range'][dataset]) == 2:
+        for crl_time in new_crl.time.values:
+            # find the index of the in situ time nearest this crl time
+            idx = (np.abs(float_time - crl_time)).argmin()
+            # get the in situ distance value at this index
+            crl_dist = center_dist_array[ idx]
+            crl_dist_array = crl_dist_array + [ crl_dist]
+    # new spiral case: do the same thing, but with the non chopped time array!
+    elif len( metadata['crl_range'][dataset]) == 4:
+        for crl_time in new_crl.time_distance_axis.values:
+            idx = (np.abs(float_time - crl_time)).argmin()
+            crl_dist = center_dist_array[ idx]
+            crl_dist_array = crl_dist_array + [ crl_dist]
+
+    # center axis already accounts for 4 ind case! no need to change anything here
+    if returnval == 'crl':
+        return crl_dist_array
+
+    # in situ data still doesn't account for the 4 ind case: let's fix that
+    elif returnval == 'in-situ':
+        # normal case: don't do anything
+        if len( metadata['crl_range'][dataset]) == 2:
+            return center_dist_array
+        # 4 ind case: need to cut out distances during spiral
+        if len( metadata['crl_range'][dataset]) == 4:
+            # load trimmed crl data just for this bit to find spiral section
+            temp_crl_path = "/Users/etmu9498/research/data/crl-new"
+            os.chdir( temp_crl_path)
+            tdr_name, crl_name = tc_metadata.choose_new_data( tcname, dataset)
+            temp_crl = xr.open_dataset( crl_name)
+            # get time values
+            newtime = temp_crl.time.values
+
+            # find inds where spiral starts / ends: crl data
+            i0 = metadata['crl_range'][dataset][ 1] - metadata['crl_range'][dataset][ 0]
+            i1 = metadata['crl_range'][dataset][ 2] - metadata['crl_range'][dataset][ 0]
+            # find the indices of in situ times nearest the crl times
+            # start and end in situ indices of spiral
+            idx1 = (np.abs(float_time - newtime[i0])).argmin().values
+            idx2 = (np.abs(float_time - newtime[i1])).argmin().values
+
+            # shift end of array over through subtraction
+            # figure out the distance difference between the two indices
+            dist_diff = center_dist_array[idx1] - center_dist_array[idx2]
+
+            # get the indices for the full distance array
+            indrange = np.arange( len( center_dist_array))
+
+            # for any index past the spiral, remove the distance difference to shift the axis over
+            new_center_dist = np.where( indrange >= idx1, center_dist_array + dist_diff, center_dist_array)
+            # remove in situ distances from the spiral region
+            # new_center_dist = np.delete( new_center_dist, np.arange( idx1, idx2 )) # + 1))
+
+            # add -999 values as fillers at the end of the dataset
+            # new_center_dist = np.concatenate( ( new_center_dist, -999 * np.ones( idx2 - idx1)))
+
+            warnings.filterwarnings("default")
+            return new_center_dist
+
+    else:
+        print( "Please select either 'crl' or 'in-situ' as a valid input for" +
+        " the returnval parameter in the find_crl_dist_in_situ() function.")
+        return None
+
+
+
 
 
 

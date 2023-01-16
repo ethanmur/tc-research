@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 os.chdir("/Users/etmu9498/research/code/scripts")
 import tc_metadata
 
-def plot(crl_path, crl_name, tcdata, counter, xaxis='dist', plot_number=313):
+def plot(crl_path, crl_name, tcdata, counter, xaxis='dist', plot_number=313, togrid=False):
     warnings.filterwarnings("ignore")
 
     in_situ_path = tcdata[ 'new_flight_data_path']
@@ -59,8 +59,14 @@ def plot(crl_path, crl_name, tcdata, counter, xaxis='dist', plot_number=313):
     # make sure the x axis data is a numpy array for proper plotting
     xaxis_data = np.array(xaxis_data)
 
-    fig = plt.gcf()
-    ax1 = fig.add_subplot( plot_number)
+    # special case to add to a gridded plot!
+    if togrid:
+        plt.subplot2grid((4,6), (3,0), colspan=6)
+        fig = plt.gcf()
+        ax1 = plt.gca()
+    else:
+        fig = plt.gcf()
+        ax1 = fig.add_subplot( plot_number)
 
     ax1.plot( xaxis_data, datatrim['WS.d'], c='c', label='Tangential Wind Speed (m/s)')
     ax1.set_ylabel('Total Wind Speed (m/s)', c='c')

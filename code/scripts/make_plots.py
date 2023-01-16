@@ -106,6 +106,7 @@ def plot_T(data_path, data_file, index1, index2, xaxis_name, show_colorbar=True)
     crl_data = xr.open_dataset( data_file)
     color_map = plt.cm.get_cmap( "RdYlBu").reversed()
 
+
     # choose x axis with helper script
     xaxis, x_label, xlims = x_axis_helper( data_path, data_file, index1, index2, xaxis_name)
 
@@ -113,7 +114,12 @@ def plot_T(data_path, data_file, index1, index2, xaxis_name, show_colorbar=True)
     temp = crl_data.T[index1:index2, :].where( crl_data.T[index1:index2, :].values < 50).transpose()
 
     # plot and make things pretty
-    plt.pcolormesh( xaxis, - crl_data.H, temp, cmap = color_map, vmin=5, vmax=35 )
+    # code to correct negative heights on some new 2022 crl data
+    if np.mean( crl_data.H) > 0.0:
+        plt.pcolormesh( xaxis, crl_data.H, temp, cmap = color_map, vmin=5, vmax=35 )
+    else:
+        plt.pcolormesh( xaxis, - crl_data.H, temp, cmap = color_map, vmin=5, vmax=35 )
+
     plt.ylabel( 'Height (km)')
     # plt.xlabel( x_label)
     if xlims:
@@ -139,6 +145,19 @@ def plot_new_T( data_path, data_file, data_source = 'none', xlims=None, show_col
     new_crl = xr.open_dataset( data_file)
     color_map = plt.cm.get_cmap( "RdYlBu").reversed()
 
+    # print( len( new_crl.in_situ_distance))
+    # print( type( new_crl.psurf_distance))
+
+    # print( new_crl.psurf_distance)
+
+    # print( len( new_crl.psurf_distance))
+
+    # if np.isnan( new_crl.psurf_distance):
+    #     print( 'nan')
+    # else:
+    #     print( 'no nan')
+
+
     if data_source == 'tdr':
         temp = new_crl.T[ 0 : len( new_crl.tdr_distance), :]
         temp = temp.where( temp < 50).transpose()
@@ -147,8 +166,13 @@ def plot_new_T( data_path, data_file, data_source = 'none', xlims=None, show_col
         temp = new_crl.T[ 0 : len( new_crl.in_situ_distance), :]
         temp = temp.where( temp < 50).transpose()
         plt.pcolormesh( new_crl.in_situ_distance, - new_crl.H, temp, cmap = color_map, vmin=5, vmax=35 )
+    elif data_source == 'in-situ-psurf':
+        temp = new_crl.T[ 0 : len( new_crl.psurf_distance), :]
+        temp = temp.where( temp < 50).transpose()
+        plt.pcolormesh( new_crl.psurf_distance, - new_crl.H, temp, cmap = color_map, vmin=5, vmax=35 )
     else:
-        print( "Please choose either 'tdr' or 'in-situ' for the data_source input for the plot_new_power_ch1() function")
+        print( "Please choose either 'tdr', 'in-situ', or 'in-situ-psurf' for the data_source input for the plot_new_power_ch1() function")
+
 
     if show_colorbar:
         plt.colorbar(label="Temperature ( C)")
@@ -215,7 +239,12 @@ def plot_wvmr(data_path, data_file, index1, index2, xaxis_name):
     crl_wvmr = step2[index1:index2, :].transpose()
 
     # plot things
-    plt.pcolormesh( xaxis, - crl_data.H, crl_wvmr, vmin = 0, vmax =20)
+    # code to correct negative heights on some new 2022 crl data
+    if np.mean( crl_data.H) > 0.0:
+        plt.pcolormesh( xaxis, crl_data.H, crl_wvmr, vmin = 0, vmax =20)
+    else:
+        plt.pcolormesh( xaxis, - crl_data.H, crl_wvmr, vmin = 0, vmax =20)
+
     plt.colorbar(label="WVMR ( g/kg)")
     plt.ylabel( 'Height (km)')
     # plt.xlabel( x_label)
@@ -245,7 +274,12 @@ def plot_lsr(data_path, data_file, index1, index2, xaxis_name):
     crl_lsr = step1.where( step1.values > .1)
 
     # plot things
-    plt.pcolormesh( xaxis, - crl_data.H, crl_lsr)
+    # code to correct negative heights on some new 2022 crl data
+    if np.mean( crl_data.H) > 0.0:
+        plt.pcolormesh( xaxis, crl_data.H, crl_lsr)
+    else:
+        plt.pcolormesh( xaxis, - crl_data.H, crl_lsr)
+
     plt.colorbar(label="LSR ( unitless)")
     plt.ylabel( 'Height (km)')
     # plt.xlabel( x_label)
@@ -285,7 +319,12 @@ def plot_power_ch1(data_path, data_file, index1, index2, xaxis_name, cutoff=-30,
     # color_map = plt.cm.get_cmap( "RdYlBu").reversed()
     # color_map = 'viridis'
     # color_map = plt.cm.get_cmap( "Spectral").reversed()
-    plt.pcolormesh(  xaxis, - crl_data.H, crl_pch1, vmin = cutoff, vmax =-10)
+    # code to correct negative heights on some new 2022 crl data
+    if np.mean( crl_data.H) > 0.0:
+        plt.pcolormesh(  xaxis, crl_data.H, crl_pch1, vmin = cutoff, vmax =-10)
+    else:
+        plt.pcolormesh(  xaxis, - crl_data.H, crl_pch1, vmin = cutoff, vmax =-10)
+
     if show_colorbar:
         plt.colorbar(label="CRL Return Power (dBz)")
     plt.ylabel( 'Height (km)')

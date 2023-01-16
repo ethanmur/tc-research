@@ -35,8 +35,9 @@ def print_dates():
     for i in range( len( goes_folders)):
         print( "Dataset "+ str( i) + ": " + str( goes_folders[ i]))
 
-def one_in_situ_plot( dataset):
 
+# edited 1/5/23: added the ability to find and add two tc centers to goes plots: helps with quadrant determinations!
+def one_in_situ_plot( dataset, add_centers=False):
     # a list of helper information
     goes_folders = [ '0812am', '0812pm', '0813', '0816', '0817', '0818', '0819', '0820', '0821', '0827', '0926', '0927', '0929']
 
@@ -58,6 +59,8 @@ def one_in_situ_plot( dataset):
             [ -55, -46, 12, 18], [ -57, -49, 13, 19], [ -61, -54, 16, 24] ] # the original extent
             # [ -58.5, -57, 19.5, 21] ] # the new, zoom in extent
 
+    all_centers = [ ()]
+
     # rename the input dataset as i becuase I'm lazy and don't want to change my old code lol
     i = dataset
 
@@ -73,7 +76,16 @@ def one_in_situ_plot( dataset):
     dataset = dataset_list[ i]
     name = name_list[ i]
     extent = extent_list[ i]
-    goes_gifs.goes_in_situ( goes_names, goes_data_path, crl_name, crl_path, extent, in_situ_path, in_situ_name, tcname=name, dataset=dataset, goes_folders= goes_folders[ i])
+
+    # 1/5/23 edit: find the center list for this data point. The center lists were created using "10-01-22 shear angles test, 1-4-23 updates"
+    center_list = all_centers[ i]
+
+    # new case: add tc centers to plots
+    if add_centers:
+        goes_gifs.goes_in_situ( goes_names, goes_data_path, crl_name, crl_path, extent, in_situ_path, in_situ_name, tcname=name, dataset=dataset, goes_folders= goes_folders[ i], add_centers=center_list)
+    # regular case
+    else:
+        goes_gifs.goes_in_situ( goes_names, goes_data_path, crl_name, crl_path, extent, in_situ_path, in_situ_name, tcname=name, dataset=dataset, goes_folders= goes_folders[ i])
 
 
 def all_in_situ_plots():
@@ -112,7 +124,8 @@ def all_in_situ_plots():
         goes_gifs.goes_in_situ( goes_names, goes_data_path, crl_name, crl_path, extent, in_situ_path, in_situ_name, tcname=name, dataset=dataset)
 
 
-def goes_in_situ( goes_names, goes_data_path, flight_name, flight_path, extent, p, n, tcname=None, dataset = None, goes_folders= None): # flight_line):
+# edited 1/5/23: added the ability to find and add two tc centers to goes plots: helps with quadrant determinations!
+def goes_in_situ( goes_names, goes_data_path, flight_name, flight_path, extent, p, n, tcname=None, dataset = None, goes_folders= None, add_centers=False): # flight_line):
     """
     goes_wv_upper_gif generates images from satellite data (located in a folder
     specified by the user), and saves them automatically to a unique folder.
@@ -140,7 +153,7 @@ def goes_in_situ( goes_names, goes_data_path, flight_name, flight_path, extent, 
     flight_line_color = 'g'
     goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name, channel_full_name, goes_names,
         goes_data_path, flight_name, flight_path, extent=extent, show_in_situ=show_in_situ, in_situ_data_path=p, in_situ_name=n,
-        shear_arrow = True, tcname=tcname, dataset = dataset)
+        shear_arrow = True, tcname=tcname, dataset = dataset, add_centers)
 
 
 
@@ -393,7 +406,7 @@ def goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name,
                                  mutation_scale=100,
                                  transform=ax.transAxes, color='k')
             ax.add_patch(arrow)
-            
+
 
             '''
             # transform=ax.transAxes

@@ -17,7 +17,7 @@ import get_p3_heights
 def save_all_crl(tcname='all', shift_crl_dist=False, add_dist_coords=False):
 
     if tcname == 'all':
-        tcname_list = ['grace', 'henri', 'ida', 'sam']
+        tcname_list = [ 'fred', 'grace', 'henri', 'ida', 'sam']
     else:
         tcname_list = [ tcname]
 
@@ -76,7 +76,7 @@ def save_one_crl(tcname, dataset, metadata, shift_crl_dist, add_dist_coords):
 
     # make a copy of the crl data: this will eventually become the new, full dataset!
     crl_new = crl_data.copy()
-    # this works really well at dropping all the coords, dims, and vars not listed!!
+    # this works really well at dropping all the coords, dims, and vars not listed
     crl_new = crl_new[ ['ProductionDateTime', 'VersionID']]
 
     # add a new attribute explaining how this dataset has been edited
@@ -92,9 +92,8 @@ def save_one_crl(tcname, dataset, metadata, shift_crl_dist, add_dist_coords):
     crl_new = crl_new.assign_coords( {'H': crl_data.H }) # leaving this name as H to keep consistent with old code
 
 
-    # you might have to comment out the next four lines of code to get things to work!
     # find_dist_new_tdr implicitly looks at the current new_crl dataset, so if it's
-    # not yet created, it'll blow up :( only run add_dist_coords if the files exist!
+    # not yet created, it'll blow up :( only run add_dist_coords if the new crl files exist!
 
     if add_dist_coords:
         # use a helper function to determine distance coords from lat / lon values!
@@ -104,10 +103,15 @@ def save_one_crl(tcname, dataset, metadata, shift_crl_dist, add_dist_coords):
         new_dist2 = find_crl_distance.find_crl_dist_in_situ( tcname, dataset, returnval='crl')
         print( "In Situ Distance axis created")
 
+        new_dist3 = find_crl_distance.find_crl_dist_psurf( tcname, dataset, returnval='crl')
+        print( "Surface Pressure Distance axis created")
+
+
         if new_dist2 is None:
             return
 
         # save the newly created distance array as a coordinate in the crl file!
+
         crl_new = crl_new.assign_coords( {'tdr_distance': new_dist })
         crl_new.tdr_distance.attrs['long_name'] = 'tdr_distance'
         crl_new.tdr_distance.attrs['units'] = 'meters'
@@ -117,7 +121,14 @@ def save_one_crl(tcname, dataset, metadata, shift_crl_dist, add_dist_coords):
         crl_new = crl_new.assign_coords( {'in_situ_distance': new_dist2 })
         crl_new.in_situ_distance.attrs['long_name'] = 'in_situ_distance'
         crl_new.in_situ_distance.attrs['units'] = 'meters'
-        crl_new.in_situ_distance.attrs['description'] = 'Distance from the center of the TC, determined from in situ P-3 data'
+        crl_new.in_situ_distance.attrs['description'] = 'Distance from the center of the TC, determined from P-3 height data'
+
+        # saving the surface pressure array
+        crl_new = crl_new.assign_coords( {'psurf_distance': new_dist3 })
+        crl_new.psurf_distance.attrs['long_name'] = 'psurf_distance'
+        crl_new.psurf_distance.attrs['units'] = 'meters'
+        crl_new.psurf_distance.attrs['description'] = 'Distance from the center of the TC, determined from in situ surface pressure data'
+
 
     # loop through all the variables in crl_data, cropping them to the smaller i1 and i2 values provided
     var_list = list( crl_data.keys() )
@@ -168,7 +179,7 @@ def save_one_crl(tcname, dataset, metadata, shift_crl_dist, add_dist_coords):
 
 def save_all_new_matrices( tcname='all', add_rmw = False, dist_lim=False):
     if tcname == 'all':
-        tcname_list = ['grace', 'henri', 'ida', 'sam']
+        tcname_list = [ 'fred', 'grace', 'henri', 'ida', 'sam']
     else:
         tcname_list = [ tcname]
 

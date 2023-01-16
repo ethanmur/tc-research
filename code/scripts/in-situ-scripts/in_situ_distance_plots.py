@@ -22,12 +22,12 @@ import save_crl_data
 # pretty much the same function as the one found in ../save-new-datasets/
 # testing_distance_coords.py, except it uses distance from tc center values calculated
 # from in situ data, not tdr data!
-def distance_plots( padding=250, tc='all'):
+def distance_plots( padding=250, tc='all', psurf=False):
     warnings.filterwarnings("ignore")
 
     # put tcname into a list to make the for loop work correctly
     if tc == 'all':
-        tcname_list = ['grace', 'henri', 'ida', 'sam']
+        tcname_list = [ 'fred', 'grace', 'henri', 'ida', 'sam']
     else:
         tcname_list = [ tc]
 
@@ -82,27 +82,65 @@ def distance_plots( padding=250, tc='all'):
             # comparing lat / lon crl and tdr plots to new distance plots!
             plt.figure( figsize=(14, 14), facecolor='w')
 
+
+            # a separate subplot list used to distinguish psurf cases vs normal cases
+            if psurf:
+                plot_list = [ 511, 512, 513, 515]
+            # normal case: just use 4 subplots
+            else:
+                plot_list = [411, 412, 413, 414]
+
             # make plots for crl and tdr distance datasets using new tdr dataset
-            plt.subplot( 411)
+            plt.subplot( plot_list[ 0])
             plt.title( title)
             make_plots.plot_new_tdr( new_tdr_path, tdr_name, 'dist')
             plt.xlim( [ padding, - padding])
 
-            plt.subplot(412)
+            plt.subplot( plot_list[ 1])
             # calculate power backscattered to channel 1
             make_plots.plot_new_power_ch1( new_crl_path, new_crl_name, data_source='in-situ')
             plt.xlim( [padding, - padding])
 
-            plt.subplot( 413)
+            plt.subplot( plot_list[ 2])
             make_plots.plot_new_T( new_crl_path, new_crl_name, data_source = 'in-situ')
             plt.xlim( [ padding, - padding])
 
+            # special surface pressure comparison case
+            if psurf:
+                # add a red line on the p-3 height t plot representing where the pressure center is
+                os.chdir( new_crl_path)
+                new_crl = xr.open_dataset( new_crl_name)
+
+                # avoid fred case where psurf axis isn't properly initialized
+                if not np.isnan( new_crl.psurf_distance).all():
+
+                    # find the center psurf distance (closest to 0 km)
+                    idx = (np.abs( new_crl.psurf_distance)).argmin().values
+
+                    # find the time corresponding to 0 km psurf and the index of the closest time in the in situ data
+                    # psurf_time =
+                    # idx = (np.abs( new_crl.psurf_distance)).argmin().values
+                    dist = new_crl.in_situ_distance[ idx]
+                    plt.axvline( x=dist, c='r', linewidth=3)
+
+                    plt.subplot(514)
+                    make_plots.plot_new_T( new_crl_path, new_crl_name, data_source = 'in-situ-psurf')
+                    plt.xlim( [ padding, - padding])
+
+                else:
+                    print( 'skipping surface pressure plot due to invalid psurf axis')
+
+
             new_flight_data_path = metadata['new_flight_data_path']
             new_flight_name = tc_metadata.choose_new_in_situ_name( tcname, dataset)
-
             # plt.subplot( 414)
-            in_situ_multi_panels.make_one_subplot(metadata['crl_path'], crl_name, new_flight_data_path, new_flight_name, metadata['crl_range'][dataset])
+            in_situ_multi_panels.make_one_subplot(metadata['crl_path'], crl_name, new_flight_data_path, new_flight_name, metadata['crl_range'][dataset], subplot=plot_list[3])
             plt.xlim( [ padding, - padding])
+
+            # avoid fred case where psurf axis isn't properly initialized
+            if not np.isnan( new_crl.psurf_distance).all():
+                plt.axvline( x=dist, c='r', linewidth=1, linestyle='--')
+
 
             # add an empty colorbar to make everything fit in line... kinda a
             # messy solution but it's ok for now!
@@ -120,8 +158,13 @@ def distance_plots( padding=250, tc='all'):
             print( 'Distance Plots Added')
 
             # save the plots
-            os.chdir( "/Users/etmu9498/research/figures/in-situ-calculated-distance/")
-            plt.savefig( metadata['tc_name'].casefold() + "-" + str( dataset+1) + ".png", bbox_inches='tight', dpi=200 )
+            if psurf:
+                os.chdir( "/Users/etmu9498/research/figures/psurf-comparisons/")
+                plt.savefig( metadata['tc_name'].casefold() + "-" + str( dataset+1) + ".png", bbox_inches='tight', dpi=200 )
+            else:
+                os.chdir( "/Users/etmu9498/research/figures/in-situ-calculated-distance/")
+                plt.savefig( metadata['tc_name'].casefold() + "-" + str( dataset+1) + ".png", bbox_inches='tight', dpi=200 )
+
             print( "Plot " + str( dataset + 1) + " saved\n" )
 
     warnings.filterwarnings("default")

@@ -21,14 +21,13 @@ def load_in_situ( flight_path, flight_number, sample_step_size= 1):
     # load in situ data
 
     os.chdir( flight_path)
-    in_situ_data = pd.read_csv( flight_number, header=None)
+    in_situ_data = pd.read_csv( flight_number, header=None, on_bad_lines='skip')
 
     # in_situ_data
 
     # make proper row the df header (some rows have text descriptors, for some reason this varies
     # between data sets)
     for col_ind in range( len( in_situ_data.columns)):
-        # print( col_ind)
         if in_situ_data.iloc[ col_ind][1] == 'TIME':
             in_situ_data.columns = in_situ_data.iloc[ col_ind]
             break

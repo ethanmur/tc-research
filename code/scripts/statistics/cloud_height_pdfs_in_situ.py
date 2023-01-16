@@ -17,7 +17,7 @@ def pdf_all_tc_eyes( tc='all', no_eyewalls=False):
 
     # put tcname into a list to make the for loop work correctly
     if tc == 'all':
-        tcname_list = ['grace', 'henri', 'ida', 'sam']
+        tcname_list = ['fred', 'grace', 'henri', 'ida', 'sam']
     else:
         tcname_list = [ tc]
 
@@ -346,7 +346,7 @@ def cloud_height_vs_intensity( csu_poster_case=False, no_eyewalls=False):
     wh_heights, wh_cases = [], 0
     sh_heights, sh_cases = [], 0
     # cycle through every dataset
-    tcname_list = ['grace', 'henri', 'ida', 'sam']
+    tcname_list = [ 'fred', 'grace', 'henri', 'ida', 'sam']
     for tcname in tcname_list:
         # load data
         metadata = tc_metadata.all_data( tcname)
@@ -502,12 +502,13 @@ def cloud_height_vs_intensity( csu_poster_case=False, no_eyewalls=False):
                 '''
 
                 # print out some useful statistics
+                plot_height = height[ np.where( height > .05)[0] ]
                 clear_points  = len( height[ np.where( height < .05)[0] ])
 
                 a1.text( 0, 1, ("Number of data points:  " + str( len( height))))
                 a1.text( 0, .8, ("Number of clear air points: " + str( clear_points )))
                 # a1.text( 0, .8, ("Height value range:     " + str( height.min()) + " km to " + str( height.max()) + " km"))
-                a1.text( 0, .6, ("Height value mean:      " + str( height.mean()) + " km"))
+                a1.text( 0, .6, ("Height value mean (no clear air): " + str( plot_height.mean()) + " km"))
                 # a1.text( 0, .3, ("Height value median:    " + str( np.median( height)) + " km\n"))
                 a1.text( 0, .3, ("clear air fraction:    " + str( 100 * ( clear_points / len(height) ))))
                 a1.text( 0, .2, ("Number of eye passes: " + str( cases[ i])))

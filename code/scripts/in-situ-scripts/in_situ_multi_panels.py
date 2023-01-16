@@ -182,7 +182,7 @@ def plot_one_cross_section( crl_path, crl_name, flight_data_path, flight_name, c
 
 
 
-def make_one_subplot( crl_path, crl_name, flight_data_path, flight_name, cutoff_indices):
+def make_one_subplot( crl_path, crl_name, flight_data_path, flight_name, cutoff_indices, subplot=414):
 
     warnings.filterwarnings("ignore")
 
@@ -195,7 +195,7 @@ def make_one_subplot( crl_path, crl_name, flight_data_path, flight_name, cutoff_
     str_time = xr_in_situ.str_time
     float_time = xr_in_situ.float_time
 
-    keyList = [ 'distance', 'WS.d', 'HT.d']
+    keyList = [ 'distance', 'WS.d', 'HT.d', 'PSURF.d']
     # make an empty dict that will be filled soon!
     datatrim = {key: None for key in keyList}
 
@@ -203,11 +203,11 @@ def make_one_subplot( crl_path, crl_name, flight_data_path, flight_name, cutoff_
     for key in keyList:
         datatrim[ key] = clip_old_data.in_situ_helper( crl_path, crl_name, cutoff_indices, xr_in_situ[ key].values, float_time)
 
-    xaxis_data, ws, height = datatrim['distance'], datatrim['WS.d'], datatrim['HT.d']
+    xaxis_data, ws, height, psurf = datatrim['distance'], datatrim['WS.d'], datatrim['HT.d'], datatrim['PSURF.d']
 
 
     fig = plt.gcf()
-    ax1 = fig.add_subplot(414)
+    ax1 = fig.add_subplot( subplot)
 
     ax1.plot( xaxis_data, height, c='y')
     ax1.set_ylabel('P-3 Height (m)', c='y')
@@ -217,6 +217,12 @@ def make_one_subplot( crl_path, crl_name, flight_data_path, flight_name, cutoff_
 
     ax2 = ax1.twinx()
     ax2.plot( xaxis_data, ws, c='c')
-    ax2.set_ylabel( 'Tangential Wind Speed (m/s)', c='c')
+    ax2.set_ylabel( 'Wind Speed (m/s)', c='c')
+
+    ax3 = ax1.twinx()
+    ax3.plot( xaxis_data, psurf, c='r')
+    ax3.set_ylabel( 'Surface P (hPa)', c='r')
+    ax3.spines.right.set_position(("axes", 1.1))
+
 
     warnings.filterwarnings("ignore")

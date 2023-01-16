@@ -52,8 +52,12 @@ def save_one_in_situ(tcname, dataset, metadata, shift_crl_dist, add_dist_coords)
     in_situ_data = load_in_situ_data.load_in_situ( metadata['in_situ_path'], insitu_name)
     newData = in_situ_data.copy()
 
+    print( 'converted to nc file')
+
     # use a helper script to find the new distance array for the in situ data!
     distance = find_crl_distance.find_crl_dist_in_situ( tcname, dataset, returnval='in-situ')
+
+    print( 'in situ distance found')
 
     # save the in situ distance array in a separate variable
     # newData= newData.assign_coords( {'distance': distance })

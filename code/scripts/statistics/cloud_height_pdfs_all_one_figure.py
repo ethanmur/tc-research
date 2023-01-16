@@ -24,7 +24,7 @@ import helper_fns
 
 # this function finds statistics on cloud heights depending on the tc intensity!
 # it outputs figures summarizing these values for each intensity category
-def cloud_height_vs_intensity( no_eyewalls=True, binwidth=1.0, percent_plot=False, density_plot=False, poster_case=False, lw=2):
+def cloud_height_vs_intensity( no_eyewalls=True, binwidth=1.0, percent_plot=False, density_plot=False, poster_case=False, lw=2, manual_bins=False, smoothwidth=10):
     warnings.filterwarnings("ignore")
 
     # empty lists that will hold all the height datasets for each intensity category
@@ -34,7 +34,7 @@ def cloud_height_vs_intensity( no_eyewalls=True, binwidth=1.0, percent_plot=Fals
     sh_heights, sh_cases = [], 0
 
     # cycle through every dataset
-    tcname_list = ['grace', 'henri', 'ida', 'sam']
+    tcname_list = [ 'fred', 'grace', 'henri', 'ida', 'sam']
     for tcname in tcname_list:
         # load data
         metadata = tc_metadata.all_data( tcname)
@@ -149,42 +149,143 @@ def cloud_height_vs_intensity( no_eyewalls=True, binwidth=1.0, percent_plot=Fals
         # no cases for this category (only applies to td's because Fred case hasn't been added yet)
         if len( height) != 0:
 
+            # just some semantic definition changes... not important
             width = binwidth
-
-            scale_factor = len( heights[ i]) / total_heights
-            print( scale_factor)
-            # scale_factor = 1
 
             # special case for making a nice figure for the esss poster conference!
             if poster_case:
-
                 # this step is to have all integrals of the curves to sum to 1!
                 # not just to have each curve sum to 1
                 # a0.xaxis.set_major_formatter( PercentFormatter( 1 * scale_factor, symbol=None, decimals=2))
-
                 # ticks = ticker.FuncFormatter(lambda x, pos: '{0:g}'.format( plot_height * scale_factor))
                 # a0.xaxis.set_major_formatter(ticks)
-
                 # cut=0 tells the function to not plot curves above the highest and lowest measured values
                 # try using clip as well! might be better. see docs
-                sns.kdeplot( y= plot_height, bw_adjust= width, linewidth=lw, color = colors[i], label=fig_title_nice[i], cut=0) #  clip=[0, 3.6]) # bw_adjust=1 -> curve found in histplot
-                a0.set_xlabel('Cloud Height Probability Density', fontsize=mediumfont)
-                sns.set_theme(style="white", palette=None)
+
+
+                # new method based on zhien's code: create manual bins for stats, don't use seaborn
+                # don't use a gaussian curve to interpolate data; just use regular bins
+                if manual_bins:
+                    savedir = "/Users/etmu9498/research/figures/prob-dist-results/intensity-same-plot-new/"
+
+                    height_bin=np.arange(0, 4.51, width)
+
+                    # print( height_bin)
+
+                    # calculate mean height variation within the bin range
+                    mean_height=[]
+                    mean_height_count=[]
+                    mean_height_prob = []
+
+                    mean_height_prob_trimmed = []
+                    height_bin_trimmed = []
+
+                    # a list that will hold max smoothed heights from all loops
+                    # used for proper x axis scaling
+                    max_heights = []
+
+                    # print( len( plot_height))
+
+                    # do this for every height level determined by the manually inputed bin width
+                    for newi in height_bin:
+
+                        # find the points that fall within this height bin for this step
+                        res=np.where(np.logical_and( plot_height >= newi - width / 2., plot_height <= newi + width / 2. ))
+
+                        # print( plot_height[ res])
+
+                        mean_height.append( np.mean( plot_height[ res]))
+                        mean_height_count.append( len( res[0]))
+                        # use height, not plot_height, to include heights below 50m in caclulations
+                        # this line accounts for clear air fraction when scaling the curves!
+                        mean_height_prob.append( len( res[0] ) / len( height))
+
+
+
+                    # print( len( height))
+                    # print( len( plot_height))
+                    # print( mean_height)
+                    # print( mean_height_count)
+
+                    # clip cloud height counts and bins so that only full bins are plotted: ignore empty bins
+
+
+                    # smooth data before plotting to eliminate noise
+                    box_pts = smoothwidth
+                    box = np.ones(box_pts)/box_pts
+                    prob_smooth = np.convolve( mean_height_prob, box, mode='same')
+
+                    # a0.plot( mean_height_prob, height_bin, color=colors[i], linewidth=lw/2, alpha=.5)
+                    a0.plot( prob_smooth * 100, height_bin, color=colors[i], label=fig_title_nice[i], linewidth=lw)
+
+
+                    a0.set_xlabel('Cloud Height Probability (%)', fontsize=mediumfont)
+                    # a0.set_xlabel('Cloud Height Probability (Sums to 1)', fontsize=mediumfont)
+
+                    # use the highest smoothed value to effectively scale the x axis!!
+                    max_prob = np.nanmax( prob_smooth)
+                    max_heights.append( max_prob)
+
+                    # print( 'max prob: ' + str( max_prob))
+
+
+                    # make and save separate plots for each intensity! in the same output folder
+                    fig1, a1 = plt.subplots(1, 1, figsize=( 10, 10) )
+                    # set the figure background (not plot background!) to transparent!!
+                    fig1.patch.set_facecolor('blue')
+                    fig1.patch.set_alpha(0)
+                    plt.sca( a1)
+                    a1.plot( np.array( mean_height_prob) * 100, height_bin, color=colors[i], label='Raw Data: Bins = ' + str( width * 1000) + " m", linewidth=lw/2, alpha=.7)
+                    a1.plot( prob_smooth * 100, height_bin, color=colors[i], label='Smoothed Data', linewidth=lw)
+
+                    # a1.set_xlabel('Cloud Height Probability (Sums to 1)', fontsize=mediumfont)
+                    a1.set_xlabel('Cloud Height Probability (%)', fontsize=mediumfont)
+
+                    # sns.set_theme(style="white", palette=None)
+                    a1.set_ylabel( 'Height from Surface (Km)', fontsize=mediumfont)
+                    a1.set_ylim( [-.2, 4.5])
+
+                    # a0.set_xlim( [ 0, 1.05])
+                    # a1.set_xlim( [ 0, .02])
+                    a1.set_xlim( [ 0, max_prob * 2 * 100])
+
+
+                    a1.grid(True)
+                    a1.set_title( "Cloud Height Distributions for " + fig_title_nice[i], fontsize=largefont)
+                    a1.tick_params(axis='both', which='major', labelsize=smallfont)
+                    a1.legend(fontsize=smallfont, loc="upper right")
+
+                    os.chdir( savedir)
+                    plt.savefig( fig_title[i] + '-' + str( int( binwidth*1000)) + "m.png", bbox_inches='tight', dpi=500, transparent=False )
+
+
+
+                    plt.sca( a0)
+
+
+                # original method
+                else:
+                    savedir = "/Users/etmu9498/research/figures/prob-dist-results/intensity-same-plot/"
+                    sns.kdeplot( y= plot_height, bw_adjust= width, linewidth=lw, color = colors[i], label=fig_title_nice[i], cut=0) #  clip=[0, 3.6]) # bw_adjust=1 -> curve found in histplot
+
+                    a0.set_xlabel('Cloud Height Probability Density', fontsize=mediumfont)
+
+                    a0.set_xlim( [ 0, 1.05])
+
+
+
+                # sns.set_theme(style="white", palette=None)
                 a0.set_ylabel( 'Height from Surface (Km)', fontsize=mediumfont)
                 a0.set_ylim( [-.2, 4.5])
+
                 a0.grid(True)
                 a0.set_title( "Cloud Height Distributions by TC Intensity", fontsize=largefont)
                 a0.tick_params(axis='both', which='major', labelsize=smallfont)
                 plt.legend(fontsize=smallfont, loc="upper right")
 
-                # save the histogram
-                os.chdir( "/Users/etmu9498/research/figures/prob-dist-results/intensity-same-plot/")
-                plt.savefig( "one-fig-pdfs.png", bbox_inches='tight', dpi=500, transparent=False )
 
+                # save figs at the end of the function!
                 continue
-
-
-
 
 
 
@@ -205,6 +306,34 @@ def cloud_height_vs_intensity( no_eyewalls=True, binwidth=1.0, percent_plot=Fals
                 # plot_height = plot_height / width
                 a0.set_xlabel(f'Cloud Height Probability for Bin Width = {width} km', fontsize=mediumfont)
                 sns.kdeplot( y=  plot_height, bw_adjust= width, linewidth=lw, color = colors[i], label=fig_title_nice[i]) # bw_adjust=1 -> curve found in histplot
+
+
+    if poster_case:
+        # make one last auto axis adjustment for new, manual plots
+        if manual_bins:
+            # find the highest max value, and scale the x axis with that
+            total_max = np.max( max_heights)
+            plt.sca( a0)
+
+            a0.set_xlim( [ 0, total_max * 1.5 * 100])
+
+            # 25 m case
+            # a0.set_xlim( [ 0, 1.6])
+            # plt.xticks([ 0, .5, 1.0, 1.5])
+
+            # 100 m case
+            # a0.set_xlim( [0, 7])
+
+
+            # print( total_max)
+
+        # save the histogram
+        os.chdir( savedir)
+        plt.savefig( "one-fig-pdfs-" + str( int( binwidth*1000)) + "m.png", bbox_inches='tight', dpi=500, transparent=False )
+
+        return
+
+
 
     # sns.displot( x=height, kind='kde')
     sns.set_theme(style="white", palette=None)
@@ -251,7 +380,7 @@ def cloud_height_vs_intensity( no_eyewalls=True, binwidth=1.0, percent_plot=Fals
 
 
 
-# pretty much the same code as above, but with
+# pretty much the same code as above, but with separate distribution profile panels based on intensity
 def by_intensity_stacked( binwidth=1.0):
     warnings.filterwarnings("ignore")
 
