@@ -49,8 +49,6 @@ def clusters_within_250m( H, xaxis, cluster_threshold= .250 ):
 
 # this script is attempting to preserve larger cloud clusters by implementing
 # a few less restrictive cases to sort out non clusters
-
-# surfac
 def large_clusters( H, xaxis, surface_threshold= .050 ):
     # save total cloud clusters, and the current cluster, in individual lists
     # do the same for x axis values
@@ -63,17 +61,12 @@ def large_clusters( H, xaxis, surface_threshold= .050 ):
     for i in range( len( H) - 1):
         pass_case = True
 
-
         # run multiple tests to see if the next cloud height should be included in the cluster
         # if just one of these cases fail, set pass = False and start a new cluster
-
-
-
 
         # make sure we aren't at the last 5 indices for the next test... things would break :/
         if i > len( H) - 5:
             pass
-
         else:
             # first, check if the next cloud top is close to the current one... if so,
             # skip this test completely
@@ -109,9 +102,6 @@ def large_clusters( H, xaxis, surface_threshold= .050 ):
                     pass_case = False
                     print('i = ' + str( i) + ': break case from 3 surf points at x = ' + str( xaxis[i].values))
                     pass
-
-
-
 
         print( " pass case: " + str( pass_case))
 
@@ -157,21 +147,61 @@ def large_clusters( H, xaxis, surface_threshold= .050 ):
 # the 250m script, but it also looks at more than just the next point, like the larger cluster
 # script
 
-# maybe reverse this script too? currently im searching for cases that break a cluster up,
-# but should I instead be looking for cases that continue the current cluster?
-# aka switch from finding false cases to true cases
-
-
 # or, make a script that ignores smaller jagged clouds in cluster calculations altogether??
 # in some ways, they aren't true clusters at all- just noisy
 # or, should I just filter these clusters out at the end?
 
 
+# initial idea:
+# maybe reverse the previous script? currently im searching for cases that break a cluster up,
+# but should I instead be looking for cases that continue the current cluster?
+# aka switch from finding false cases to true cases
+def large_clusters_additive( H, xaxis, surface_threshold= .050, cluster_points = 5,  )
+    # save total cloud clusters, and the current cluster, in individual lists
+    # do the same for x axis values
+    H_clusters = []
+    xaxis_clusters = []
+    H_cluster_current = []
+    xaxis_cluster_current = []
+
+    # cycle through every cloud height value looking for cloud clusters
+    for i in range( len( H) - 1):
+        # run multiple tests to see if the next cloud height should be included in the cluster
+        # the cluster needs to pass all the following tests for pass_case=True and to be included!
+        pass_case = False
+
+        # lidar reaches down to the surface for at least 3 data points in a row: no more cloud cluster.
+        # make sure the last 3 indices aren't used...
+        if i > len( H) - 3:
+            pass
+        else:
+            surf_points = 0
+            for j in range( 3):
+                if abs( H[ i + j]) < surface_threshold:
+                    surf_points += 1
+            # all three points are under threshold
+            if surf_points == 3:
+                pass
+
+
+        # make sure we aren't at the last 5 indices for the next test... things would break :/
+        if i > len( H) - 5:
+            pass
+        else:
+
+
+
+# check if the next cluster points are all close together
+
+
+
+
+
+
+
 # use find_peaks() algorithm to find unique cloud clusters and individual cells from
 # crl cloud height data! It worked before, so why shouldn't it work now?
+# Update: this function works pretty poorly lol, not all cloud clusters have unique peaks!
 def find_peaks_clusters( H, xaxis, surface_threshold= .050):
-
-
     peaks = find_peaks( H, prominence= 1.0, width=3)
-
     return H[ peaks[0]], xaxis[ peaks[0]]

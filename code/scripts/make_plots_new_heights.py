@@ -49,7 +49,7 @@ def x_axis_helper( data_path, data_file, xaxis):
         return None
 
 
-def plot_T( data_path, data_file, xaxis = 'in-situ-dist', xlims=None, show_colorbar=True):
+def plot_T( data_path, data_file, xaxis = 'in-situ-dist', xlims=None, show_colorbar=True, grids=True):
     warnings.filterwarnings("ignore")
     # get data
     os.chdir( data_path)
@@ -62,7 +62,10 @@ def plot_T( data_path, data_file, xaxis = 'in-situ-dist', xlims=None, show_color
     if show_colorbar:
         plt.colorbar(label="Temperature ( C)")
     plt.ylabel( 'Height (km)')
-    plt.grid( 'on')
+
+    if grids:
+        plt.grid( 'on')
+
     ax = plt.gca()
     ax.set_facecolor('k')
     warnings.filterwarnings("default")
@@ -102,7 +105,7 @@ def plot_lsr(data_path, data_file, xaxis):
 
 
 
-def plot_power_ch1(data_path, data_file, xaxis):
+def plot_power_ch1(data_path, data_file, xaxis, grids=True):
     warnings.filterwarnings("ignore")
     # get data
     os.chdir( data_path)
@@ -116,7 +119,10 @@ def plot_power_ch1(data_path, data_file, xaxis):
     plt.pcolormesh(  xaxis, - crl_data.H_new, crl_data.power_new.transpose(), vmin = -30, vmax =-10, cmap='viridis')
     plt.ylabel( 'Height (km)')
     plt.colorbar(label="Backscattered Power ( dBz)")
-    plt.grid( 'on')
+
+    if grids:
+        plt.grid( 'on')
+
     ax = plt.gca()
     ax.set_facecolor('k')
     warnings.filterwarnings("default")

@@ -693,7 +693,7 @@ def calc_stats( H, rmwaxis=np.nan, xaxis=np.nan, c=.95):
 def mean_confidence_interval(data, confidence=0.95):
     a = 1.0 * np.array(data)
     n = len(a)
-    m, se = np.mean(a), scipy.stats.sem(a)
+    m, se = np.nanmean(a), scipy.stats.sem(a, nan_policy='omit')
     h = se * scipy.stats.t.ppf((1 + confidence) / 2., n-1)
     return m, m-h, m+h
 

@@ -27,7 +27,7 @@ import make_plots
 os.chdir("/Users/etmu9498/research/code/scripts/in-situ-scripts")
 import load_in_situ_data
 
-def load_goes( gif_path, print_files=True):
+def load_goes( gif_path, print_files=True, year=2021):
     return helper_fns.display_data_files( gif_path, 'goes', print_files)
 
 def print_dates():
@@ -37,7 +37,7 @@ def print_dates():
 
 
 # edited 1/5/23: added the ability to find and add two tc centers to goes plots: helps with quadrant determinations!
-def one_in_situ_plot( dataset, add_centers=False):
+def one_in_situ_plot( dataset, add_centers=False, year=2021):
     # a list of helper information
     goes_folders = [ '0812am', '0812pm', '0813', '0816', '0817', '0818', '0819', '0820', '0821', '0827', '0926', '0927', '0929']
 
@@ -50,7 +50,7 @@ def one_in_situ_plot( dataset, add_centers=False):
     in_situ_list = make_plots.load_flight_level(in_situ_path, print_files=False)
     in_situ_numbers = [ 4, 5, 6, 7, 8, 9, 12, 14, 16, 17, 31, 32, 34]
 
-    dataset_list = [ 0, 3,        0, 2, 0, 0, 3, 5] # fix this!! need to edit metadata if arrows are needed
+    dataset_list = [ 0, 3, 0, 3, 0, 0, 0, 0, 2, 0, 0, 3, 5] # fix this!! need to edit metadata if arrows are needed
     name_list = [ 'fred', 'fred', 'grace', 'grace', 'grace', 'grace', 'henri', 'henri', 'ida', 'sam', 'sam', 'sam']
     extent_list = [ [ -80, -70, 16, 24], [ -80, -70, 16, 24], [-90, -74, 18, 25], # fred zoomed in: [ -77, -73, 20, 24], [ -80, -74, 20, 25],
             [ -76, -68, 15, 20], [ -80, -72, 15, 21], [ -89, -80, 17, 23], [ -95, -85, 18, 25],
@@ -58,8 +58,6 @@ def one_in_situ_plot( dataset, add_centers=False):
             [ -87, -81, 19.5, 25.5],
             [ -55, -46, 12, 18], [ -57, -49, 13, 19], [ -61, -54, 16, 24] ] # the original extent
             # [ -58.5, -57, 19.5, 21] ] # the new, zoom in extent
-
-    all_centers = [ ()]
 
     # rename the input dataset as i becuase I'm lazy and don't want to change my old code lol
     i = dataset
@@ -78,7 +76,7 @@ def one_in_situ_plot( dataset, add_centers=False):
     extent = extent_list[ i]
 
     # 1/5/23 edit: find the center list for this data point. The center lists were created using "10-01-22 shear angles test, 1-4-23 updates"
-    center_list = all_centers[ i]
+    # center_list = all_centers[ i]
 
     # new case: add tc centers to plots
     if add_centers:
@@ -153,7 +151,7 @@ def goes_in_situ( goes_names, goes_data_path, flight_name, flight_path, extent, 
     flight_line_color = 'g'
     goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name, channel_full_name, goes_names,
         goes_data_path, flight_name, flight_path, extent=extent, show_in_situ=show_in_situ, in_situ_data_path=p, in_situ_name=n,
-        shear_arrow = True, tcname=tcname, dataset = dataset, add_centers)
+        shear_arrow = True, tcname=tcname, dataset = dataset, add_centers = add_centers)
 
 
 
@@ -256,7 +254,7 @@ def collocation_test( goes_names, goes_data_path, crl_name, crl_path):
 
 def goes_gif_helper( flight_line_color, plot_color, output_folder, channel_name, channel_full_name,
     goes_names, goes_path, crl_name, crl_path, extent=None, show_in_situ=False, in_situ_data_path=None,
-    in_situ_name=None, shear_arrow=False, tcname=None, dataset=None):
+    in_situ_name=None, shear_arrow=False, tcname=None, dataset=None, add_centers=False):
 
     """
     goes_gif_helper is called by the functions above and does most of the work

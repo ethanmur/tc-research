@@ -22,7 +22,7 @@ def plot( tc='all'):
     helper_fns.mpl_defaults()
 
     if tc == 'all':
-        tcname_list = [ 'grace', 'henri', 'ida', 'sam'] # fred isn't included in all the data bc it doesn't have all the proper metadata!
+        tcname_list = [ 'fred', 'grace', 'henri', 'ida', 'sam'] # fred isn't included in all the data bc it doesn't have all the proper metadata!
     else:
         tcname_list = [ tc]
 

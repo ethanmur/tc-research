@@ -21,7 +21,7 @@ def clusters_all_tc_eyes( tc='all', no_eyewalls=True, cluster_threshold=.250, pr
 
     # put tcname into a list to make the for loop work correctly
     if tc == 'all':
-        tcname_list = ['grace', 'henri', 'ida', 'sam']
+        tcname_list = ['fred', 'grace', 'henri', 'ida', 'sam']
     else:
         tcname_list = [ tc]
 

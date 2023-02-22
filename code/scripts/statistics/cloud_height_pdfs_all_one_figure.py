@@ -391,7 +391,7 @@ def by_intensity_stacked( binwidth=1.0):
     sh_heights, sh_cases = [], 0
 
     # cycle through every dataset
-    tcname_list = ['grace', 'henri', 'ida', 'sam']
+    tcname_list = ['fred', 'grace', 'henri', 'ida', 'sam']
     for tcname in tcname_list:
         # load data
         metadata = tc_metadata.all_data( tcname)

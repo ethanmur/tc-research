@@ -69,3 +69,9 @@ cmap = helper_fns.truncate_colormap(cmap, 0.2, 1.0)
 
 # keep only overlapping elements from two numpy arrays
 dist_inds = np.intersect1d( dist_inds1, dist_inds2)
+
+# remove the current colorbar!!!
+ax = plt.gca()
+im = ax.images
+cb = im[-1].colorbar
+cb.remove()
