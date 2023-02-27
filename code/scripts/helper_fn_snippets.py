@@ -6,8 +6,8 @@ plt.figure( figsize=(18, 18), facecolor='w')
 ctrl + shift + F
 
 # find closest crl distances to a 'padding' variable: save their indices and corresponding distances!
-idx1 = (np.abs(crl_data.in_situ_distance + padding )).argmin().values
-idx2 = (np.abs(crl_data.in_situ_distance - padding )).argmin().values
+idx1 = np.argmin( np.abs(crl_data.in_situ_distance + padding )).values
+idx2 = np.argmin( np.abs(crl_data.in_situ_distance - padding )).values
 rmw_lim1 = crl_data.rmw_negatives[ idx1]
 rmw_lim2 = crl_data.rmw_negatives[idx2]
 
@@ -75,3 +75,15 @@ ax = plt.gca()
 im = ax.images
 cb = im[-1].colorbar
 cb.remove()
+
+
+
+import sys
+sys.path.append("/Users/etmu9498/research/code/scripts/plotting/")
+
+
+
+
+# interpolate between nans in speed array; they were causing issues!
+nans, x = nan_helper( speed)
+speed[ nans] = np.interp( x( nans), x( ~nans), speed[~nans])

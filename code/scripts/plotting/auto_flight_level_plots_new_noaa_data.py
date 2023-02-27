@@ -92,17 +92,18 @@ def plot( tc='all', max_v_requirement=40, window=10, method='pmin_tlim', timelim
 
         # make sure a save folder exists for the output figures!
         # from goes_gifs_2023_update.py
-        os.chdir( "/Users/etmu9498/research/figures/in-situ-all-data-new-noaa/")
+        os.chdir( "/Users/etmu9498/research/figures/in-situ-all-data-new-noaa/time-series")
         if not os.path.isdir( yeari):
             os.makedirs( yeari)
-            print( 'New folder created: ' + yeari)
+            print( 'New folder created: time-series/' + yeari)
 
-        if not os.path.isdir( yeari+'-pretty'):
-            os.makedirs( yeari+'-pretty')
-            print( 'New folder created: ' + yeari + "-pretty")
+        os.chdir( "/Users/etmu9498/research/figures/in-situ-all-data-new-noaa/time-series-pretty")
+        if not os.path.isdir( yeari):
+            os.makedirs( yeari)
+            print( 'New folder created: time-series-pretty/' + yeari + "-pretty")
 
-        savedir = "/Users/etmu9498/research/figures/in-situ-all-data-new-noaa/" + yeari
-        prettydir = "/Users/etmu9498/research/figures/in-situ-all-data-new-noaa/" + yeari + '-pretty'
+        savedir = "/Users/etmu9498/research/figures/in-situ-all-data-new-noaa/time-series/" + yeari
+        prettydir = "/Users/etmu9498/research/figures/in-situ-all-data-new-noaa/time-series-pretty/" + yeari
 
         # load data
         for dataseti in range( len( fl_list)):
@@ -182,9 +183,9 @@ def plot( tc='all', max_v_requirement=40, window=10, method='pmin_tlim', timelim
 
             # add peak info
             if peaks:
+                ax1.set_title( title)
                 for peakind in vpeaks:
                     ax1.axvline(x=time[ peakind], c='k', linewidth = lw1)
-                    ax1.set_title( title)
             else:
                 # ax1.text( time[0] + .5, 30, "Wind speeds are too low :(", fontsize=18)
                 ax1.set_title( title + " - Wind speeds are too low for analysis")
@@ -231,7 +232,7 @@ def plot( tc='all', max_v_requirement=40, window=10, method='pmin_tlim', timelim
             plt.locator_params(axis='x', nbins=10)
             plt.gca().axes.get_xaxis().set_visible(False)
             if ylims:
-                ax4.set_ylim( [ -3, 60]) 
+                ax4.set_ylim( [ -3, 60])
 
 
             ax5 = fig.add_subplot( 815)
@@ -307,7 +308,7 @@ def plot( tc='all', max_v_requirement=40, window=10, method='pmin_tlim', timelim
             ax4.legend(loc='upper left', fontsize=12.5)
 
             os.chdir( savedir)
-            plt.savefig( fl_list[ dataseti][:-6] + ".png", dpi=200, bbox_inches='tight')
+            plt.savefig( fl_list[ dataseti][:-3] + ".png", dpi=200, bbox_inches='tight')
             print( "Plot " + str( dataseti + 1) + " saved\n" )
 
 
@@ -319,7 +320,7 @@ def plot( tc='all', max_v_requirement=40, window=10, method='pmin_tlim', timelim
             helper_fns.change_font_sizes( 18, 18)
 
             ax1 = fig.add_subplot( 211)
-            ax1.set_title( title)
+
             ax1.set_ylabel('Total Wind Speed (m/s)', c='c')
             ax1.plot( time, fl_data['WS.d'], c='c', linewidth=1.5)
             ax1.yaxis.tick_right()
@@ -335,10 +336,11 @@ def plot( tc='all', max_v_requirement=40, window=10, method='pmin_tlim', timelim
             lw4 = 2.0
             # add peak info
             if peaks:
+                ax1.set_title( title)
                 for peakind in vpeaks:
-                    ax1.axvline(x=time[ peakind], c='k', linewidth = lw1)
+                    ax1.axvline( x=time[ peakind], c='k', linewidth = lw1)
             else:
-                ax1.text( time[0] + .5, 30, "Wind speeds are too low :(", fontsize=18)
+                ax1.set_title( title + " - Wind speeds are too low for analysis")
 
             # surface pressure data
             ax4 = fig.add_subplot( 212)
@@ -372,5 +374,5 @@ def plot( tc='all', max_v_requirement=40, window=10, method='pmin_tlim', timelim
             ax4.legend(loc='upper left', fontsize=12.5)
 
             os.chdir( prettydir)
-            plt.savefig( fl_list[ dataseti][:-6] + ".png", dpi=200, bbox_inches='tight')
+            plt.savefig( fl_list[ dataseti][:-3] + ".png", dpi=200, bbox_inches='tight')
             print( "Plot " + str( dataseti + 1) + " saved\n" )

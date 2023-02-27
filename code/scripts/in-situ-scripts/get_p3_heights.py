@@ -77,7 +77,7 @@ def geth( tcname, dataset, all_data=False):
 
 
 
-# this function interprets the data in the following way:
+# this function interpolates the data in the following way:
 # it creates a new height matrix from 0 to the p_3 height and 'squishes'
 # the data into this smaller array
 # resolution is in meters here
