@@ -4,6 +4,7 @@ import os
 import xarray as xr
 import warnings
 import scipy
+import math
 
 os.chdir(  "/Users/etmu9498/research/code/scripts")
 import helper_fns
@@ -41,6 +42,7 @@ def find_matching_fl( year, crlname):
 
     # get the fl dataset and return it!
     os.chdir( flpath)
+
     return xr.open_dataset( matchlist[ 0], decode_times=True)
 
 
@@ -97,41 +99,148 @@ def find_interp( crl_data, fl_data, fl_data_field):
 
 # interpolate crl matrices using the updated p3 height measurements!
 # based on code from scripts/in-situ-scripts/get_p3_heights.py (interp_data2)
-def interp_data( varval, crl_origh, p3_heights):
+def interp_data( varval, crl_origh, p3_heights, crl_time, year=None, crl_name=None):
+    resolution = 6 # interpolated height resolution, meters
 
-    resolution = 6 # change this?
+    # see if the p-3 ever reaches really high altitudes (above the assumed 4 km cap)
+    # if so, make a larger matrix :/ slower, but will put upper data where it belongs!
+    if np.nanmax( p3_heights) > 4000:
 
-    # defining a new base height array to standardize the new matrix
-    base_h = np.arange( -4.0, 0.0, resolution / 1000)
+        # find the height of the top of the matrix. Kinda complicated, because
+        # it needs to include the max p-3 height and return an int from top / 6.0 (meters)
+        # so that it's evenly spaced.
+        # find the max height float
+        p3max = np.nanmax( p3_heights)
+        # round up to next highest int
+        p3max = math.ceil( p3max)
+        # keep searching until a whole number after division is found! This will be
+        # the top of the crl matrix
+        idx = 0
+        topheight = p3max
+        while True:
+            # break case- we have an integer!
+            if topheight % resolution == 0:
+                break
+            else:
+                topheight += 1
+                idx += 1
+        # make a new base height array for our new crl data! Convert it to km
+        # to match old height array
+        base_h = np.arange( - topheight / 1000, 0, resolution / 1000)
+    # regular case: assume a peak height of 4 km
+    else:
+        # defining a new base height array to standardize the new matrix
+        base_h = np.arange( -4.0, 0.0, resolution / 1000)
     # make an empty array for initial storage
     new_matrix=np.empty([ np.size( varval, 0), len( base_h)])
 
+    # get the largest value from the original height matrix. This value is usually
+    # around 3.5 km
+    orig_maxh = np.nanmax( - crl_origh)
 
-    # redefine variable
-    origh = crl_origh
-    orig_maxh = np.nanmax( - origh)
+    # locally define the time axis: save runtime speed
+    crl_time = crl_time.values
 
     # do this for every x axis value
     for i in range( np.size( varval, 0) ):
         # get the current matrix column
         columni = varval[ i, :]
 
-        # calculate a couple more useful heights: height from p3 and difference
-        # from original estimate
+        # get the current time value- used for limits in 2022 height cases below!
+        time_ival = crl_time[ i]
+
+        # calculate a couple more useful heights:
+        # The flight level p-3 height in km
+        # when flying at the 700 mbar level, this value is usually around 3.2 km
         p3h = p3_heights[ i] / 1000
+        # the difference between the crl top of matrix value (usually around 3.5 km)
+        # and the p-3 height (around 3.2 km for a typical flight)
+        # helps for rescaling the matrix- allows for large heights to be given nans below!
         hdiff = orig_maxh - p3h
+
+        #######
+        ## 3/2/23 code: figure out how much to shift the datasets by!
+        # this is an empirical shift to correct for particular cases. Not the most
+        # elegant code, but it needs to be done to get the correct cloud heights!
+        #######
+        date = crl_name[ 7:11]
+        if year == '2021':
+            # special date cases: need particular fixes
+            # 08/12 is an annoying case- sort between early and late flight
+            if date == '0812':
+                if crl_name[11:13] == "H1": # first flight
+                    shift = -.4 # -.45 shows surface
+                else:
+                    shift = -.35 # -.4 shows surface
+            # small shifts. 0812 pm flight already accounted for.
+            # includes 0816, 0817
+            elif date == '0816' or date == '0817':
+                shift = -.35 # -.4 shows surface
+            # big shift down
+            elif date == '0818':
+                shift = .85
+            # default shift
+            # cases include 0813, 0819, 0820, 0821, 0827 (half), 0828, 0829 (idk about this one),
+            # and all of sam
+            else:
+                shift = 0.0
+        elif year == '2022':
+            # special date cases: need particular fixes
+            # surface is too high for all passes, but irregular in eye grrr. need to shift based on time inds like below
+            if date == '0918':
+                # special little sections to correct 
+                if time_ival > 12.38 and time_ival < 12.50:
+                    shift = .55
+                #elif time_ival > 14.34 and time_ival < 14.38:
+                #    shift = .25
+                # default case
+                else:
+                    shift = .825
+            # surface is too high, but only for the last two passes :/ will be hard to fix
+            elif date == '0920':
+                # special case in 3rd eyewall pass
+                if time_ival > 12.77 and time_ival < 12.82:
+                    shift = .3 
+                elif time_ival > 11.46:
+                    shift = .825
+                else:
+                    shift = 0.0
+            # just like above: too high for last 3 passes
+            elif date == '0926':
+                if time_ival > 10.64:
+                    shift = .85
+                else:
+                    shift = 0.0
+            else:
+                shift = 0.0
+        else:
+            # default shift
+            shift = 0.0
+
+        # printing / testing
+        #if i % 2000 == 0:
+        #    print( 'index = ' + str( i))
+        #    print( 'shift = ' + str( shift))
+        #    print( 'crl maxh - flight height max = ' + str( hdiff))
 
         # make a new height profile for this column, from 0 to p-3 height
         # this is different from the step above!
         # ex: - p3h ~ -3.15, 0 - hdiff ~ + .4, should get rid of lower vals!
-        trim_h = np.linspace( - p3h , 0.0 + hdiff, np.size( varval, 1))
+        trim_h = np.linspace( - p3h , 0.0 + hdiff + shift, np.size( varval, 1))
 
-
+        # the left and right = nan is incredibly important! it makes anything out of bounds
+        # into a nan. This prevents returning the same values from like 3000 m (lower limit)
+        # down to the surface
         # interpolate over that row and save results
-        new_columni = np.interp( base_h, trim_h, columni)
+        new_columni = np.interp( base_h, trim_h, columni, left=np.nan, right=np.nan)
         new_matrix[ i, :] = new_columni
 
     return base_h, new_matrix
+
+
+
+
+
 
 
 def find_rh_old( crl_data, fl_data):
@@ -197,3 +306,32 @@ def find_temp_anom_old( crl_data, fl_data):
         avg_temp_obs[i, :] = avg_temp_obs[ i, :] * layer_avg_temp
     # calculate the anomaly: current value - layer average for every layer
     temp_anomaly_obs = T_2d - avg_temp_obs
+
+
+
+#this function works ok! just in case I break things above lol
+def interp_data_original( varval, crl_origh, p3_heights):
+    resolution = 6 # meters, change this?
+    # defining a new base height array to standardize the new matrix
+    base_h = np.arange( -4.0, 0.0, resolution / 1000)
+    # make an empty array for initial storage
+    new_matrix=np.empty([ np.size( varval, 0), len( base_h)])
+    # redefine variable
+    origh = crl_origh
+    orig_maxh = np.nanmax( - origh)
+    # do this for every x axis value
+    for i in range( np.size( varval, 0) ):
+        # get the current matrix column
+        columni = varval[ i, :]
+        # calculate a couple more useful heights: height from p3 and difference
+        # from original estimate
+        p3h = p3_heights[ i] / 1000
+        hdiff = orig_maxh - p3h
+        # make a new height profile for this column, from 0 to p-3 height
+        # this is different from the step above!
+        # ex: - p3h ~ -3.15, 0 - hdiff ~ + .4, should get rid of lower vals!
+        trim_h = np.linspace( - p3h , 0.0 + hdiff, np.size( varval, 1))
+        # interpolate over that row and save results
+        new_columni = np.interp( base_h, trim_h, columni)
+        new_matrix[ i, :] = new_columni
+    return base_h, new_matrix

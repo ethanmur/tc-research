@@ -27,15 +27,16 @@ import fl_vpeaks_algorithms as peak_algs
 # this function plots all eye passes from RMW = -1 to RMW = 1
 # fl data hasn't been binned at this point- more just a test to make sure data looks good
 def plot_all_eyes(tc='all', max_v_requirement=40, window=10, method='pmin_tlim', timelim=30, filter_inner_core=False):
+
     # load data
     # this code comes from auto_flight_level_plots_new_noaa_data.py
-    fl_path_root = "/Users/etmu9498/research/data/in-situ-noaa-full/"
+    fl_path_root = "/Users/etmu9498/research/data/in-situ-noaa-processed/"
     data_path = "/Users/etmu9498/research/data/"
 
     # make a list of year folders saved in 'in-situ-noaa-full'
     os.chdir( data_path)
-    folder_list = [name for name in os.listdir('in-situ-noaa-full')
-        if os.path.isdir(os.path.join('in-situ-noaa-full', name))]
+    folder_list = [name for name in os.listdir('in-situ-noaa-processed')
+        if os.path.isdir(os.path.join('in-situ-noaa-processed', name))]
     fl_list_total = []
     # go through every year- count the number of datasets!
     for folderi in range( len( folder_list)):
@@ -50,8 +51,20 @@ def plot_all_eyes(tc='all', max_v_requirement=40, window=10, method='pmin_tlim',
         print( 'Total Number of plots to be created: ' + str(fl_list_count)+ '\n')
         folder_input = folder_list # use all possible year folders
 
+        print( 'all case')
+        print( folder_list)
+
+    # input names of specific runs as a dict! each year has its own entry
+    elif type( tc) == type( {}):
+        # make the folder_list: just the dates saved in the dictionary!
+        folder_input = list( tc.keys())
+
+        print( 'dict case')
+
     # one year case- check the first two characters: a proper year input?
     elif len( tc) == 4 and ( tc[0:2] == '19' or tc[0:2] == '20'):
+
+        print( 'year case')
         # check if this year has a folder
         folder_present = False
         for folder in folder_list:
@@ -65,43 +78,31 @@ def plot_all_eyes(tc='all', max_v_requirement=40, window=10, method='pmin_tlim',
         if folder_present == False:
             print( "No folder present. Please download flight level data and add a new folder for it!")
             return
-
-    # input names of specific runs as a dict! each year has its own entry
-    elif type( tc) == type( {}):
-
-        # make the folder_list: just the dates saved in the dictionary!
-        folder_input = list( tc.keys())
-
     # made it out of the loop?
     else:
         print( 'implement the else case! cannot handle individual plots yet.')
-
-
 
 
     # initialize the dataframe!!
     fl_df_total = pd.DataFrame( )
     # do this for every year applicable: all years, one year, or a special case!
     for yeari in folder_input:
-
         # make a temp dataframe that will be concatonated to the final dataframe!
         fl_df_current = pd.DataFrame( )
-
         print( "\nCurrent year: " + yeari)
-
 
         fl_path = fl_path_root + yeari
 
-        # normal cases: just load all the datasets from the given year!
-        if tc=='all' or ( len( tc) == 4 and ( tc[0:2] == '19' or tc[0:2] == '20')):
-            fl_list = make_plots.load_flight_level( fl_path, print_files=False)
         # dictionary case: load only the datasets provided!
-        elif type( tc) == type( {}):
+        if type( tc) == type( {}):
             fl_list = tc[ yeari]
-
+        # normal cases: just load all the datasets from the given year!
+        elif tc=='all' or ( len( tc) == 4 and ( tc[0:2] == '19' or tc[0:2] == '20')):
+            fl_list = make_plots.load_flight_level( fl_path, print_files=False)
+        
         # new code
         # add the automatic variable names to the dataset
-        auto_vars = [ 'name', 'year', 'pass', 'rmw', 'Time'] # always find these variables
+        auto_vars = [ 'name', 'year', 'pass', 'rmw', 'time'] # always find these variables
         # input variables
         input_vars = [ 'WS.d', 'UWZ.d', 'SfmrRainRate.1', 'THETAE.d', 'MR.d', 'TA.d'] # change me!
         var_names = [ 'wind_speed', 'w', 'Rain Rate', 'Theta E', 'Mixing Ratio', 'temp']  # change me!
@@ -118,7 +119,6 @@ def plot_all_eyes(tc='all', max_v_requirement=40, window=10, method='pmin_tlim',
         for i in range( len( fl_list)):
             # load data
             dataset = xr.open_dataset( fl_list[ i], decode_times=False)
-            dataset = process_data_step1( dataset)
 
             # smooth wind speeds and surface pressures- more realistic peaks
             window = window # seconds
@@ -165,7 +165,7 @@ def plot_all_eyes(tc='all', max_v_requirement=40, window=10, method='pmin_tlim',
                     vpeaks, pmins = peak_algs.find_peaks_pressure_mins( dataset['PSURF.d'], spd_avg, window)
                 elif method == 'pmin_tlim':
                     vpeaks, pmins, time_lims = peak_algs.find_peaks_pmin_time_limit( dataset['PSURF.d'], spd_avg,
-                            dataset['Time'].values, window, timelim=timelim, filter_inner_core = filter_inner_core)
+                            dataset['time'].values, window, timelim=timelim, filter_inner_core = filter_inner_core)
 
                 pass_counter = 0
                 # loop through eyewall passes
@@ -185,7 +185,7 @@ def plot_all_eyes(tc='all', max_v_requirement=40, window=10, method='pmin_tlim',
                         var_total.append( pass_counter)
 
                     # longer cases
-                    elif input_field == 'Time':
+                    elif input_field == 'time':
                         left_eyewall_ind = vpeaks[ 2* vind]
                         right_eyewall_ind = vpeaks[2 * vind + 1]
 
@@ -249,7 +249,7 @@ def plot_all_eyes(tc='all', max_v_requirement=40, window=10, method='pmin_tlim',
                 if method == 'pmin':
                     vpeaks, pmins = peak_algs.find_peaks_pressure_mins( dataset['PSURF.d'], spd_avg, window)
                 elif method == 'pmin_tlim':
-                    vpeaks, pmins, time_lims = peak_algs.find_peaks_pmin_time_limit( dataset['PSURF.d'], spd_avg, dataset['Time'].values, window, timelim=timelim)
+                    vpeaks, pmins, time_lims = peak_algs.find_peaks_pmin_time_limit( dataset['PSURF.d'], spd_avg, dataset['time'].values, window, timelim=timelim)
 
                 pass_counter = 0
                 # loop through eyewall passes
@@ -281,8 +281,6 @@ def plot_all_eyes(tc='all', max_v_requirement=40, window=10, method='pmin_tlim',
         fl_df_total = pd.concat( [fl_df_total, fl_df_current], ignore_index=True)
 
 
-    # print( fl_df_total)
-    fl_data_totals = fl_df_total
     ######################
     ## Make a nice rmw plot for each eye pass!
     ######################
@@ -318,12 +316,10 @@ def plot_all_eyes(tc='all', max_v_requirement=40, window=10, method='pmin_tlim',
     plt.xlabel("Radius of Maximum Winds (RMW)")
     plt.xlim( [-1.2, 1.2])
 
-
     # create a colormap for nice plotting!
     start = 0.0
     stop = 1.0
-    number_of_lines= fl_data_totals.shape[0]
-
+    number_of_lines= fl_df_total.shape[0]
     cm_subsection = np.linspace(start, stop, number_of_lines)
     colors = [ cm.jet(x) for x in cm_subsection ]
 
@@ -337,64 +333,29 @@ def plot_all_eyes(tc='all', max_v_requirement=40, window=10, method='pmin_tlim',
 
         # make plots of total wind speed and vertical vels along new rmw axes!
         plt.subplot(611)
-        plt.plot( fl_data_totals['rmw'][i], fl_data_totals['wind_speed'][i], c=colors[ i], linewidth=lw, alpha=.7)
+        plt.plot( fl_df_total['rmw'][i], fl_df_total['wind_speed'][i], c=colors[ i], linewidth=lw, alpha=.7)
 
         plt.subplot(612)
-        plt.plot( fl_data_totals['rmw'][i], fl_data_totals['w'][i], c=colors[ i], linewidth=lw, alpha=.7)
+        plt.plot( fl_df_total['rmw'][i], fl_df_total['w'][i], c=colors[ i], linewidth=lw, alpha=.7)
 
         plt.subplot(613)
-        label = "Flight " + fl_data_totals['name'][i] + ", pass " + str( fl_data_totals['pass'][i])
-        plt.plot( fl_data_totals['rmw'][i], fl_data_totals['temp'][i], c=colors[ i], label=label, linewidth=lw, alpha=.7)
+        label = "Flight " + fl_df_total['name'][i] + ", pass " + str( fl_df_total['pass'][i])
+        plt.plot( fl_df_total['rmw'][i], fl_df_total['temp'][i], c=colors[ i], label=label, linewidth=lw, alpha=.7)
         if i == number_of_lines - 1:
             plt.legend( bbox_to_anchor=(1.03, 1.05), fancybox=False, shadow=False, fontsize=14, facecolor='w', framealpha=1)
             plt.grid()
 
 
         plt.subplot(614)
-        plt.plot( fl_data_totals['rmw'][i], fl_data_totals['Theta E'][i], c=colors[ i], label=label, linewidth=lw, alpha=.7)
+        plt.plot( fl_df_total['rmw'][i], fl_df_total['Theta E'][i], c=colors[ i], label=label, linewidth=lw, alpha=.7)
 
         plt.subplot(615)
         # trim out non physical peaks in wv from plots! maybe do this when data is saved?
         # this actually doesn't help, so I commented it out :(
 
-        rmw_trim = fl_data_totals['rmw'][i] # [ np.where( fl_data_totals['Mixing Ratio'][i] < 30 ) ]
-        wv_trim = fl_data_totals['Mixing Ratio'][i] # [ np.where( fl_data_totals['Mixing Ratio'][i] < 30 )]
+        rmw_trim = fl_df_total['rmw'][i] # [ np.where( fl_df_total['Mixing Ratio'][i] < 30 ) ]
+        wv_trim = fl_df_total['Mixing Ratio'][i] # [ np.where( fl_df_total['Mixing Ratio'][i] < 30 )]
         plt.plot( rmw_trim, wv_trim, c=colors[ i], linewidth=lw, alpha=.7)
 
         plt.subplot(616)
-        plt.plot( fl_data_totals['rmw'][i], fl_data_totals['Rain Rate'][i], c=colors[ i], linewidth=lw, alpha=.7)
-
-
-
-
-
-
-def process_data_step1( dataset):
-    # this snippet turns all relevant quantities from strings into floats
-    # add more fields here if needed!
-    keylist = [ 'Time', 'WS.d', 'WD.d', 'UWZ.d', 'SfmrRainRate.1', 'LATref', 'LONref', 'TAS.d', 'PSURF.d',
-               'HT.d', 'PITCHref', 'ROLLref', 'MR.d', 'HUM_REL.d', 'THETA.d', 'THETAE.d', 'THETAV.d', 'TA.d']
-    # create a new version of the xarray dataset holding only the provided keys
-    datasetnew = dataset.copy()
-    datasetnew = datasetnew[ keylist]
-
-    # create a new time axis!
-    datasetnew[ 'time_index'] = dataset[ 'Time']
-
-    # this string holds the start and end times. cut down the interval dataset to get the hours, mins, secs!
-    interval_str = dataset.attrs['TimeInterval']
-    h = float( interval_str[0:2])
-    m = float( interval_str[3:5])
-    s = float( interval_str[6:8])
-    start_time = h + m / 60 + s / 3600
-
-    # create the time array manually
-    # if this is too slow, try using pandas? see stack overflow link below...
-    # https://stackoverflow.com/questions/55648630/how-to-decode-the-time-variable-while-using-xarray-to-load-a-netcdf-file
-    time_array = np.empty( ( len( dataset['Time'])))
-    for timei in range( len( dataset['Time'])):
-        # add to time array
-        time_array[ timei] = start_time + timei / 3600
-    datasetnew[ 'Time'] = time_array
-
-    return datasetnew
+        plt.plot( fl_df_total['rmw'][i], fl_df_total['Rain Rate'][i], c=colors[ i], linewidth=lw, alpha=.7)

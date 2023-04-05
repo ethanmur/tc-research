@@ -23,29 +23,29 @@ def choose_crl_date( date, crl_list):
     elif date == '08-16':
         crl_data = crl_list[ 4]
     elif date == '08-17':
-        crl_data = crl_list[ 6]
+        crl_data = crl_list[ 5]
     elif date == '08-18':
-        crl_data = crl_list[ 7]
+        crl_data = crl_list[ 6]
     elif date == '08-19':
-        crl_data = crl_list[ 8]
+        crl_data = crl_list[ 7]
     elif date == '08-20':
-        crl_data = crl_list[ 9]
+        crl_data = crl_list[ 8]
     elif date == '08-21':
-        crl_data = crl_list[ 11]
+        crl_data = crl_list[ 9]
     elif date == '08-27':
-        crl_data = crl_list[ 12]
+        crl_data = crl_list[ 10]
     elif date == '08-28':
-        crl_data = crl_list[ 13]
+        crl_data = crl_list[ 11]
     elif date == '08-29':
-        crl_data = crl_list[ 14]
+        crl_data = crl_list[ 12]
     elif date == '09-25':
-        crl_data = crl_list[ 15]
+        crl_data = crl_list[ 13]
     elif date == '09-26':
-        crl_data = crl_list[ 16]
+        crl_data = crl_list[ 14]
     elif date == '09-27':
-        crl_data = crl_list[ 17]
+        crl_data = crl_list[ 15]
     elif date == '09-29':
-        crl_data = crl_list[ 18]
+        crl_data = crl_list[ 16]
     else:
         print( 'update if statement!')
         return

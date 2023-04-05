@@ -10,7 +10,8 @@ import make_plots
 import helper_fns
 sys.path.append(  "/Users/etmu9498/research/code/scripts-winter2023/crl-data-processing")
 import find_crl_distance_rmws
-
+sys.path.append(  "/Users/etmu9498/research/code/scripts-winter2023/")
+import helper_fns_winter2023
 
 
 # this function is the main loop to save multiple new CRL datasets.
@@ -22,36 +23,8 @@ import find_crl_distance_rmws
 # add_dist_coords: a dictionary of possible distance coordinates to add / other optional
 #     inputs. All the inputs default to False (kinda useless lol but prevents errors!)
 def save_tcs( tc='all', add_dist_coords={'new_heights': False, 'fl_fields': False, 'rmw': False}):
-
     crl_data_root = "/Users/etmu9498/research/data/CRL_data/"
-
-    # do this for all crl datasets (2021 and 2022)
-    if tc == 'all':
-        # make a list of years where crl data is present
-        yearlist = ['2021', '2022']
-
-        # make a list of lists of all the datasets to be processed ( each year has a sublist)
-        filelist = []
-        filelist.append( make_plots.load_flight_level( crl_data_root + '2021', print_files=False) )
-        filelist.append( make_plots.load_flight_level( crl_data_root + '2022', print_files=False) )
-
-    # do this for just one year
-    elif tc == '2021':
-        yearlist = ['2021']
-        filelist = [ make_plots.load_flight_level( crl_data_root + '2021', print_files=False)]
-    elif tc == '2022':
-        yearlist = ['2022']
-        filelist = [ make_plots.load_flight_level( crl_data_root + '2022', print_files=False)]
-
-    # do this for a specific dictionary of files:
-    elif type( tc) == type( {}):
-        # make the folder_list: just the dates saved in the dictionary!
-        yearlist = list( tc.keys())
-        filelist = []
-        for keyi, keyval in enumerate( yearlist):
-            filelist.append( tc[ keyval])
-    else:
-        print( "Error: please enter a valid selection for tc")
+    yearlist, filelist = helper_fns_winter2023.get_crl_datasets( tc, crl_data_root)
 
     # print out the number of files to be saved
     filecount = 0
@@ -84,7 +57,6 @@ def save_one_crl( yearval, crl_name, add_dist_coords={'new_heights': False, 'fl_
     os.chdir( crl_path)
     crl_data = xr.open_dataset( crl_name)
 
-
     # go through every key for add_dist_coords. If any of them are true, we'll need to
     # load the crl's corresponding flight level dataset!
     load_data = False
@@ -104,6 +76,7 @@ def save_one_crl( yearval, crl_name, add_dist_coords={'new_heights': False, 'fl_
     if add_dist_coords['rmw']:
         # downsample the radial distance and rmw coordinates found in the flight level dataset
         # to this new dataset!
+
         crldist, crlrmw = find_crl_distance_rmws.find_rmws( crl_data, fl_data)
         print( "In Situ radial distance and rmw axes found")
 
@@ -138,11 +111,12 @@ def save_one_crl( yearval, crl_name, add_dist_coords={'new_heights': False, 'fl_
 
         vars_interpolated = []
         for vari, varval in enumerate( vars):
-            newh, var_2d = find_crl_distance_rmws.interp_data( varval, crl_data.H, p3_heights)
+            newh, var_2d = find_crl_distance_rmws.interp_data( varval, crl_data.H, p3_heights, crl_data.time,  year=yearval, crl_name=crl_name)
             # save
             if vari == 0:
                 vars_interpolated.append( newh)
             vars_interpolated.append( var_2d)
+            print( var_names[ vari] + " Interpolated")
 
     # add downscaled flight level data like wind speeds, etc!
     if add_dist_coords['fl_fields']:
@@ -151,6 +125,7 @@ def save_one_crl( yearval, crl_name, add_dist_coords={'new_heights': False, 'fl_
         fl_field_interp = []
         for fieldi, fieldval in enumerate( fl_field_list):
             fl_field_interp.append( find_crl_distance_rmws.find_interp( crl_data, fl_data, fl_data[ fieldval]) )
+
 
 
 
@@ -189,13 +164,6 @@ def save_one_crl( yearval, crl_name, add_dist_coords={'new_heights': False, 'fl_
         power = vars_interpolated[ 2]
         wv = vars_interpolated[ 3]
         lsr = vars_interpolated[ 4]
-
-        #print( len( time))
-        #print( len( height))
-        #print( np.shape( temp))
-        #print( type( temp))
-        #print( temp)
-
         # add metadata
         units += ( "Degrees C", "dBz", "g/kg", "unitless", 'm')
         description1 += ( "Temperature", "Returned channel 1 power", "Water vapor mixing ratio", "Light scattering ratio", "P-3 height above surface")

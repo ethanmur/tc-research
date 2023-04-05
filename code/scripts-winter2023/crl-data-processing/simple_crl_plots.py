@@ -12,7 +12,7 @@ sys.path.append(  "/Users/etmu9498/research/code/scripts-winter2023/crl-data-pro
 import find_crl_distance_rmws
 
 
-def plot_all( tc='all'):
+def plot_all( tc='all', set_xlims=True):
     crl_data_root = "/Users/etmu9498/research/data/crl-all-data-processed/"
 
     # do this for all crl datasets (2021 and 2022)
@@ -56,34 +56,38 @@ def plot_all( tc='all'):
     for yeari, yearval in enumerate( yearlist):
         for filei, fileval in enumerate( filelist[ yeari]):
             # use the function below to process the crl data separately!
-            crl_data = plot_one( yearval, fileval)
+            crl_data = plot_one( yearval, fileval, set_xlims)
 
             print( "New CRL File Plotted and Saved: " +  yearval + "/" + fileval)
     return
 
 
-def plot_one( yearval, crl_name):
+def plot_one( yearval, crl_name, set_xlims=True):
     # open up the crl file
     crl_data_root = "/Users/etmu9498/research/data/crl-all-data-processed/"
     crl_path = crl_data_root + yearval
     os.chdir( crl_path)
     crl_data = xr.open_dataset( crl_name)
 
-    plt.figure( figsize=(14, 14))
+    plt.figure( figsize=(14, 10))
     helper_fns.change_font_sizes( 12, 12)
 
     time = crl_data.time
     height = crl_data.height
 
     # plot p3 height and temps!
-    plt.subplot( 612)
+    plt.subplot( 311)
+    plt.title( "All CRL data for file " + crl_name[:-3])
     plt.plot( time, crl_data.p3_height, c='y', linewidth=1.5)
     plt.ylabel( "P-3 Height (m)")
     plt.grid()
     ax = plt.gca()
+
     xlims = ax.get_xlim()
+    # set these x limits no matter what: prevents showing colorbars at -10000!
     if xlims[1] > 1:
         plt.xlim( xlims)
+
     ax = plt.gca()
     ax2 = ax.twinx()
     ax2.plot( time, crl_data.fl_T, c='r', linewidth=1.5, label='Temp')
@@ -92,13 +96,15 @@ def plot_one( yearval, crl_name):
     ax2.legend(loc='upper right')
     plt.grid()
     helper_fns.add_blank_colorbar()
+    # set these x limits no matter what: prevents showing colorbars at -10000!
     if xlims[1] > 1:
         plt.xlim( xlims)
 
+    print( "height plotted")
 
+    '''
     # plot rmw and radial distance axes!
-    plt.subplot( 611)
-    plt.title( "All CRL data for file " + crl_name[:-3])
+    plt.subplot( 411)
     plt.plot( time, crl_data.center_dist, c='k', linewidth=1.5)
     plt.ylabel( "Radial Distance (km)")
     ax = plt.gca()
@@ -110,11 +116,14 @@ def plot_one( yearval, crl_name):
     ax2.legend(loc='upper right')
     plt.grid()
     helper_fns.add_blank_colorbar()
+    # set these x limits no matter what: prevents showing colorbars at -10000!
     if xlims[1] > 1:
         plt.xlim( xlims)
 
+    print( "rmw plotted")
+
     # plot wind spd and w axes!
-    plt.subplot( 613)
+    plt.subplot( 413)
     plt.plot( time, crl_data.wind_speed, c='c', linewidth=1.5)
     plt.ylabel( "Wind Speed (m/s)")
     ax = plt.gca()
@@ -126,13 +135,14 @@ def plot_one( yearval, crl_name):
     ax2.legend(loc='upper right')
     plt.grid()
     helper_fns.add_blank_colorbar()
+    # set these x limits no matter what: prevents showing colorbars at -10000!
     if xlims[1] > 1:
         plt.xlim( xlims)
-
-
+    print( 'speed plotted')
+    '''
 
     # plot temperature
-    plt.subplot( 614)
+    plt.subplot( 312)
     min = 5
     max = 35
     map = plt.cm.get_cmap( "RdYlBu").reversed()
@@ -140,11 +150,15 @@ def plot_one( yearval, crl_name):
     plt.colorbar(label="T (Degrees C)")
     plt.ylabel("Height (m)")
 
-    if xlims[1] > 1:
-        plt.xlim( xlims)
+    if set_xlims:
+        if xlims[1] > 1:
+            plt.xlim( xlims)
     ax = plt.gca()
     ax.set_facecolor('k')
+    plt.ylim( [ 0, np.nanmax( height)])
+    print("temp plotted")
 
+    '''
     # plot wv
     plt.subplot( 615)
     min = 0
@@ -152,25 +166,35 @@ def plot_one( yearval, crl_name):
     plt.pcolormesh( time, height, crl_data.WVMR.transpose(), vmin = min, vmax = max)
     plt.colorbar(label="WVMR (g/kg)")
     plt.ylabel("Height (m)")
-    if xlims[1] > 1:
-        plt.xlim( xlims)
+    print( "wv plotted")
+
+    if set_xlims:
+        if xlims[1] > 1:
+            plt.xlim( xlims)
     ax = plt.gca()
     ax.set_facecolor('k')
+    plt.ylim( [ 0, np.nanmax( height)])
+    '''
 
     # plot power ch1
 
-    plt.subplot( 616)
+    plt.subplot( 313)
     min = -30
     max = -10
     plt.pcolormesh( time, height, crl_data.P_ch1.transpose(), vmin = min, vmax = max)
     plt.colorbar(label="Power Ch. 1 (dBz)")
     plt.ylabel("Height (m)")
-    if xlims[1] > 1:
-        plt.xlim( xlims)
+
+    if set_xlims:
+        if xlims[1] > 1:
+            plt.xlim( xlims)
     ax = plt.gca()
     ax.set_facecolor('k')
     plt.xlabel( "Time (Hours, UTC)")
+    plt.ylim( [ 0, np.nanmax( height)])
+    plt.grid('on')
+    print( "power plotted")
 
     savedir = "/Users/etmu9498/research/figures/CRL-all-data-processed/" + yearval
     os.chdir( savedir)
-    plt.savefig( crl_name[:-3] + ".png", dpi=100, bbox_inches='tight')
+    # plt.savefig( crl_name[:-3] + ".png", dpi=100, bbox_inches='tight')

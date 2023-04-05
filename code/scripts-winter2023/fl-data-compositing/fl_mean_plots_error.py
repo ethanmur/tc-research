@@ -4,27 +4,17 @@ import os
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import pandas as pd
-
+import scipy
+import sys
 import warnings
 import pandas as pd
 from scipy.signal import find_peaks
+os.chdir("/Users/etmu9498/research/code/scripts-winter2023")
+import helper_fns_winter2023 as helper_fns
 
-os.chdir("/Users/etmu9498/research/code/scripts")
-import make_plots_new_heights
-import make_plots
-import tc_metadata
-import helper_fns
-
-os.chdir("/Users/etmu9498/research/code/scripts/in-situ-scripts")
-import load_in_situ_data
-
-import sys
 # import rmw_inner_outer_stats as extra_stats # confidence interval function resides here!
-sys.path.append("/Users/etmu9498/research/code/scripts/plotting")
+sys.path.append("/Users/etmu9498/research/code/scripts-winter2023/fl-data-compositing") # scripts/plotting")
 import fl_vpeaks_algorithms as peak_algs
-
-sys.path.append("/Users/etmu9498/research/code/scripts/obj-data-analysis")
-import ch1_statistics # use the updated confidence functions instead!
 
 
 # this function plots all eye passes from RMW = -1 to RMW = 1
@@ -34,27 +24,31 @@ import ch1_statistics # use the updated confidence functions instead!
 def make_plot(tc='all', max_v_requirement=40, window=10, method='pmin_tlim', timelim=30, save_datasets=True, confidence=.95):
     # load data
     # this code comes from auto_flight_level_plots_new_noaa_data.py
-    fl_path_root = "/Users/etmu9498/research/data/in-situ-noaa-full/"
+    fl_path_root = "/Users/etmu9498/research/data/in-situ-noaa-processed/"
     data_path = "/Users/etmu9498/research/data/"
+
+    print( 'good file')
 
     # make a list of year folders saved in 'in-situ-noaa-full'
     os.chdir( data_path)
-    folder_list = [name for name in os.listdir('in-situ-noaa-full')
-        if os.path.isdir(os.path.join('in-situ-noaa-full', name))]
+    folder_list = [name for name in os.listdir('in-situ-noaa-processed')
+        if os.path.isdir(os.path.join('in-situ-noaa-processed', name))]
     fl_list_total = []
     # go through every year- count the number of datasets!
     for folderi in range( len( folder_list)):
         # go to new directory and get the count + names of files there!
-        fl_listi = make_plots.load_flight_level( fl_path_root + folder_list[ folderi], print_files=False)
+        fl_listi = helper_fns.load_flight_level( fl_path_root + folder_list[ folderi], print_files=False)
         fl_list_total += fl_listi
     fl_list_count = len( fl_list_total)
 
-
     # use the whole list, or make plots for just one year!
-    if tc == 'all':
+    # input names of specific runs as a dict! each year has its own entry
+    if type( tc) == type( {}):
+        # make the folder_list: just the dates saved in the dictionary!
+        folder_input = list( tc.keys())
+    elif tc == 'all':
         print( 'Total Number of plots to be created: ' + str(fl_list_count)+ '\n')
         folder_input = folder_list # use all possible year folders
-
     # one year case- check the first two characters: a proper year input?
     elif len( tc) == 4 and ( tc[0:2] == '19' or tc[0:2] == '20'):
         # check if this year has a folder
@@ -64,19 +58,12 @@ def make_plot(tc='all', max_v_requirement=40, window=10, method='pmin_tlim', tim
             if folder == tc:
                 folder_input = [ tc]
                 folder_present = True
-                fl_listi = make_plots.load_flight_level( fl_path_root + tc, print_files=False)
+                fl_listi = helper_fns.load_flight_level( fl_path_root + tc, print_files=False)
                 print( 'Total Number of plots to be created: ' + str( len( fl_listi))+ '\n')
         # no folder present case:
         if folder_present == False:
             print( "No folder present. Please download flight level data and add a new folder for it!")
             return
-
-    # input names of specific runs as a dict! each year has its own entry
-    elif type( tc) == type( {}):
-
-        # make the folder_list: just the dates saved in the dictionary!
-        folder_input = list( tc.keys())
-
     # made it out of the loop?
     else:
         print( 'implement the else case! cannot handle individual plots yet.')
@@ -97,16 +84,16 @@ def make_plot(tc='all', max_v_requirement=40, window=10, method='pmin_tlim', tim
 
         fl_path = fl_path_root + yeari
 
-        # normal cases: just load all the datasets from the given year!
-        if tc=='all' or ( len( tc) == 4 and ( tc[0:2] == '19' or tc[0:2] == '20')):
-            fl_list = make_plots.load_flight_level( fl_path, print_files=False)
         # dictionary case: load only the datasets provided!
-        elif type( tc) == type( {}):
+        if type( tc) == type( {}):
             fl_list = tc[ yeari]
+        # normal cases: just load all the datasets from the given year!
+        elif tc=='all' or ( len( tc) == 4 and ( tc[0:2] == '19' or tc[0:2] == '20')):
+            fl_list = helper_fns.load_flight_level( fl_path, print_files=False)
 
         # new code
         # add the automatic variable names to the dataset
-        auto_vars = [ 'name', 'year', 'pass', 'rmw', 'Time'] # always find these variables
+        auto_vars = [ 'name', 'year', 'pass', 'rmw', 'time'] # always find these variables
         # input variables
         input_vars = [ 'WS.d', 'UWZ.d', 'SfmrRainRate.1', 'THETAE.d', 'MR.d', 'TA.d'] # change me!
         var_names = [ 'wind_speed', 'w', 'Rain Rate', 'Theta E', 'Mixing Ratio', 'temp']  # change me!
@@ -121,7 +108,6 @@ def make_plot(tc='all', max_v_requirement=40, window=10, method='pmin_tlim', tim
         for i in range( len( fl_list)):
             # load data
             dataset = xr.open_dataset( fl_list[ i], decode_times=False)
-            dataset = process_data_step1( dataset)
 
             # smooth wind speeds and surface pressures- more realistic peaks
             window = window # seconds
@@ -167,7 +153,7 @@ def make_plot(tc='all', max_v_requirement=40, window=10, method='pmin_tlim', tim
                 if method == 'pmin':
                     vpeaks, pmins = peak_algs.find_peaks_pressure_mins( dataset['PSURF.d'], spd_avg, window)
                 elif method == 'pmin_tlim':
-                    vpeaks, pmins, time_lims = peak_algs.find_peaks_pmin_time_limit( dataset['PSURF.d'], spd_avg, dataset['Time'].values, window, timelim=timelim)
+                    vpeaks, pmins, time_lims = peak_algs.find_peaks_pmin_time_limit( dataset['PSURF.d'], spd_avg, dataset['time'].values, window, timelim=timelim)
 
                 pass_counter = 0
                 # loop through eyewall passes
@@ -187,7 +173,7 @@ def make_plot(tc='all', max_v_requirement=40, window=10, method='pmin_tlim', tim
                         var_total.append( pass_counter)
 
                     # longer cases
-                    elif input_field == 'Time':
+                    elif input_field == 'time':
                         left_eyewall_ind = vpeaks[ 2* vind]
                         right_eyewall_ind = vpeaks[2 * vind + 1]
 
@@ -247,7 +233,7 @@ def make_plot(tc='all', max_v_requirement=40, window=10, method='pmin_tlim', tim
                 if method == 'pmin':
                     vpeaks, pmins = peak_algs.find_peaks_pressure_mins( dataset['PSURF.d'], spd_avg, window)
                 elif method == 'pmin_tlim':
-                    vpeaks, pmins, time_lims = peak_algs.find_peaks_pmin_time_limit( dataset['PSURF.d'], spd_avg, dataset['Time'].values, window, timelim=timelim)
+                    vpeaks, pmins, time_lims = peak_algs.find_peaks_pmin_time_limit( dataset['PSURF.d'], spd_avg, dataset['time'].values, window, timelim=timelim)
 
                 pass_counter = 0
                 # loop through eyewall passes
@@ -293,7 +279,7 @@ def make_plot(tc='all', max_v_requirement=40, window=10, method='pmin_tlim', tim
     # initialize the dataframe!!
     df_binned = pd.DataFrame( )
     # bin_list = ['rmw', 'time'] + input_vars
-    bin_names = ['rmw', 'Time'] + var_names
+    bin_names = ['rmw', 'time'] + var_names
 
     # pick a bin width for rmw values, sort velocities into those bins, and
     # calculate important quantities like the mean, standard deviation, and confidence levels!
@@ -397,8 +383,7 @@ def make_plot(tc='all', max_v_requirement=40, window=10, method='pmin_tlim', tim
         for i in range( len( df_binned[ 'midpoints'] )):
 
             # np.ma.masked_array( field[ i], np.isnan( field[ i]))
-            mean, lowc, highc = ch1_statistics.t_test_intervals(
-                        field[i], confidence=confidence)
+            mean, lowc, highc = t_test_intervals( field[i], confidence=confidence)
             var_mean.append(  mean)
             var_lowc.append(  lowc)
             var_highc.append(  highc)
@@ -414,11 +399,12 @@ def make_plot(tc='all', max_v_requirement=40, window=10, method='pmin_tlim', tim
     ###############################
     ## make figure
     ###############################
-    # make figure
+
+    # original code: show 6 panels
+    '''
     plt.figure( figsize=(21, 12))
     lw = 2.
     helper_fns.change_font_sizes(14, 14)
-
     # make plots of total wind speed and vertical vels along new rmw axes!
     plt.subplot(231)
 
@@ -447,34 +433,74 @@ def make_plot(tc='all', max_v_requirement=40, window=10, method='pmin_tlim', tim
 
     plt.subplot(235)
     plt.xlabel("Radius of Maximum Wind")
+    '''
+
+    # simpler code
+    # show 4 panels
+    # make plots of total wind speed and vertical vels along new rmw axes!
+    plt.figure( figsize=(15, 12))
+    lw = 2.
+    helper_fns.change_font_sizes(16, 16)
+    plt.subplot(221)
+
+    subplots = [221, 222, 223, 224]
+    ylabels = [ "Total Wind Speed (m/s)", "Temperature (C)", "WVMR (g/kg)", "Vertical Velocity (m/s)"]
+    colors = ['b', 'k', 'r', 'g']
+
+    # use the var_names list defined way earlier for plotting!
+    new_var_names = ['wind_speed', 'temp', 'Mixing Ratio', 'w' ]
+
+    for i in range( len( subplots)):
+
+        plt.subplot( subplots[ i])
+        plt.ylabel(ylabels[ i])
+        plt.xlim( [-.2, 1.2])
+        plt.plot( df_binned[ 'midpoints'], df_binned[ new_var_names[ i] + '_mean'], c=colors[i], linewidth=lw, label="Mean Value")
+
+        ax = plt.gca()
+        ax.fill_between( df_binned[ 'midpoints'], df_binned[ new_var_names[ i] + '_lowc'], df_binned[ new_var_names[ i] + '_highc'],
+                        color=colors[i], alpha=0.3, label=str( int(confidence*100)) + "% Confidence")
+        ax.legend()
+
+    plt.subplot(224)
+    plt.axhline(y=0, linewidth = 1.5, c='k')
+    plt.xlabel("Radius of Maximum Wind")
+
+    plt.subplot(223)
+    plt.xlabel("Radius of Maximum Wind")
 
 
-def process_data_step1( dataset):
-    # this snippet turns all relevant quantities from strings into floats
-    # add more fields here if needed!
-    keylist = [ 'Time', 'WS.d', 'WD.d', 'UWZ.d', 'SfmrRainRate.1', 'LATref', 'LONref', 'TAS.d', 'PSURF.d',
-               'HT.d', 'PITCHref', 'ROLLref', 'MR.d', 'HUM_REL.d', 'THETA.d', 'THETAE.d', 'THETAV.d', 'TA.d']
-    # create a new version of the xarray dataset holding only the provided keys
-    datasetnew = dataset.copy()
-    datasetnew = datasetnew[ keylist]
 
-    # create a new time axis!
-    datasetnew[ 'time_index'] = dataset[ 'Time']
+def t_test_intervals( data, confidence=.95):
+    diff = 1 - confidence
+    tableval = confidence + diff / 2
+    data_inds = np.where( ~ np.isnan( data)) [0]
+    data = np.array( data) [data_inds]
+    N = len( data)
+    df=N-1
+    mean = data.mean()
+    std = data.std()
+    # find the t test upper and lower limits
+    tstat = scipy.stats.t.ppf( tableval, df)
+    low_limitt = mean - tstat * ( std / np.sqrt( N-1))
+    high_limitt = mean + tstat * ( std / np.sqrt( N-1))
 
-    # this string holds the start and end times. cut down the interval dataset to get the hours, mins, secs!
-    interval_str = dataset.attrs['TimeInterval']
-    h = float( interval_str[0:2])
-    m = float( interval_str[3:5])
-    s = float( interval_str[6:8])
-    start_time = h + m / 60 + s / 3600
+    return mean, low_limitt, high_limitt
 
-    # create the time array manually
-    # if this is too slow, try using pandas? see stack overflow link below...
-    # https://stackoverflow.com/questions/55648630/how-to-decode-the-time-variable-while-using-xarray-to-load-a-netcdf-file
-    time_array = np.empty( ( len( dataset['Time'])))
-    for timei in range( len( dataset['Time'])):
-        # add to time array
-        time_array[ timei] = start_time + timei / 3600
-    datasetnew[ 'Time'] = time_array
 
-    return datasetnew
+
+def z_test_intervals( data, confidence=.95):
+    diff = 1 - confidence
+    tableval = confidence + diff / 2
+    data_inds = np.where( ~ np.isnan( data)) [0]
+    data = np.array( data) [data_inds]
+    N = len( data)
+    df=N-1
+    mean = data.mean()
+    std = data.std()
+    # find the z test upper and lower limits
+    zstat = scipy.stats.norm.ppf( tableval)
+    low_limitz = mean - zstat * ( std / np.sqrt( N))
+    high_limitz = mean + zstat * ( std / np.sqrt( N))
+
+    return mean, low_limitz, high_limitz
