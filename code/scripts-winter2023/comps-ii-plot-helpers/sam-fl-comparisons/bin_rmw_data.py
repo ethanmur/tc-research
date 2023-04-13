@@ -21,8 +21,12 @@ import helpful_stats
 # use the new rmw axis saved in the processed fl data to bin important quantities!
 # return the binned quantities for additional analysis :)
 # do this for specific
-def bin( tc='all', binwidth=.1, maxbin=10):
-    fl_data_root = "/Users/etmu9498/research/data/in-situ-noaa-processed/"
+def bin( tc='all', binwidth=.1, maxbin=10, new_data=False, bintype='rmw'):
+
+    if new_data:
+        fl_data_root = "/Users/etmu9498/research/data/in-situ-noaa-trimmed/"
+    else:
+        fl_data_root = "/Users/etmu9498/research/data/in-situ-noaa-processed/"
     yearlist, filelist = helper_fns_winter2023.get_fl_datasets( tc)
     # print out the number of files to be saved
     filecount = 0
@@ -82,7 +86,13 @@ def bin( tc='all', binwidth=.1, maxbin=10):
                     total_vars.append( temp_list)
 
             # save all relevant fields as numpy arrays rather than xarray: saves computing time!
-            rmwvals = fl_data['rmw'].values
+            # also choose whether to sort by rmw or distances in this line of code! keep calling
+            # the values "rmwvals" for either case, i'm too lazy to update code names right now lol
+            if bintype == 'rmw':
+                rmwvals = fl_data['rmw'].values
+            elif bintype == 'dist':
+                rmwvals = fl_data['center_dist'].values
+
             datalist = []
             for i in range( len( input_vars)):
                 datalist.append( fl_data[ input_vars[i]].values)

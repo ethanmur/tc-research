@@ -29,8 +29,11 @@ import correct_fl_data_fields
 #     the save_one_fl() function are used. otherwise, you can pass a list of variables through
 #     this field for different behavior!
 # correct_data tells the script whether or not to process the flight level data
-#     (removing too high / low legs, anomalously high wv, etc)
-def save_tcs( tc='all', add_dist_coords={'center_dist': False, 'psurf_dist': False, 'rmw': False, 'vars_to_save': 'default'}, correct_data=True):
+#     (removing too high / low legs, anomalously high wv, etc).
+#     You can give it either 'full' to not process the data at all (keep the full dataset),
+#     'correct' to just correct the issue data points, or 'trim' to do the corrections and delete problem data. 
+#     'correct' also leaves the relative vorticity as it is: it doesn't apply any filters to it!
+def save_tcs( tc='all', add_dist_coords={'center_dist': False, 'psurf_dist': False, 'rmw': False, 'vars_to_save': 'default'}, correct_data='correct'):
 
     data_path = "/Users/etmu9498/research/data/"
     fl_data_path = "/Users/etmu9498/research/data/in-situ-noaa-full/"
@@ -77,14 +80,22 @@ def save_tcs( tc='all', add_dist_coords={'center_dist': False, 'psurf_dist': Fal
             # final goal: save the newly created crl dataset
             # make a name for the dataset
             filename = filelist[ yeari][ filei] [ : -3] + "_processed.nc"
-            # make sure the folder exists!
-            os.chdir("/Users/etmu9498/research/data/in-situ-noaa-processed")
+
+            if correct_data == 'correct':
+                # make sure the folder exists!
+                path = "/Users/etmu9498/research/data/in-situ-noaa-processed/"
+            elif correct_data == 'full':
+                path = "/Users/etmu9498/research/data/in-situ-noaa-not-processed/"
+            elif correct_data == 'trim':
+                path = "/Users/etmu9498/research/data/in-situ-noaa-trimmed/"
+
+            os.chdir(path)
             output_folder = yearval
             if not os.path.isdir( output_folder):
                 os.makedirs( output_folder)
                 print( 'New folder created: ' + output_folder)
             # go to the new folder and save the data!
-            fl_data.to_netcdf('/Users/etmu9498/research/data/in-situ-noaa-processed/' + yearval + "/" + filename)
+            fl_data.to_netcdf(path + yearval + "/" + filename)
             print( "New In Situ File Created and Saved: " + filename + "\n")
     return
 
@@ -99,7 +110,7 @@ def save_tcs( tc='all', add_dist_coords={'center_dist': False, 'psurf_dist': Fal
 # fileval: the name of this tc dataset (in the format of "20210929H2_sam.nc")
 # return: a new trimmed netcdf file with the additional coordinates.
 #########
-def save_one_fl( yearval, fileval, add_dist_coords={'center_dist': False, 'psurf_dist': False, 'rmw': False, 'vars_to_save': 'default'}, correct_data=True, limits=False, inputdata=False):
+def save_one_fl( yearval, fileval, add_dist_coords={'center_dist': False, 'psurf_dist': False, 'rmw': False, 'vars_to_save': 'default'}, correct_data='correct', limits=False, inputdata=False):
     # option 1: use the default variables case
     if add_dist_coords['vars_to_save'] == 'default':
         # 'float_time', 'Time',
@@ -137,13 +148,20 @@ def save_one_fl( yearval, fileval, add_dist_coords={'center_dist': False, 'psurf
 
     # save the original p3 height here... it was being iterated over and edited in an
     # unhelpful way!
-    # p3_height_original = fl_data[ 'HT.d'].values.copy()
+    p3_height_new = np.copy( fl_data[ 'HT.d'])
 
     # correct the p-3 height array outside of the loop... will impact all other measurements!
     bad_inds = np.union1d( np.where( fl_data[ 'HT.d'].values < 2500.)[0], np.where( fl_data[ 'HT.d'].values > 4000.)[0] )
     # the correct inds are all inds - bad_inds!
     correct_inds = np.setdiff1d( np.arange( 0, len( fl_data[ 'HT.d'].values)), bad_inds)
-    fl_data[ 'HT.d'][ bad_inds] = np.nan
+    # fl_data[ 'HT.d'][ bad_inds] = np.nan
+    p3_height_new[ bad_inds] = np.nan
+
+    print(np.shape(p3_height_new))
+    print(len(p3_height_new[np.where(~ np.isnan( p3_height_new))]))
+    print(len(fl_data['HT.d'][np.where(~ np.isnan(fl_data['HT.d']))]))
+    print(type(p3_height_new))
+    print(p3_height_new)
 
     # make a field list for adding things in a separate loop... doing it in the same loop was causing problems :/
     field_list = []
@@ -155,28 +173,43 @@ def save_one_fl( yearval, fileval, add_dist_coords={'center_dist': False, 'psurf
     if limits:
         # fieldval is the NAME of the dataset, not the actual data...
         for fieldi, fieldval in enumerate( input_vars):
+            
             # better case: correct for inconsistencies in the flight level data! will improve stats later
-            if correct_data:
+            # DON'T correct the height field... leads to issues later!
+            if correct_data == 'trim': # and fieldval != 'HT.d':
                 # give the helper script the data field of interest, the p-3 height array (too high or low is an issue),
                 # and the time array (needed?? maybe not)
-                field = correct_fl_data_fields.one_field( fieldval, fl_data[ fieldval].values, fl_data['HT.d'].values, bad_inds, time, fileval, fl_data[ 'TA.d'].values)
+                field = correct_fl_data_fields.one_field_trim( fieldval, fl_data[ fieldval].values, p3_height_new, bad_inds, time, fileval, fl_data[ 'TA.d'].values)
+            
+            elif correct_data == 'correct':
+                field = correct_fl_data_fields.one_field_correct( fieldval, fl_data[ fieldval].values, p3_height_new, time, fileval, fl_data[ 'TA.d'].values)
+
             # original case: just add the raw fl data fields to the array!
-            else:
+            elif correct_data == 'full':
                 field = fl_data[ fieldval].values
             field_list.append( field[ limits[0] : limits[1] ])
+    
     # original, normal case:
     else:
         # fieldval is the NAME of the dataset, not the actual data...
         for fieldi, fieldval in enumerate( input_vars):
+
             # better case: correct for inconsistencies in the flight level data! will improve stats later
-            if correct_data:
+            # DON'T correct the height field... leads to issues later!
+            if correct_data == 'trim': # and fieldval != 'HT.d':
                 # give the helper script the data field of interest, the p-3 height array (too high or low is an issue),
                 # and the time array (needed?? maybe not)
-                field = correct_fl_data_fields.one_field( fieldval, fl_data[ fieldval].values, fl_data['HT.d'].values, bad_inds, time, fileval, fl_data[ 'TA.d'].values)
+                field = correct_fl_data_fields.one_field_trim( fieldval, fl_data[ fieldval].values, p3_height_new, bad_inds, time, fileval, fl_data[ 'TA.d'].values)
+            
+            elif correct_data == 'correct':
+                field = correct_fl_data_fields.one_field_correct( fieldval, fl_data[ fieldval].values, p3_height_new, time, fileval, fl_data[ 'TA.d'].values)
+
             # original case: just add the raw fl data fields to the array!
-            else:
+            elif correct_data == 'full':
                 field = fl_data[ fieldval].values
+
             field_list.append( field)
+
 
     for fieldi, fieldval in enumerate( field_list):
         # add this field to the dataframe!
@@ -204,18 +237,31 @@ def save_one_fl( yearval, fileval, add_dist_coords={'center_dist': False, 'psurf
         pass
 
 
-    # try to add relative vorticity to the dataset!
+    # add relative vorticity to the dataset!
     # using the method found in kossin and eastin 2001
     # give the helper fn total wind speed in m/s and radial distance in meters
     # return processed / smoothed relative vorticity in units of 10^-4 s-1
-    if 'WS.d' in fl_data.keys() and 'center_dist' in fl_data.keys():
-        wd = 60
-        avg = False
-        rel_vort = find_fl_dists_rmws.calc_rel_vort( fl_data['WS.d'].values, fl_data['center_dist'].values * 1000, double_average=avg, window=wd)
-        # add it to the dataframe for nicer loops!
-        dvs.update( { 'rel_vort': ('time', rel_vort) })
+
+    # spectial 'full' data case: correct vorticity before adding it to the array
+    if correct_data=='full':
+        if 'WS.d' in fl_data.keys() and 'center_dist' in fl_data.keys():
+            wd = 60 # 14
+            avg = False
+            rel_vort = find_fl_dists_rmws.calc_rel_vort( fl_data['WS.d'].values, fl_data['center_dist'].values * 1000, double_average=avg, window=wd)
+            # add it to the dataframe for nicer loops!
+            dvs.update( { 'rel_vort': ('time', rel_vort) })
+        else:
+            print( "relative vorticity not added")
+    # don't do any smoothing!
     else:
-        print( "relative vorticity not added")
+        if 'WS.d' in fl_data.keys() and 'center_dist' in fl_data.keys():
+            wd = 1
+            avg = False
+            rel_vort = find_fl_dists_rmws.calc_rel_vort( fl_data['WS.d'].values, fl_data['center_dist'].values * 1000, double_average=avg, window=wd)
+            # add it to the dataframe for nicer loops!
+            dvs.update( { 'rel_vort': ('time', rel_vort) })
+        else:
+            print( "relative vorticity not added")
 
 
     # next step: create the dataset and update units for existing variables!

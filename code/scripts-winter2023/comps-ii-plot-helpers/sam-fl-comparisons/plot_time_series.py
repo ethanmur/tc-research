@@ -187,9 +187,14 @@ def plot( tc='all', zoom=False):
 
 
 # plot
-def plot_rmw_sections( tc='all', rmw_lim='default', save_new_data=False, save_fig=False):
+def plot_rmw_sections( tc='all', rmw_lim='default', save_new_data=False, save_fig=False, trimmed_data=False):
     lw = 2
-    fl_data_root = "/Users/etmu9498/research/data/in-situ-noaa-processed/"
+
+    if trimmed_data:
+        fl_data_root = "/Users/etmu9498/research/data/in-situ-noaa-trimmed/"
+    else:
+        fl_data_root = "/Users/etmu9498/research/data/in-situ-noaa-processed/"
+
     yearlist, filelist = helper_fns_winter2023.get_fl_datasets( tc)
 
     # print out the number of files to be saved
@@ -314,10 +319,10 @@ def plot_rmw_sections( tc='all', rmw_lim='default', save_new_data=False, save_fi
             fl_data[ 'rel_vort'] = rel_vort
 
             # list all variables to plot here
-            vars = ['TA.d', 'MR.d', 'SfmrRainRate.1', 'HUM_REL.d', 'rel_vort']
-            labels = ["Temperature (C)", "Water Vapor (g/kg)", "Rain Rate (mm/hr)", "Relative Humidity (%)", "Relative Vorticity (10^-4 s-1)"]
+            vars = ['TA.d', 'MR.d', 'WS.d', 'HUM_REL.d', 'rel_vort']
+            labels = ["Temperature (C)", "Water Vapor (g/kg)", "Wind Spped (m/s)", "Relative Humidity (%)", "Relative Vorticity (10^-4 s-1)"]
             colors = ['r', 'b', 'c', 'k', 'g']
-            ylims = [ [0, 30], [0, 25], [0, 90], [0, 100], [-100, 200]]
+            ylims = [ [0, 30], [0, 25], [0, 80], [0, 100], [-100, 200]]
             # make figure before loop
             fig = plt.figure( figsize=(6 * len( vars), 3 * len( all_inds)))
             helper_fns.change_font_sizes( 14, 14)
@@ -370,11 +375,17 @@ def plot_rmw_sections( tc='all', rmw_lim='default', save_new_data=False, save_fi
             if save_fig:
                 # make sure a save folder exists for the output figures!
                 # from goes_gifs_2023_update.py
-                os.chdir( "/Users/etmu9498/research/figures/in-situ-all-data-new-noaa/time-series-individual")
+
+                if trimmed_data:
+                    path = "/Users/etmu9498/research/figures/in-situ-all-data-new-noaa/time-series-trimmed/"
+                else:
+                    path = "/Users/etmu9498/research/figures/in-situ-all-data-new-noaa/time-series-individual/"
+                
+                os.chdir( path)
                 if not os.path.isdir( yearval):
                     os.makedirs( yearval)
                     print( 'New folder created: time-series/' + yearval)
-                savedir = "/Users/etmu9498/research/figures/in-situ-all-data-new-noaa/time-series-individual/" + yearval
+                savedir = path + yearval
                 os.chdir( savedir)
                 plt.savefig( fileval[:-3] + ".png", dpi=200, bbox_inches='tight')
                 print( "Plot " + fileval + " saved\n" )

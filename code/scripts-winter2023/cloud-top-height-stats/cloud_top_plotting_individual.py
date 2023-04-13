@@ -18,7 +18,9 @@ import find_cloud_tops
 
 
 # make histogram plots for each individual pass, with the lidar data beneath it!
-def plot( tc='all'):
+# savefig = false: save figure to default location and don't enlarge fonts
+# savefig = true: save to colloquium slides with high resolution and enlarge fonts!
+def plot( tc='all', savefig=False):
     # plot crl data underneath it to highlight how the distributions are created
     metadata = eyewall_metadata.all_metadata()
     lw = 2
@@ -177,7 +179,6 @@ def plot( tc='all'):
                 binwidth=25
                 smoothwidth=25
                 lw=2
-
                 # remove 0 km heights from figure!
                 plot_height = height[ np.where( height > 50)[0] ]
                 height_bin=np.arange(0, 4510, binwidth)
@@ -239,21 +240,26 @@ def plot( tc='all'):
                 a0.set_xlabel("Cloud Height Probability (%)")
                 a0.set_title( "Cloud Height Probabilities for " + fileval)
 
-                # save the total figure!
-                savedir = "/Users/etmu9498/research/figures/CRL-all-data-processed/" + yearval + "-distributions"
-                os.chdir( savedir)
-                plt.savefig( fileval[:-3] + '-' + str( pairi) + ".png", dpi=100, bbox_inches='tight')
-
+                if savefig:
+                    # save the total figure!
+                    savedir = "/Users/etmu9498/research-private/colloquium"
+                    os.chdir( savedir)
+                    plt.savefig( fileval[:-3] + '-' + str( pairi) + ".png", dpi=250, bbox_inches='tight')
+                else:
+                    # save the total figure!
+                    savedir = "/Users/etmu9498/research/figures/CRL-all-data-processed/" + yearval + "-distributions"
+                    os.chdir( savedir)
+                    plt.savefig( fileval[:-3] + '-' + str( pairi) + ".png", dpi=100, bbox_inches='tight')
                 print( "Figure " + fileval + ", case " + str( pairi) + " Saved")
 
 
 # similar to the code above, but don't include the lidar data plots, and plot all
 # histograms for a day atop one another
-def plot_one_day( tc='all'):
+def plot_one_day( tc='all', savefig=False):
     metadata = eyewall_metadata.all_metadata()
     lw = 2
     crl_data_root = "/Users/etmu9498/research/data/crl-all-data-processed/"
-    window = 10
+    window = 5
 
     # case 1: do this for all crl datasets (2021 and 2022)
     if tc == 'all':
@@ -306,7 +312,8 @@ def plot_one_day( tc='all'):
     df_datelist = []
     df_passlist = []
     df_peaklist = []
-    df_peakcount = []
+    df_peakcount_strong = []
+    df_peakcount_weak = []
     df_intensity = []
     df_category = []
 
@@ -364,7 +371,11 @@ def plot_one_day( tc='all'):
                 # first new date case: no need to save the old figure, just make a new one
                 if not old_date:
                     fig, ax = plt.subplots(1, 1, figsize=(9, 6))
-                    helper_fns.change_font_sizes( 12, 12)
+                    if savefig:
+                        helper_fns.change_font_sizes( 18, 18)
+                    else:
+                        helper_fns.change_font_sizes( 12, 12)
+
                     # add some nice labels, scales, etc
                     ax.set_ylabel("Height (m)")
                     ax.set_xlabel("Cloud Height Probability (%)")
@@ -374,6 +385,13 @@ def plot_one_day( tc='all'):
                 elif old_date != date:
                     count = 0 # reset the color counter
                     # saving the multiple distribution figure for the previous date
+
+                    # add scatter points again just to add labels! only once
+                    # add scatter points symbolyzing tall / strong peak locations!
+                    ax.scatter( prob_smooth[ peakind], height_bin[ peakind], c='k', marker='*', s=50, zorder=5, label='strong')
+                    # add scatter points symbolyzing weaker / smaller peak locations!
+                    ax.scatter( prob_smooth[ peakindweak], height_bin[ peakindweak], c='r', marker='*', s=50, zorder=6, label='weak')
+
                     ax.legend( loc='upper right')
                     savedir = "/Users/etmu9498/research/figures/cloud-heights-one-day/" + oldyear
                     os.chdir( savedir)
@@ -416,10 +434,12 @@ def plot_one_day( tc='all'):
                     ax2.plot( prob_smooth, height_bin, color=col, linewidth=lw)
 
                     # find local peaks for this probability
-                    peakind = find_local_peak( prob_smooth)
+                    peakind, peakindweak = find_local_peak( prob_smooth)
 
-                    # add scatter points symbolyzing these peak locations!
-                    ax2.scatter( prob_smooth[ peakind], height_bin[ peakind], c='k', marker='*', s=50, zorder=5)
+                    # add scatter points symbolyzing tall / strong peak locations!
+                    ax2.scatter( prob_smooth[ peakind], height_bin[ peakind], c='k', marker='*', s=50, zorder=5, label='strong')
+                    # add scatter points symbolyzing weaker / smaller peak locations!
+                    ax2.scatter( prob_smooth[ peakindweak], height_bin[ peakindweak], c='r', marker='*', s=50, zorder=6, label='weak')
 
                     savedir = "/Users/etmu9498/research/figures/cloud-heights-one-day/" + oldyear
                     os.chdir( savedir)
@@ -449,7 +469,7 @@ def plot_one_day( tc='all'):
                 ax.plot( prob_smooth, height_bin, color=colors[ pairi], linewidth=lw, label='case ' + str( pairi))
 
                 # find local peaks for this probability
-                peakind = find_local_peak( prob_smooth)
+                peakind, peakindweak = find_local_peak( prob_smooth)
 
                 # *** # 
                 # add the metadata and peaks found to the dataframe!
@@ -457,7 +477,9 @@ def plot_one_day( tc='all'):
                 df_datelist.append( date)
                 df_passlist.append( pairi)
                 df_peaklist.append( height_bin[peakind].tolist())
-                df_peakcount.append( len( height_bin[peakind]))
+                df_peakcount_strong.append( len( height_bin[peakind]))
+                df_peakcount_weak.append( len( height_bin[peakindweak]))
+                
                 if date == '0812':
                     if fileval[11:13] == "H1":
                         df_intensity.append( metadata[yearval]['intensity']['0812am'])
@@ -469,8 +491,10 @@ def plot_one_day( tc='all'):
                     df_intensity.append( metadata[yearval]['intensity'][date])
                     df_category.append( metadata[yearval]['category'][date])
 
-                # add scatter points symbolyzing these peak locations!
+                # add scatter points symbolyzing tall / strong peak locations!
                 ax.scatter( prob_smooth[ peakind], height_bin[ peakind], c='k', marker='*', s=50, zorder=5)
+                # add scatter points symbolyzing weaker / smaller peak locations!
+                ax.scatter( prob_smooth[ peakindweak], height_bin[ peakindweak], c='r', marker='*', s=50, zorder=6)
 
                 # update the old date / year counter, add one to count to iterate colors
                 old_date = date
@@ -517,9 +541,12 @@ def plot_one_day( tc='all'):
     ax2.plot( prob_smooth, height_bin, color=col, linewidth=lw)
 
     # find local peaks for this probability
-    peakind = find_local_peak( prob_smooth)
-    # add scatter points symbolyzing these peak locations!
-    ax2.scatter( prob_smooth[ peakind], height_bin[ peakind], c='k', marker='*', s=50, zorder=5)
+    peakind, peakindweak = find_local_peak( prob_smooth)
+
+    # add scatter points symbolyzing tall / strong peak locations!
+    ax.scatter( prob_smooth[ peakind], height_bin[ peakind], c='k', marker='*', s=50, zorder=5, label='strong')
+    # add scatter points symbolyzing weaker / smaller peak locations!
+    ax.scatter( prob_smooth[ peakindweak], height_bin[ peakindweak], c='r', marker='*', s=50, zorder=6, label='weak')
 
     savedir = "/Users/etmu9498/research/figures/cloud-heights-one-day/" + oldyear
     os.chdir( savedir)
@@ -529,14 +556,13 @@ def plot_one_day( tc='all'):
 
     # finally, assemble and return the distribution peak dataframe!
 
-    print( df_datelist)
-    print( df_peakcount)
 
     df_peaks['year'] = df_yearlist
     df_peaks['date'] = df_datelist
     df_peaks['pass'] = df_passlist
     df_peaks['peak heights (m)'] = df_peaklist
-    df_peaks['peak counts'] = df_peakcount
+    df_peaks['peak counts strong'] = df_peakcount_strong
+    df_peaks['peak counts weak'] = df_peakcount_weak
     df_peaks['intensity (kt)'] = df_intensity
     df_peaks['tc category'] = df_category
 
@@ -549,8 +575,20 @@ def find_local_peak( prob_smooth):
     # max height of the distribution
     maxh = np.nanmax( prob_smooth)
     # no height requirements, but the peaks must be prominent enough!
-    peakind = find_peaks( x= prob_smooth, prominence= maxh / 6, distance=10)[0]
-    return peakind
+    peakind = find_peaks( x= prob_smooth, prominence= maxh / 6, distance=20)[0].tolist()
+
+    print("tall: " + str( peakind))
+
+    # remove tall peaks from this list!
+    peakindweak = find_peaks( x= prob_smooth, prominence= maxh / 15, distance=10)[0].tolist()
+    peakindweak = list( set(peakind).symmetric_difference( set(peakindweak)))
+
+    # get rid of the strong peaks to just look at the weak peaks!
+    print("Smaller: " + str( peakindweak))
+
+
+
+    return peakind, peakindweak
 
 
 

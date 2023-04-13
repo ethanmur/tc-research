@@ -121,7 +121,7 @@ def save_one_crl( yearval, crl_name, add_dist_coords={'new_heights': False, 'fl_
     # add downscaled flight level data like wind speeds, etc!
     if add_dist_coords['fl_fields']:
 
-        fl_field_list = [ 'WS.d', 'UWZ.d', 'MR.d', 'TA.d' ]
+        fl_field_list = [ 'WS.d', 'UWZ.d', 'MR.d', 'TA.d', 'PSURF.d']
         fl_field_interp = []
         for fieldi, fieldval in enumerate( fl_field_list):
             fl_field_interp.append( find_crl_distance_rmws.find_interp( crl_data, fl_data, fl_data[ fieldval]) )
@@ -195,13 +195,13 @@ def save_one_crl( yearval, crl_name, add_dist_coords={'new_heights': False, 'fl_
 
     # add the new downscaled flight level data!
     if add_dist_coords['fl_fields']:
-        units += ( 'm/s', 'm/s', "g/kg", "Degrees C" )
+        units += ( 'm/s', 'm/s', "g/kg", "Degrees C", "hPa" )
         description1 += ( "Flight Level Total Wind Speed", "Flight Level Vertical Velocity", "Flight level water vapor mixing ratio",
-                "Flight level temperature")
-        description2 += ( "", "", "", "")
-        description3 += ( "", "", "", "")
+                "Flight level temperature", "Flight level surface pressure")
+        description2 += ( "", "", "", "", "")
+        description3 += ( "", "", "", "", "")
         dvs.update( { 'wind_speed': ('time', fl_field_interp[0]), 'w': ('time', fl_field_interp[1]), 'fl_wv': ( 'time', fl_field_interp[2]),
-        'fl_T': ( 'time', fl_field_interp[3]) })
+        'fl_T': ( 'time', fl_field_interp[3]), 'fl_psurf': ('time', fl_field_interp[4])})
 
 
     # next step: create the dataset and update units!

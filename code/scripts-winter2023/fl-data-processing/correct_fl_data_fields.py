@@ -9,12 +9,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # process one flight level variable based on its input name / parameters
+# also, trim down data to correct heights!
 # inputs:
 # var_name: the name of the variable
 # var: the actual data of the variable of interest
 # p3_height: aircraft height array
 # return: the processed variable data array!
-def one_field( var_name, var, p3_heights, bad_inds, time, tcname, temp):
+def one_field_trim( var_name, var, p3_heights, bad_inds, time, tcname, temp):
 
     # step 0:
     # trim every variable by the bad indices to get down to the desired height limits!
@@ -25,19 +26,19 @@ def one_field( var_name, var, p3_heights, bad_inds, time, tcname, temp):
 
         # use the error helper function to trim out the unrealistic wvmr peaks!
         error_lim = 30 # cut out wvmr values above 30 g/kg... sensible for tcs at 700 hPa
-        var = error_helper( var_name, var, p3_heights, bad_inds, time, tcname, temp, error_lim)
+        var = error_helper( var_name, var, p3_heights, time, tcname, temp, error_lim, bad_inds=bad_inds, bad_inds_handle=True)
         return var
 
     # repeat for equivalent potential temp, but with a higher cutoff!
     elif var_name == 'THETAE.d':
         error_lim = 375 # cut out values above 275 K.. sensible for tcs at 700 hPa
-        var = error_helper( var_name, var, p3_heights, bad_inds, time, tcname, temp, error_lim)
+        var = error_helper( var_name, var, p3_heights, time, tcname, temp, error_lim, bad_inds=bad_inds, bad_inds_handle=True)
         return var        
 
     # repeat for relative humidity
     elif var_name == 'HUM_REL.d':
         error_lim = 100 # cut out values above 100%
-        var = error_helper( var_name, var, p3_heights, bad_inds, time, tcname, temp, error_lim)
+        var = error_helper( var_name, var, p3_heights, time, tcname, temp, error_lim, bad_inds=bad_inds, bad_inds_handle=True)
         return var        
 
     # no errors for this variable! just return the height trimmed data
@@ -45,7 +46,35 @@ def one_field( var_name, var, p3_heights, bad_inds, time, tcname, temp):
         return var
 
 
-def error_helper( var_name, var, p3_heights, bad_inds, time, tcname, temp, error_lim):
+# the same as the code above, but it only corrects the data! no trimming by height
+def one_field_correct( var_name, var, p3_heights, time, tcname, temp):
+
+    # mixing ratio: remove anomalous wv peaks! up to 60 g/kg :/
+    if var_name == 'MR.d':
+
+        # use the error helper function to trim out the unrealistic wvmr peaks!
+        error_lim = 30 # cut out wvmr values above 30 g/kg... sensible for tcs at 700 hPa
+        var = error_helper( var_name, var, p3_heights, time, tcname, temp, error_lim)
+        return var
+
+    # repeat for equivalent potential temp, but with a higher cutoff!
+    elif var_name == 'THETAE.d':
+        error_lim = 375 # cut out values above 275 K.. sensible for tcs at 700 hPa
+        var = error_helper( var_name, var, p3_heights, time, tcname, temp, error_lim)
+        return var        
+
+    # repeat for relative humidity
+    elif var_name == 'HUM_REL.d':
+        error_lim = 100 # cut out values above 100%
+        var = error_helper( var_name, var, p3_heights, time, tcname, temp, error_lim)
+        return var        
+
+    # no errors for this variable! just return the height trimmed data
+    else:
+        return var
+
+
+def error_helper( var_name, var, p3_heights, time, tcname, temp, error_lim, bad_inds=False, bad_inds_handle=False):
     # step 1:
         # identify the large error regions
         # get large wv error peaks: more values are corrupted, though, so we need to find those, too!
@@ -137,6 +166,8 @@ def error_helper( var_name, var, p3_heights, bad_inds, time, tcname, temp, error
         var[ error_list] = np.nan
 
         p3_heights[ error_list] = np.nan
-        temp[ bad_inds] = np.nan
+
+        if bad_inds_handle:
+            temp[ bad_inds] = np.nan
 
         return var

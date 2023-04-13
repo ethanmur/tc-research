@@ -1,5 +1,10 @@
 import os
 import matplotlib.pyplot as plt
+from matplotlib import cm
+import matplotlib
+import numpy as np
+from matplotlib.colors import ListedColormap
+import matplotlib.colors as colors
 os.chdir("/Users/etmu9498/research/code/scripts")
 import make_plots
 
@@ -149,3 +154,24 @@ def display_data_files( path, data_type, print_files):
             print( str( number) + ") " + file_names[ number])
 
     return file_names
+
+
+
+def add_blank_colorbar(color=False):
+    # add an empty colorbar to make everything fit in line... kinda a
+    # messy solution but it's ok for now!
+    viridis = cm.get_cmap('viridis', 256)
+    newcolors = viridis(np.linspace(0, 1, 256))
+
+    if color == 'gray':
+        white = np.array([ .92, .92, .92, .92])
+    else:
+        white = np.array([ 1, 1, 1, 1])
+
+    newcolors[:, :] = white
+    white_cmap = ListedColormap(newcolors)
+
+    map = matplotlib.cm.ScalarMappable(cmap= white_cmap, norm=matplotlib.colors.Normalize( vmin= 0, vmax= 1) )
+    cbar = plt.colorbar( mappable= map)
+    cbar.set_ticks([])
+    cbar.outline.set_visible(False)

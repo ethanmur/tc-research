@@ -39,12 +39,17 @@ def calc_rel_vort( vtan, r, double_average=False, window=20):
     # in radial distance or total vel.
     # replace with the limit value to still capture the high values in this region
     rel_vort = np.array( rel_vort)
-    rel_vort[ np.where( rel_vort > .2)[0]] = .2 # np.nan
-    # do the same for low values
-    rel_vort[ np.where( rel_vort < -.1)[0]] = -.1 # np.nan
 
-    # smooth the relative vorticity data to remove peaks!
-    rel_vort = pd.Series( rel_vort).rolling(window = window, min_periods=1, center=True).mean()
+    # only correct values if data are being averaged!
+    if window > 1:
+        rel_vort[ np.where( rel_vort > .2)[0]] = .2 # np.nan
+        # do the same for low values
+        rel_vort[ np.where( rel_vort < -.1)[0]] = -.1 # np.nan
+
+
+    if window > 1:
+        # smooth the relative vorticity data to remove peaks!
+        rel_vort = pd.Series( rel_vort).rolling(window = window, min_periods=1, center=True).mean()
     # optional code to double smooth the data! this makes it look more like the 2001 paper
     if double_average:
         rel_vort = pd.Series( rel_vort).rolling(window = window, min_periods=1, center=True).mean()

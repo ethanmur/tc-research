@@ -112,7 +112,8 @@ def intensity_bins( year, td_heights, ts_heights, wh_heights, sh_heights, binwid
     a0.set_xlabel('Cloud Height Probability (%)', fontsize=mediumfont)
     a0.set_ylim( [-200, 4600])
     a0.grid(True)
-    a0.set_title( "Cloud Height Distributions by TC Intensity", fontsize=largefont)
+
+    a0.set_title( year + " Cloud Height Distributions", fontsize=largefont)
     a0.tick_params(axis='both', which='major', labelsize=smallfont)
     plt.legend(fontsize=smallfont, loc="upper right")
     plt.savefig( year + "-all-dists-" + str( int( binwidth*1000)) + "m.png", bbox_inches='tight', dpi=500, transparent=False )
