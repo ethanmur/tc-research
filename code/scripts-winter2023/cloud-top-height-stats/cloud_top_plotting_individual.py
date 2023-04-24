@@ -70,6 +70,9 @@ def plot( tc='all', savefig=False):
 
         for filei, fileval in enumerate( filelist[ yeari]):
 
+            fs = 20
+            helper_fns.change_font_sizes(fs, fs)
+
             ######
             ## new code: grab the limits for this case
             ######
@@ -158,16 +161,16 @@ def plot( tc='all', savefig=False):
                     # cbar.update_ticks()
 
                 a1.legend(loc='upper right')
-                a1.set_ylabel("Height (m)", fontsize=16)
+                a1.set_ylabel("Height (m)", fontsize=fs)
                 a1.set_facecolor('k')
-                a1.set_xlabel( "Time (Hours, UTC)", fontsize=16)
+                a1.set_xlabel( "Time (Hours, UTC)", fontsize=fs)
 
                 # plot proposed eyewall limits!
                 # a1.axvline( x = lefteyewall, c='w', linewidth=lw)
                 # a1.axvline( x = righteyewall, c='w', linewidth=lw)
                 a1.set_ylim( [ np.nanmin( height), np.nanmax( height)])
-                plt.yticks([1000, 2000, 3000, 4000], fontsize=16)
-                plt.xticks(fontsize=16)
+                plt.yticks([1000, 2000, 3000, 4000], fontsize=fs)
+                plt.xticks(fontsize=fs)
 
 
 
@@ -297,7 +300,7 @@ def plot_one_day( tc='all', savefig=False):
     old_date = False # date from previous run
     oldyear = False # year from previous run
     # plot colors
-    colors = [ 'darkgreen', 'seagreen', 'springgreen', 'mediumturquoise', 'darkcyan']
+    colors = ['b', 'k', 'g', 'y', 'r'] # [ 'darkgreen', 'seagreen', 'springgreen', 'mediumturquoise', 'darkcyan']
     # recursively save height data here! for making histograms for a full day
     day_heights = []
     oldname = False
@@ -379,7 +382,8 @@ def plot_one_day( tc='all', savefig=False):
                     # add some nice labels, scales, etc
                     ax.set_ylabel("Height (m)")
                     ax.set_xlabel("Cloud Height Probability (%)")
-                    ax.set_title( "Cloud Height Probabilities for " + fileval)
+                    name = fileval[7:9] + '/' + fileval[9:11] + '/' + fileval[3:7]
+                    ax.set_title( "Cloud Height Probabilities for " + name)
 
                 # if it's a new date (but not the first), save the old figure and make a new one!
                 elif old_date != date:
@@ -388,9 +392,9 @@ def plot_one_day( tc='all', savefig=False):
 
                     # add scatter points again just to add labels! only once
                     # add scatter points symbolyzing tall / strong peak locations!
-                    ax.scatter( prob_smooth[ peakind], height_bin[ peakind], c='k', marker='*', s=50, zorder=5, label='strong')
+                    ax.scatter( prob_smooth[ peakind], height_bin[ peakind], c='y', marker='s', s=50, zorder=5, label='Large Cloud Layer')
                     # add scatter points symbolyzing weaker / smaller peak locations!
-                    ax.scatter( prob_smooth[ peakindweak], height_bin[ peakindweak], c='r', marker='*', s=50, zorder=6, label='weak')
+                    ax.scatter( prob_smooth[ peakindweak], height_bin[ peakindweak], c='r', marker='s', s=50, zorder=6, label='Small Cloud Layer')
 
                     ax.legend( loc='upper right')
                     savedir = "/Users/etmu9498/research/figures/cloud-heights-one-day/" + oldyear
@@ -437,9 +441,9 @@ def plot_one_day( tc='all', savefig=False):
                     peakind, peakindweak = find_local_peak( prob_smooth)
 
                     # add scatter points symbolyzing tall / strong peak locations!
-                    ax2.scatter( prob_smooth[ peakind], height_bin[ peakind], c='k', marker='*', s=50, zorder=5, label='strong')
+                    ax2.scatter( prob_smooth[ peakind], height_bin[ peakind], c='y', marker='s', s=50, zorder=5, label='Large Cloud Layer')
                     # add scatter points symbolyzing weaker / smaller peak locations!
-                    ax2.scatter( prob_smooth[ peakindweak], height_bin[ peakindweak], c='r', marker='*', s=50, zorder=6, label='weak')
+                    ax2.scatter( prob_smooth[ peakindweak], height_bin[ peakindweak], c='r', marker='s', s=50, zorder=6, label='Small Cloud Layer')
 
                     savedir = "/Users/etmu9498/research/figures/cloud-heights-one-day/" + oldyear
                     os.chdir( savedir)
@@ -466,7 +470,7 @@ def plot_one_day( tc='all', savefig=False):
                 prob_smooth = np.array( pd.Series( prob_smooth).rolling(window=window, min_periods=1, center=True).mean())
 
                 # add the probability plot to the figure!
-                ax.plot( prob_smooth, height_bin, color=colors[ pairi], linewidth=lw, label='case ' + str( pairi))
+                ax.plot( prob_smooth, height_bin, color=colors[ pairi], linewidth=lw, label='Pass ' + str( pairi))
 
                 # find local peaks for this probability
                 peakind, peakindweak = find_local_peak( prob_smooth)
@@ -492,9 +496,9 @@ def plot_one_day( tc='all', savefig=False):
                     df_category.append( metadata[yearval]['category'][date])
 
                 # add scatter points symbolyzing tall / strong peak locations!
-                ax.scatter( prob_smooth[ peakind], height_bin[ peakind], c='k', marker='*', s=50, zorder=5)
+                ax.scatter( prob_smooth[ peakind], height_bin[ peakind], c='y', marker='s', s=50, zorder=5)
                 # add scatter points symbolyzing weaker / smaller peak locations!
-                ax.scatter( prob_smooth[ peakindweak], height_bin[ peakindweak], c='r', marker='*', s=50, zorder=6)
+                ax.scatter( prob_smooth[ peakindweak], height_bin[ peakindweak], c='r', marker='s', s=50, zorder=6)
 
                 # update the old date / year counter, add one to count to iterate colors
                 old_date = date
@@ -544,9 +548,9 @@ def plot_one_day( tc='all', savefig=False):
     peakind, peakindweak = find_local_peak( prob_smooth)
 
     # add scatter points symbolyzing tall / strong peak locations!
-    ax.scatter( prob_smooth[ peakind], height_bin[ peakind], c='k', marker='*', s=50, zorder=5, label='strong')
+    ax.scatter( prob_smooth[ peakind], height_bin[ peakind], c='y', marker='s', s=50, zorder=5, label='Large Cloud Layer')
     # add scatter points symbolyzing weaker / smaller peak locations!
-    ax.scatter( prob_smooth[ peakindweak], height_bin[ peakindweak], c='r', marker='*', s=50, zorder=6, label='weak')
+    ax.scatter( prob_smooth[ peakindweak], height_bin[ peakindweak], c='r', marker='s', s=50, zorder=6, label='Small Cloud Layer')
 
     savedir = "/Users/etmu9498/research/figures/cloud-heights-one-day/" + oldyear
     os.chdir( savedir)

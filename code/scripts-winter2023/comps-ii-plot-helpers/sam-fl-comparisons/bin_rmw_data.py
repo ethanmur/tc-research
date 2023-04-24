@@ -14,7 +14,7 @@ os.chdir("/Users/etmu9498/research/code/scripts")
 import make_plots
 import helper_fns
 
-os.chdir("/Users/etmu9498/research/code/scripts-winter2023")
+sys.path.append("/Users/etmu9498/research/code/scripts-winter2023")
 import helper_fns_winter2023
 import helpful_stats
 
@@ -55,9 +55,14 @@ def bin( tc='all', binwidth=.1, maxbin=10, new_data=False, bintype='rmw'):
     # initial value, update later!
     total_vars = []
 
+
     # do this for all the datasets! years and filenames
     for yeari, yearval in enumerate( yearlist):
         for filei, fileval in enumerate( filelist[ yeari]):
+
+            print(filei)
+            print(fileval)
+
             # get data
             fl_path = fl_data_root + yearval
             os.chdir( fl_path)
@@ -67,12 +72,18 @@ def bin( tc='all', binwidth=.1, maxbin=10, new_data=False, bintype='rmw'):
             # input variables
             #input_vars = [ 'dist', 'rmw', 'float_time', 'WS.d', 'UWZ.d', 'SfmrRainRate.1', 'THETAE.d', 'MR.d', 'TA.d'] # change me!
             #var_names = [ 'dist', 'rmw', 'time', 'wind_speed', 'w', 'Rain Rate', 'Theta E', 'Mixing Ratio', 'temp']  # change me!
-            input_vars = list( fl_data.keys())
+            
+            # input_vars = list( fl_data.keys())
+            
+            input_vars = ['center_dist', 'rmw', 'WS.d', 'TA.d', 'MR.d', 'UWZ.d', 'THETAE.d', 'SfmrRainRate.1'] 
+
             ################
             ## the list below holds about 10 empty lists, one for each of the input_vars.
             ## for each variable, there are len( midpoints) empty lists to hold each sorted data point
             ## structure
             ################
+
+            print(input_vars)
 
             # new 3/17/23 code
             # initial case: make a bunch of empty lists. If not true, that mean this

@@ -5,8 +5,6 @@ import matplotlib
 import numpy as np
 from matplotlib.colors import ListedColormap
 import matplotlib.colors as colors
-os.chdir("/Users/etmu9498/research/code/scripts")
-import make_plots
 
 # get and return a list of tc years and file names for a specific subset (or all) crl tc data!
 # based off code from plotting in "code/2022 eyewall determinations.ipynb"
@@ -18,16 +16,16 @@ def get_crl_datasets( tc='all', crl_data_root = "/Users/etmu9498/research/data/c
         yearlist = ['2021', '2022']
         # make a list of lists of all the datasets to be processed ( each year has a sublist)
         filelist = []
-        filelist.append( make_plots.load_flight_level( crl_data_root + '2021', print_files=False) )
-        filelist.append( make_plots.load_flight_level( crl_data_root + '2022', print_files=False) )
+        filelist.append( load_flight_level( crl_data_root + '2021', print_files=False) )
+        filelist.append( load_flight_level( crl_data_root + '2022', print_files=False) )
 
     # do this for just one year
     elif tc == '2021':
         yearlist = ['2021']
-        filelist = [ make_plots.load_flight_level( crl_data_root + '2021', print_files=False)]
+        filelist = [ load_flight_level( crl_data_root + '2021', print_files=False)]
     elif tc == '2022':
         yearlist = ['2022']
-        filelist = [ make_plots.load_flight_level( crl_data_root + '2022', print_files=False)]
+        filelist = [ load_flight_level( crl_data_root + '2022', print_files=False)]
 
     # do this for a specific dictionary of files:
     elif type( tc) == type( {}):
@@ -41,7 +39,7 @@ def get_crl_datasets( tc='all', crl_data_root = "/Users/etmu9498/research/data/c
 
     return yearlist, filelist
 
-
+# the same process as above, but for flight level data
 def get_fl_datasets( tc='all', crl_data_root = "/Users/etmu9498/research/data/in-situ-noaa-processed/"):
     # do this for all crl datasets (2021 and 2022)
     if tc == 'all':
@@ -49,16 +47,16 @@ def get_fl_datasets( tc='all', crl_data_root = "/Users/etmu9498/research/data/in
         yearlist = ['2021', '2022']
         # make a list of lists of all the datasets to be processed ( each year has a sublist)
         filelist = []
-        filelist.append( make_plots.load_flight_level( crl_data_root + '2021', print_files=False) )
-        filelist.append( make_plots.load_flight_level( crl_data_root + '2022', print_files=False) )
+        filelist.append( load_flight_level( crl_data_root + '2021', print_files=False) )
+        filelist.append( load_flight_level( crl_data_root + '2022', print_files=False) )
 
     # do this for just one year
     elif tc == '2021':
         yearlist = ['2021']
-        filelist = [ make_plots.load_flight_level( crl_data_root + '2021', print_files=False)]
+        filelist = [ load_flight_level( crl_data_root + '2021', print_files=False)]
     elif tc == '2022':
         yearlist = ['2022']
-        filelist = [ make_plots.load_flight_level( crl_data_root + '2022', print_files=False)]
+        filelist = [ load_flight_level( crl_data_root + '2022', print_files=False)]
 
     # do this for a specific dictionary of files:
     elif type( tc) == type( {}):
@@ -69,8 +67,65 @@ def get_fl_datasets( tc='all', crl_data_root = "/Users/etmu9498/research/data/in
             filelist.append( tc[ keyval])
     else:
         print( "Error: please enter a valid selection for tc")
-
     return yearlist, filelist
+
+
+# similar to the process above, but for tdr data. also return a list of date folders ( a bit more complicated)
+def get_tdr_datasets( tc='all', tdr_data_root = "/Users/etmu9498/research/data/tdr-original/"):
+    # do this for all crl datasets (2021 and 2022)
+    if tc == 'all':
+        # make a list of years where crl data is present
+        yearlist = ['2021', '2022']
+        
+        namelist = []
+        sublist = []
+        path = tdr_data_root + "2021/"
+        for (dirpath, dirnames, file) in os.walk( path):
+            sublist.extend(dirnames)
+            break
+        namelist.append( sublist)
+
+        # repeat for 2022
+        sublist = []
+        path = tdr_data_root + "2022/"
+        for (dirpath, dirnames, file) in os.walk( path):
+            sublist.extend(dirnames)
+            break
+        namelist.append( sublist)
+
+
+        # finally, create the file list of cases to look at
+        filelist = [] 
+        # empty lists for 2021, 2022
+        # add more empty lists for each tc name and year
+        for yeari, yearval in enumerate(yearlist):
+            filelist.append([])
+            for tci, tcval in enumerate(namelist[yeari]):
+                filelist[yeari].append( [])
+        print(filelist)
+
+        for yeari, yearval in enumerate(yearlist):
+
+            for filei, filename in enumerate(namelist[ yeari]):
+                sublist = []
+                path = tdr_data_root + yearval + "/" + filename + '/'
+                for (dirpath, dirnames, file) in os.walk( path):
+                    sublist.extend(file)
+                    break
+                filelist[yeari][filei].append(sublist)
+
+    # do this for just one year
+    # elif tc == '2021':
+    #     yearlist = ['2021']
+    #     filelist = [ load_flight_level( tdr_data_root + '2021', print_files=False)]
+    # elif tc == '2022':
+    #     yearlist = ['2022']
+    #     filelist = [ load_flight_level( tdr_data_root + '2022', print_files=False)]
+    else:
+        print( "Error: please enter a valid selection for tc")
+
+    return yearlist, namelist, filelist
+
 
 
 # find tc intensity category
@@ -107,6 +162,7 @@ def change_font_sizes(small=14, medium=18 ):
     plt.rc('xtick', labelsize=small)    # fontsize of the tick labels
     plt.rc('ytick', labelsize=small)    # fontsize of the tick labels
     plt.rc('legend', fontsize=small)    # legend fontsize
+
 
 def load_crl( path, print_files=True):
     """load crl data at the given data path using a helper function."""
