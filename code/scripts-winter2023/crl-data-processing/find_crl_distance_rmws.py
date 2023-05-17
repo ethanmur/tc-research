@@ -104,6 +104,9 @@ def interp_data( varval, crl_origh, p3_heights, crl_time, year=None, crl_name=No
 
     # see if the p-3 ever reaches really high altitudes (above the assumed 4 km cap)
     # if so, make a larger matrix :/ slower, but will put upper data where it belongs!
+
+    print(np.nanmax(p3_heights))
+
     if np.nanmax( p3_heights) > 4000:
 
         # find the height of the top of the matrix. Kinda complicated, because
@@ -124,11 +127,18 @@ def interp_data( varval, crl_origh, p3_heights, crl_time, year=None, crl_name=No
             else:
                 topheight += 1
                 idx += 1
+
+        print("tall case")
+        print(topheight)
+
         # make a new base height array for our new crl data! Convert it to km
         # to match old height array
         base_h = np.arange( - topheight / 1000, 0, resolution / 1000)
     # regular case: assume a peak height of 4 km
     else:
+
+        print('short case')
+        
         # defining a new base height array to standardize the new matrix
         base_h = np.arange( -4.0, 0.0, resolution / 1000)
     # make an empty array for initial storage

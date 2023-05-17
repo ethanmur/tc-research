@@ -14,8 +14,6 @@ import helper_fns_winter2023
 
 
 
-
-
 # return a dictionary holding eye limits from the 2021 and 2022 hurricane seasons!
 # i decided to make a new file to simplify the analysis using the new tc datasets :)
 def all_metadata( eye_limits='default'):
@@ -24,10 +22,12 @@ def all_metadata( eye_limits='default'):
     # part 1: get times from the 2021 eye pass data
     # look under "2023-02-27 get 2021 eyewall limits.ipynb" to see how I wrote some automatic code
     # to find these limits!
-    eyewall_time_limits[ '2021'] = { }
-    eyewall_time_limits[ '2021']['eyewall_limits'] = { }
-    eyewall_time_limits[ '2021']['intensity'] = { }
+    eyewall_time_limits[ '2021'] = {}
+    eyewall_time_limits[ '2021']['eyewall_limits'] = {}
+    eyewall_time_limits[ '2021']['intensity'] = {}
     eyewall_time_limits[ '2021']['category'] = {}
+    eyewall_time_limits[ '2021']['names'] = {}
+    # eyewall_time_limits[ '2021']['dates'] = {}
 
 
     # date and time eye pass metadata
@@ -36,6 +36,14 @@ def all_metadata( eye_limits='default'):
             '0819', '0820', '0821',
             '0827', '0828', '0829',
             '0925', '0926', '0927', '0929']
+
+    names2021 = [
+        'fred', 'fred', 'fred', 'fred', 
+        'grace', 'grace', 'grace', 
+        'henri', 'henri', 'henri', 
+        'ida', 'ida', 'ida', 
+        'sam', 'sam', 'sam', 'sam', 
+        ]
 
     # original eye pass limits! taken from old eyewall lims, matches previous results really well
     passes2021 = [
@@ -96,20 +104,33 @@ def all_metadata( eye_limits='default'):
     category = helper_fns_winter2023.find_category( intensity)
     for datei, dateval in enumerate( dates2021):
         eyewall_time_limits['2021']['category'][ dateval] = category[ datei]
+    for datei, dateval in enumerate( names2021):
+        eyewall_time_limits['2021']['names'][dateval] = names2021[datei]
+
 
     # part 2: add 2022 eye pass data
     eyewall_time_limits[ '2022'] = { }
     eyewall_time_limits[ '2022']['eyewall_limits'] = {}
     eyewall_time_limits[ '2022']['intensity'] = {}
     eyewall_time_limits[ '2022']['category'] = {}
+    eyewall_time_limits[ '2022']['names'] = {}
+    # eyewall_time_limits[ '2021']['dates'] = {}
+
+
 
     # working on creating 2022 metadata on this line
     # eyewall_time_limits[ '2022'] = {}
     dates2022 = [
-        '0830', '0905', '0906',
-         '0908', '0916', '0917',
-         '0918', '0920', '0924',
-         '0925', '0926', '1008'
+         '0830', '0905', '0906', '0908',
+         '0916', '0917', '0918', '0920', 
+         '0924', '0925', '0926', 
+         '1008'
+        ]
+    names2022 = [
+        'earl', 'earl', 'earl', 'earl', 
+        'fiona', 'fiona', 'fiona', 'fiona', 
+        'ian', 'ian', 'ian', 
+        'julia'
         ]
 
     # these passes use the original 2021 methods for finding cloud tops-
@@ -183,11 +204,13 @@ def all_metadata( eye_limits='default'):
         55, 100, 40,
         45, 65, 60
         ]
-    # add intensity and category metadata to the dictionary!
+    # add intensity, name, and category metadata to the dictionary!
     for datei, dateval in enumerate( dates2022):
         eyewall_time_limits['2022']['intensity'][ dateval] = intensity[ datei]
     category = helper_fns_winter2023.find_category( intensity)
     for datei, dateval in enumerate( dates2022):
         eyewall_time_limits['2022']['category'][ dateval] = category[ datei]
+    for datei, dateval in enumerate( names2022):
+        eyewall_time_limits['2022']['names'][ dateval] = names2022[ datei]
 
     return eyewall_time_limits
