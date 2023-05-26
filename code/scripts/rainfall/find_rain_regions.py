@@ -9,6 +9,8 @@ os.chdir(  "/Users/etmu9498/research/code/scripts")
 import cloud_height
 import cloud_top_algorithms as cta
 
+
+
 # this function finds regions of rainfall for plotting and statisical purposes
 def find_rain( crl_name, i1, i2, cutoff_power=-30, xaxis='in-situ-dist', crl_path = "/Users/etmu9498/research/data/crl-new-matrices"):
     warnings.filterwarnings("ignore")

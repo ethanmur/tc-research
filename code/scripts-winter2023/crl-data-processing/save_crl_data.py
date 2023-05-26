@@ -55,6 +55,8 @@ def save_one_crl( yearval, crl_name, add_dist_coords={'new_heights': False, 'fl_
     crl_data_root = "/Users/etmu9498/research/data/CRL_data/"
     crl_path = crl_data_root + yearval
     os.chdir( crl_path)
+
+    print(crl_name)
     crl_data = xr.open_dataset( crl_name)
 
     # go through every key for add_dist_coords. If any of them are true, we'll need to
@@ -142,7 +144,18 @@ def save_one_crl( yearval, crl_name, add_dist_coords={'new_heights': False, 'fl_
     description2 = [ ]
     description3 = [ ]
     #making time and height coordinates
+    # special case for TC Julia: correct the time axis 
+    # (remove the one problem data point identified in "tests\2023-05-18 tc julia axis correction.ipynb")
     time = crl_data.time.values
+    if yearval == '2022' and crl_name[0:9] == "P3_202210":
+        print("Julia Case!")
+        # fill the outlier data point location with a nan
+        time[np.where(time > 28.)[0]] = np.nan
+        # interpolate the nan position
+        nans, x = np.isnan(time), lambda z: z.nonzero()[0]
+        time[nans] = np.interp(x(nans), x(~nans), time[~nans])
+
+    # add height coords here
     if add_dist_coords['new_heights']:
         height = - 1000 * vars_interpolated[ 0]
     else:

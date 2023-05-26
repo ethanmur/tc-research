@@ -23,7 +23,7 @@ import cloud_top_plotting
 # make eye cloud height distributions for the four tc categories! see how they compare.
 # confirm that results match earlier 2021 data, and repeat tests for 2022 data.
 # much of this code is taken from "scripts/statistics/cloud_height_pdfs_all_one_figure.py/cloud_height_vs_intensity()"
-def find_intensity_stats( tc='all', binwidth=25, smoothwidth=25, eye_limits='default'):
+def find_intensity_stats( tc='all', binwidth=25, smoothwidth=25, eye_limits='default', save_profile=False, multi_layers=False):
     # empty lists that will hold all the height datasets for each intensity category
     td_heights, td_cases = [], 0
     ts_heights, ts_cases = [], 0
@@ -108,7 +108,17 @@ def find_intensity_stats( tc='all', binwidth=25, smoothwidth=25, eye_limits='def
                         cutoff = -30
                     elif yearval == '2022':
                         cutoff = -40
-                    heights, time = find_cloud_tops.find_cloud_heights( H, power, axis, p3_height, cutoff_power = cutoff)
+                    
+                    # 5/25/23 new case: find all cloud layers for stats!
+                    if multi_layers:
+                        heights_lists, time, count = find_cloud_tops.find_multi_cloud_heights( H, power, axis, p3_height, cutoff_power = cutoff)
+                        # unwrap the lists of lists here!
+                        heights = np.array( [item for sublist in heights_lists for item in sublist])
+                    else:
+                        # regular case: find the top cloud height layer
+                        heights, time = find_cloud_tops.find_cloud_heights( H, power, axis, p3_height, cutoff_power = cutoff)
+
+
 
                     # save height values from this run
                     if date == '0812':
@@ -135,15 +145,21 @@ def find_intensity_stats( tc='all', binwidth=25, smoothwidth=25, eye_limits='def
                         sh_cases += 1
 
                     # optional: make a simple plot showing determined eye cloud heights!
-                    #cloud_top_plotting.eye_cloud_tops( heights, time, axis, H, power, title=fileval + '-eye-' + str( eyei))
-                    #os.chdir( "/Users/etmu9498/research/figures/CRL-all-data-processed/2021-eye-clouds/")
-                    #plt.savefig( fileval + '-eye-' + str( eyei) + ".png", dpi = 250)
+                    if save_profile:
+                        cloud_top_plotting.eye_cloud_tops( heights, time, axis, H, power, title=fileval + '-eye-' + str( eyei))
+                        os.chdir( "/Users/etmu9498/research/figures/CRL-all-data-processed/" + yearval + "-eye-clouds/")
+                        plt.savefig( fileval + '-eye-' + str( eyei) + ".png", dpi = 250)
 
 
     data = [ td_heights, ts_heights, wh_heights, sh_heights]
+    totalsum = len(td_heights) + len(ts_heights) + len(wh_heights) + len(sh_heights)
     cases = [ td_cases, ts_cases, wh_cases, sh_cases]
     tccat = ['td', 'ts', 'wh', 'sh']
     for datai, dataval in enumerate( data):
+
+        # print out total stats once
+        if datai == 0:
+            print("Total number of lidar data points: " + str(totalsum))
         test_ht = np.array( dataval)
         test_ht = test_ht[ np.where( test_ht > 50)[0] ]
 

@@ -66,8 +66,8 @@ def clusters_all_peaks( tc='all', no_eyewalls=True, cluster_threshold=.250, prin
 
             save_dir = "/Users/etmu9498/research/figures/prob-dist-results/clusters-peaks"
 
-            os.chdir( save_dir)
-            plt.savefig( metadata['tc_name'].casefold() + "-" + str( dataset+1) + ".png", bbox_inches='tight', dpi=300 )
+            # os.chdir( save_dir)
+            # plt.savefig( metadata['tc_name'].casefold() + "-" + str( dataset+1) + ".png", bbox_inches='tight', dpi=300 )
 
             # os.chdir( save_path)
             # plt.savefig( metadata['tc_name'].casefold() + "-" + str( dataset+1) + ".png", bbox_inches='tight', dpi=300 )

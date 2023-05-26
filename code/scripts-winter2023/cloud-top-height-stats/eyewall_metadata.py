@@ -121,35 +121,45 @@ def all_metadata( eye_limits='default'):
     # working on creating 2022 metadata on this line
     # eyewall_time_limits[ '2022'] = {}
     dates2022 = [
-         '0830', '0905', '0906', '0908',
+         '0830', '0831', '0901', '0903', '0904', '0905', '0906', '0908',
          '0916', '0917', '0918', '0920', 
-         '0924', '0925', '0926', 
-         '1008'
+         '0924', '0925', '0926', '0927',
+         '1007', '1008'
         ]
     names2022 = [
-        'earl', 'earl', 'earl', 'earl', 
+        'earl', 'earl', 'earl', 'earl', 'earl', 'earl', 'earl', 'earl', 
         'fiona', 'fiona', 'fiona', 'fiona', 
-        'ian', 'ian', 'ian', 
-        'julia'
+        'ian', 'ian', 'ian', 'ian',
+        'julia', 'julia'
         ]
 
     # these passes use the original 2021 methods for finding cloud tops-
     # find the wind speed / cloud centers, then break things off at the 'eyewall'.
     # works well for intense cases, but likely misidentiifes eyewalls for weak
     # cases (especially after seeing radial distance plots!!).
+
+    # try to develop a more quantitative approach for finding eye passes here.
+    # only keep data 50 km away from the TC center for weak cases!
+    # otherwise, use the same criteria for finding eyewalls
     passes2022 = [
           [ ( )], # 0830, na
-          [ (9.80, 10.18), (10.91, 11.19), (12.07, 12.2), (12.95, 13.2)], # 0905, weak
-          [ (11.18, 11.38), (12.29, 12.54), (13.41, 13.63)], # 0906, mid
+          [ ()], # 8/31
+          [ (9.13, 9.34), (10.42, 10.62), (12.6, 12.83)], # 9/01
+          [ (9.28, 9.53), (10.17, 10.38), (11.35, 11.57), (11.64, 11.85)], # last case is too far -> (13.27, 13.52)], # 9/03
+          [ (13.07, 13.3)], # 9/04
+          [ (10.06, 10.32), (10.81, 11.02), (12.045, 12.193), (12.984, 13.201)], #09/05
+          [ (11.18, 11.38), (12.29, 12.54), (13.365, 13.58)], # 0906, mid
           [ (10.44, 10.58), (11.79, 11.95), (12.93, 13.02)], # 0908, mid note!! crl and in situ times are off?!?
-          [ (10.30, 10.47), (11.58, 11.73), (13.06, 13.19)], # 0916, weak
-          [ (9.57, 9.77),  (11.92, 12.17)], # 0917, weak
+          [ (10.29, 10.514), (11.62, 11.83), ( 12.96, 13.196)], # 09/16
+          [ (9.40, 9.60), (11.96, 12.197)],
           [ (9.97, 10.03), (11.2, 11.27), (12.38, 12.53), (13.27, 13.55), (14.29, 14.45)], # 0918, strong
-          [ (10.37, 10.47), (11.43, 11.47), (12.78, 12.85), (13.97, 14.04)], #0920, strong
-          [ ()], # 0924, na
-          [ (10.72, 10.9), (12.02, 12.10)], # 0925, weak
+          [ (10.37, 10.47), (11.43, 11.47), (12.77, 12.81), (13.96, 14.04)], #0920, strong
+          [ (10.495, 10.81), (12.2, 12.4), (12.8, 13.) ], # 0924, na
+          [ (10.67, 10.914), (11.884, 12.093)], # 09/25
           [ (10.15, 10.24), (11.42, 11.51), (11.60, 11.67), (12.69, 12.83)], # 0926, mid
-          [ ()] # 1008, na
+          [ (10.38, 10.42), (11.7, 11.75), (12.58, 12.61)], # 9/27
+          [ (22.4, 22.58), (23.45, 23.64), (24.65, 24.78)], # 10/07
+          [ (22.1, 22.24), (23.16, 23.3), (24.9, 25.0)] # 1008, na
          ]
     # these passes were created using a new eye definition! Instead of looking at cloud structures,
     # the TC radial distance center is prioritized, with manual cutoffs being created around that.
@@ -168,15 +178,6 @@ def all_metadata( eye_limits='default'):
           [ (10.18, 10.25), (11.42, 11.51), (11.60, 11.67), (12.69, 12.83)], # 0926, mid
           [ ()] # 1008, na
          ]
-    # try to develop a wholly quantitative approach for finding eye passes here.
-    # only keep data 50 km away from the TC center for weak cases!
-    # otherwise, use the same criteria for finding eyewalls
-    passes2022_v3 = passes2022.copy() # start with passes as an initial guess
-    # fix data for...
-    passes2022_v3[ 1] = [ (10.06, 10.32), (10.81, 11.02), (12.045, 12.193), (12.984, 13.201)] #09/05
-    passes2022_v3[ 4] = [ (10.29, 10.514), passes2022_v3[4][1], ( 12.96, 13.196)] # 09/16
-    passes2022_v3[ 5] = [ (9.40, 9.60), (11.96, 12.197)] # 09/17
-    passes2022_v3[ 9] = [ (10.67, 10.914), (11.884, 12.093)] # 09/25
 
     # set 2021 and 2022 eyewalls depending on user input!
     if eye_limits == 'passes':
@@ -193,16 +194,16 @@ def all_metadata( eye_limits='default'):
         for datei, dateval in enumerate( dates2021):
             eyewall_time_limits['2021']['eyewall_limits'][ dateval] = passes2021_v2[ datei]
         for datei, dateval in enumerate( dates2022):
-            eyewall_time_limits['2022']['eyewall_limits'][ dateval] = passes2022_v3[ datei]
+            eyewall_time_limits['2022']['eyewall_limits'][ dateval] = passes2022[ datei]
 
     # units: kt
     # first tc is irrelevant test data
     # data manually pulled from the noaa advisory archive https://www.nhc.noaa.gov/archive/2022/
     intensity = [
-        0, 45, 55,
-        90, 45, 50,
-        55, 100, 40,
-        45, 65, 60
+        25, 25, 25, 40, 45, 55, 55, 85, # earl
+        50, 50, 55, 100, # fiona 
+        35, 40, 70, 110, # ian
+        45, 65 # julia
         ]
     # add intensity, name, and category metadata to the dictionary!
     for datei, dateval in enumerate( dates2022):

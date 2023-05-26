@@ -103,7 +103,7 @@ def large_clusters( H, xaxis, surface_threshold= .050 ):
                     print('i = ' + str( i) + ': break case from 3 surf points at x = ' + str( xaxis[i].values))
                     pass
 
-        print( " pass case: " + str( pass_case))
+        # print( " pass case: " + str( pass_case))
 
         # case where all the clusters pass the test!!
         if pass_case:
@@ -111,7 +111,7 @@ def large_clusters( H, xaxis, surface_threshold= .050 ):
             # append values to the current cluster list
             H_cluster_current.append( H[ i])
             xaxis_cluster_current.append( float( xaxis[ i].values))
-            print('i = ' + str( i) + ': pass case at x = ' + str( xaxis[i].values))
+            # print('i = ' + str( i) + ': pass case at x = ' + str( xaxis[i].values))
 
 
         # else case: start of a new cluster
@@ -152,11 +152,13 @@ def large_clusters( H, xaxis, surface_threshold= .050 ):
 # or, should I just filter these clusters out at the end?
 
 
+'''
+
 # initial idea:
 # maybe reverse the previous script? currently im searching for cases that break a cluster up,
 # but should I instead be looking for cases that continue the current cluster?
 # aka switch from finding false cases to true cases
-def large_clusters_additive( H, xaxis, surface_threshold= .050, cluster_points = 5,  )
+def large_clusters_additive( H, xaxis, surface_threshold= .050, cluster_points =5):
     # save total cloud clusters, and the current cluster, in individual lists
     # do the same for x axis values
     H_clusters = []
@@ -195,7 +197,7 @@ def large_clusters_additive( H, xaxis, surface_threshold= .050, cluster_points =
 
 
 
-
+'''
 
 
 
@@ -205,3 +207,4 @@ def large_clusters_additive( H, xaxis, surface_threshold= .050, cluster_points =
 def find_peaks_clusters( H, xaxis, surface_threshold= .050):
     peaks = find_peaks( H, prominence= 1.0, width=3)
     return H[ peaks[0]], xaxis[ peaks[0]]
+

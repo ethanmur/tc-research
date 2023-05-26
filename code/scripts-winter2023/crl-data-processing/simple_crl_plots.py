@@ -12,7 +12,7 @@ sys.path.append(  "/Users/etmu9498/research/code/scripts-winter2023/crl-data-pro
 import find_crl_distance_rmws
 
 
-def plot_all( tc='all', set_xlims=True):
+def plot_all( tc='all', set_xlims=True, save=False):
     crl_data_root = "/Users/etmu9498/research/data/crl-all-data-processed/"
 
     # do this for all crl datasets (2021 and 2022)
@@ -56,27 +56,27 @@ def plot_all( tc='all', set_xlims=True):
     for yeari, yearval in enumerate( yearlist):
         for filei, fileval in enumerate( filelist[ yeari]):
             # use the function below to process the crl data separately!
-            crl_data = plot_one( yearval, fileval, set_xlims)
+            crl_data = plot_one( yearval, fileval, set_xlims, save)
 
             print( "New CRL File Plotted and Saved: " +  yearval + "/" + fileval)
     return
 
 
-def plot_one( yearval, crl_name, set_xlims=True):
+def plot_one( yearval, crl_name, set_xlims=True, save=False):
     # open up the crl file
     crl_data_root = "/Users/etmu9498/research/data/crl-all-data-processed/"
     crl_path = crl_data_root + yearval
     os.chdir( crl_path)
     crl_data = xr.open_dataset( crl_name)
 
-    plt.figure( figsize=(14, 10))
+    plt.figure( figsize=(14, 14))
     helper_fns.change_font_sizes( 12, 12)
 
     time = crl_data.time
     height = crl_data.height
 
     # plot p3 height and temps!
-    plt.subplot( 311)
+    plt.subplot( 412)
     plt.title( "All CRL data for file " + crl_name[:-3])
     plt.plot( time, crl_data.p3_height, c='y', linewidth=1.5)
     plt.ylabel( "P-3 Height (m)")
@@ -102,7 +102,7 @@ def plot_one( yearval, crl_name, set_xlims=True):
 
     print( "height plotted")
 
-    '''
+    
     # plot rmw and radial distance axes!
     plt.subplot( 411)
     plt.plot( time, crl_data.center_dist, c='k', linewidth=1.5)
@@ -117,11 +117,14 @@ def plot_one( yearval, crl_name, set_xlims=True):
     plt.grid()
     helper_fns.add_blank_colorbar()
     # set these x limits no matter what: prevents showing colorbars at -10000!
+    ax.set_ylim([0, 350])
+    ax2.set_ylim([0, 15])
     if xlims[1] > 1:
         plt.xlim( xlims)
 
     print( "rmw plotted")
 
+    '''
     # plot wind spd and w axes!
     plt.subplot( 413)
     plt.plot( time, crl_data.wind_speed, c='c', linewidth=1.5)
@@ -142,7 +145,7 @@ def plot_one( yearval, crl_name, set_xlims=True):
     '''
 
     # plot temperature
-    plt.subplot( 312)
+    plt.subplot( 413)
     min = 5
     max = 35
     map = plt.cm.get_cmap( "RdYlBu").reversed()
@@ -178,7 +181,7 @@ def plot_one( yearval, crl_name, set_xlims=True):
 
     # plot power ch1
 
-    plt.subplot( 313)
+    plt.subplot( 414)
     min = -30
     max = -10
     plt.pcolormesh( time, height, crl_data.P_ch1.transpose(), vmin = min, vmax = max)
@@ -195,6 +198,7 @@ def plot_one( yearval, crl_name, set_xlims=True):
     plt.grid('on')
     print( "power plotted")
 
-    savedir = "/Users/etmu9498/research/figures/CRL-all-data-processed/" + yearval
-    os.chdir( savedir)
-    # plt.savefig( crl_name[:-3] + ".png", dpi=100, bbox_inches='tight')
+    if save:
+        savedir = "/Users/etmu9498/research/figures/CRL-all-data-processed/" + yearval
+        os.chdir( savedir)
+        plt.savefig( crl_name[:-3] + ".png", dpi=100, bbox_inches='tight')
