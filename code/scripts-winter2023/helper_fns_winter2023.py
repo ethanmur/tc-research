@@ -132,8 +132,11 @@ def get_tdr_datasets( tc='all', tdr_data_root = "/Users/etmu9498/research/data/t
 def find_category( intensity_list):
     cat = []
     for i in range( len( intensity_list)):
+        # data not used case
+        if np.isnan(intensity_list[ i]):
+            cat += ["NA"] 
         # tropical depression case (all values are in knots)
-        if intensity_list[ i] < 34:
+        elif intensity_list[ i] < 34:
         # tropical storm
             cat += ['td']
         elif intensity_list[ i] >= 34 and intensity_list[ i] < 64:

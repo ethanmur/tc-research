@@ -25,10 +25,12 @@ def all_metadata( eye_limits='default'):
     eyewall_time_limits[ '2021'] = {}
     eyewall_time_limits[ '2021']['eyewall_limits'] = {}
     eyewall_time_limits[ '2021']['intensity'] = {}
+    eyewall_time_limits[ '2021']['intensification'] = {}
     eyewall_time_limits[ '2021']['category'] = {}
     eyewall_time_limits[ '2021']['names'] = {}
-    # eyewall_time_limits[ '2021']['dates'] = {}
-
+    eyewall_time_limits[ '2021']['defined_eyewall'] = {}
+    eyewall_time_limits[ '2021']['shear_mag'] = {}
+    eyewall_time_limits[ '2021']['shear_dir'] = {}
 
     # date and time eye pass metadata
     dates2021 = ['0811', '0812am', '0812pm', '0813',
@@ -39,8 +41,8 @@ def all_metadata( eye_limits='default'):
 
     names2021 = [
         'fred', 'fred', 'fred', 'fred', 
-        'grace', 'grace', 'grace', 
-        'henri', 'henri', 'henri', 
+        'grace', 'grace', 'grace', 'grace', 
+        'henri', 'henri', 
         'ida', 'ida', 'ida', 
         'sam', 'sam', 'sam', 'sam', 
         ]
@@ -90,31 +92,72 @@ def all_metadata( eye_limits='default'):
         [(21.5788, 21.6793), (22.7988, 22.8877)]
         ]
 
+    # 5/28/23 update: a new way to sort the data!
+    # look at "defined" vs "undefined" eyewalls. This isn't exactly an intensity sorting method:
+    # while SH will likely all have defined eyewalls and TDs all undefined, some WH and TS cases
+    # might fall in between. This sorting method will hopefully just look at TCs with defined 
+    # low level eyes.
+    # either true or false for each day
+    defined_eyewall = [
+        False, False, False, False, # maybe 8/12 pm has a valid eye pass?
+        False, True, True, True, 
+        False, True,
+        True, True, True, 
+        False, True, True, True # I kinda want to try to add the partly cut off datasets to the analysis!!
+        ]
+
     # add 2021 intensity metadata! units: kt
     intensity = [
-        0, 30, 32.5, 30,
-        32.5, 45, 70,
-        55, 60, 65,
+        np.nan, 30, 32.5, 30,
+        32.5, 45, 70, 55,
+        60, 65,
         70, 85, 130,
-        130, 135, 105, 115
+        np.nan, 135, 105, 115
         ]
+    category = helper_fns_winter2023.find_category( intensity)
+    # intensification: +12h intensity - -12h intensity (from "tests/2023-05-06 TC intensification Calcs.ipynb")
+    intensification = [
+        np.nan, 5, 0, 0, 
+        5, 15, -5, 15,
+        10, -10, 
+        15, 60, -50, 
+        np.nan, -25, 10, 10]
+
+    shearmag = [
+        np.nan, 18.7, 18.1, 17.9, 
+        16.0, 10.7, 10.5, 8.1, 
+        12.8, 6.0, 
+        11.5, 12.5, 11.2, 
+        np.nan, 9.0, 8.5, 10.3]
+
+    sheardir = [
+        np.nan, 109, 91, 97, 
+        154, 142, 135, 169, 
+        179, 240, 
+        61, 105, 127, 
+        np.nan, 64, 44, 57]
+
     # add intensity and category metadata to the dictionary!
     for datei, dateval in enumerate( dates2021):
         eyewall_time_limits['2021']['intensity'][ dateval] = intensity[ datei]
-    category = helper_fns_winter2023.find_category( intensity)
-    for datei, dateval in enumerate( dates2021):
+        eyewall_time_limits['2021']['intensification'][ dateval] = intensification[ datei]
         eyewall_time_limits['2021']['category'][ dateval] = category[ datei]
-    for datei, dateval in enumerate( names2021):
         eyewall_time_limits['2021']['names'][dateval] = names2021[datei]
+        eyewall_time_limits['2021']['defined_eyewall'][dateval] = defined_eyewall[datei]
+        eyewall_time_limits['2021']['shear_mag'][dateval] = shearmag[datei]
+        eyewall_time_limits['2021']['shear_dir'][dateval] = sheardir[datei]
 
 
     # part 2: add 2022 eye pass data
     eyewall_time_limits[ '2022'] = { }
     eyewall_time_limits[ '2022']['eyewall_limits'] = {}
     eyewall_time_limits[ '2022']['intensity'] = {}
+    eyewall_time_limits[ '2022']['intensification'] = {}
     eyewall_time_limits[ '2022']['category'] = {}
     eyewall_time_limits[ '2022']['names'] = {}
-    # eyewall_time_limits[ '2021']['dates'] = {}
+    eyewall_time_limits[ '2022']['defined_eyewall'] = {}
+    eyewall_time_limits[ '2022']['shear_mag'] = {}
+    eyewall_time_limits[ '2022']['shear_dir'] = {}
 
 
 
@@ -196,22 +239,59 @@ def all_metadata( eye_limits='default'):
         for datei, dateval in enumerate( dates2022):
             eyewall_time_limits['2022']['eyewall_limits'][ dateval] = passes2022[ datei]
 
+
+    # 5/28/23 update: a new way to sort the data!
+    # look at "defined" vs "undefined" eyewalls. This isn't exactly an intensity sorting method:
+    # while SH will likely all have defined eyewalls and TDs all undefined, some WH and TS cases
+    # might fall in between. This sorting method will hopefully just look at TCs with defined 
+    # low level eyes.
+    # either true or false for each day
+    defined_eyewall = [
+        False, False, False, False, False, False, True, True, # maybe a True for 9/5? hard to tell
+        False, False, True, True, 
+        False, False, True, True,
+        True, True
+        ]
+
     # units: kt
     # first tc is irrelevant test data
     # data manually pulled from the noaa advisory archive https://www.nhc.noaa.gov/archive/2022/
     intensity = [
-        25, 25, 25, 40, 45, 55, 55, 85, # earl
+        np.nan, np.nan, 25, 40, 45, 55, 55, 85, # earl
         50, 50, 55, 100, # fiona 
         35, 40, 70, 110, # ian
         45, 65 # julia
         ]
+    category = helper_fns_winter2023.find_category( intensity)
+    # intensification: +12h intensity - -12h intensity (from "tests/2023-05-06 TC intensification Calcs.ipynb")
+    intensification = [
+        np.nan, np.nan, np.nan, 5, 5, 10, 10, -10, 
+        0, 0, 25, 15, 
+        5, 10, 35, 20, 
+        20, 10]
+
+    shearmag = [
+        np.nan, np.nan, np.nan, 13.9, 17.3, 19.7, 27.3, 9.4, 
+        13.2, 15.4, 19.1, 22.6, 
+        11.8, 10.6, 6.5, 17.0, 
+        11.0, 5.7]
+
+
+    sheardir = [
+        np.nan, np.nan, np.nan, 67, 75, 80, 78, 108, 
+        103, 94, 80, 97, 
+        182, 151, 88, 32, 
+        122, 194]
+
+
     # add intensity, name, and category metadata to the dictionary!
     for datei, dateval in enumerate( dates2022):
         eyewall_time_limits['2022']['intensity'][ dateval] = intensity[ datei]
-    category = helper_fns_winter2023.find_category( intensity)
-    for datei, dateval in enumerate( dates2022):
+        eyewall_time_limits['2022']['intensification'][ dateval] = intensification[ datei]
         eyewall_time_limits['2022']['category'][ dateval] = category[ datei]
-    for datei, dateval in enumerate( names2022):
         eyewall_time_limits['2022']['names'][ dateval] = names2022[ datei]
+        eyewall_time_limits['2022']['defined_eyewall'][dateval] = defined_eyewall[datei]
+        eyewall_time_limits['2022']['shear_mag'][dateval] = shearmag[datei]
+        eyewall_time_limits['2022']['shear_dir'][dateval] = sheardir[datei]
 
     return eyewall_time_limits
