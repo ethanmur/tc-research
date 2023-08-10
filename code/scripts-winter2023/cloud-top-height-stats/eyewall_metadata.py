@@ -47,6 +47,7 @@ def all_metadata( eye_limits='default'):
         'sam', 'sam', 'sam', 'sam', 
         ]
 
+    '''
     # original eye pass limits! taken from old eyewall lims, matches previous results really well
     passes2021 = [
         [ ()], # no eyes for 8/11
@@ -67,29 +68,32 @@ def all_metadata( eye_limits='default'):
         [(23.3316, 23.3971), (24.5296, 24.5724)],
         [(21.5788, 21.6793), (22.7988, 22.8877)]
         ]
+    '''
     # new eye pass limits. They remain the same for intense cases with well defined eyewalls,
     # but are at the -50 to 50 km limits for weaker cases. Inputed manually using scripts
     # found in notebooks-winter2023/"2022 eyewall determinations.ipynb"
 
-    # 3/31/23 edit: sam 9/26 pass 0 has been shifted to the left
-    passes2021_v2 = [
+
+    # 3/31/23 edit: Eyewalls used for current paper analysis
+    passes2021 = [
         [ ()], # no eyes for 8/11
-        [ (10.329, 10.52), (11.049, 11.17), (12.55, 12.76)],
-        [(22.092, 22.30), (23.348, 23.553)],
-        [(10.057, 10.127), (10.98, 11.186)],
-        [(10.89, 11.104), (12.17, 12.35)], # 8/16
-        [(10.0851, 10.369), (11.315, 11.51), (12.79, 13.0)], # only pass 2, 3 changed
-        [(21.8553, 21.9103), (23.1903, 23.2798), (24.3673, 24.4395)],
-        [(22.0095, 22.0995), (22.9457, 23.0707), (24.0498, 24.2193)],
-        [(21.775, 22.0), (24.415, 24.64)], # 8/20
-        [(22.5069, 22.5875), (23.7514, 23.823), (25.9095, 26.0095)],
-        [(21.519, 21.669), (23.5469, 23.6558), (24.7547, 24.8097), (26.7216, 26.8372)],
-        [ (21.165, 21.265)], # actually add an eye for 8/28!! one defintely exists, see the crl data...
-        [(18.9966, 19.0349)],
-        [()], # no eyes for 9/25
-        [(22.580, 22.6826), (23.8448, 23.8937), (24.8804, 24.9521)],
-        [(23.3316, 23.3971), (24.5296, 24.5724)],
-        [(21.5788, 21.6793), (22.7988, 22.8877)]
+        [ (10.329, 10.52), (11.049, 11.17), (12.55, 12.76)], # 50 km
+        [(22.092, 22.30), (23.348, 23.553)], # 50 km
+        [(10.057, 10.127), (10.98, 11.186)], # 50 km
+        [(10.89, 11.104), (12.17, 12.35)], # 8/16, 50 km
+        [(10.0851, 10.369), (11.315, 11.51), (12.79, 13.0)], # 8/17, used manual limits... maybe change?
+        [(21.8553, 21.9103), (23.1903, 23.2798), (24.3673, 24.4395)], # 8/18, manual limits
+        [(22.0095, 22.0995), (22.9457, 23.0707), (24.0498, 24.2193)], # 8/19, manual limits
+        [(21.775, 22.0), (24.415, 24.64)], # 8/20, no real defined eyewalls so 50 km limits used
+        [(22.5069, 22.5875), (23.7514, 23.823), (25.9095, 26.0095)], # 8/21, manual limits, looks good.
+        [(21.519, 21.669), (23.5469, 23.6558), (24.7547, 24.8097), (26.7216, 26.8372)], # 8/27, manual limits... maybe change?
+        [ (21.165, 21.265)], # 8/28, one eye defintely exists, see the crl data! Manual limits
+        [(18.9966, 19.0349)], # 8/29, manual and looks good
+        [(22.07, 22.12)], # added the first partial eye pass for 9/25... manual
+        [(22.580, 22.6826), (23.8448, 23.8937), (24.8804, 24.9521)], # still debating the placement of eyewall 1... should be further in? 
+        # also, eyes 2 and 3 have significant amounts of virga filling them... maybe a part of an eyewall downdraft?
+        [(22.06, 22.09), (23.3316, 23.3971), (24.5296, 24.5724)], # added eye #1 as a partial case... looks good! Eye 2 is solid, eye 3 might be a little wide...
+        [(21.5788, 21.6793), (22.7988, 22.8877), (24.03, 24.08), (25.7, 25.84)] # added partial eyes 3 and 4, 4 looks especially good!
         ]
 
     # 5/28/23 update: a new way to sort the data!
@@ -112,7 +116,7 @@ def all_metadata( eye_limits='default'):
         32.5, 45, 70, 55,
         60, 65,
         70, 85, 130,
-        np.nan, 135, 105, 115
+        130, 135, 105, 115
         ]
     category = helper_fns_winter2023.find_category( intensity)
     # intensification: +12h intensity - -12h intensity (from "tests/2023-05-06 TC intensification Calcs.ipynb")
@@ -121,21 +125,21 @@ def all_metadata( eye_limits='default'):
         5, 15, -5, 15,
         10, -10, 
         15, 60, -50, 
-        np.nan, -25, 10, 10]
+        45, -25, 10, 10]
 
     shearmag = [
         np.nan, 18.7, 18.1, 17.9, 
         16.0, 10.7, 10.5, 8.1, 
         12.8, 6.0, 
         11.5, 12.5, 11.2, 
-        np.nan, 9.0, 8.5, 10.3]
+        8.6, 9.0, 8.5, 10.3]
 
     sheardir = [
         np.nan, 109, 91, 97, 
         154, 142, 135, 169, 
         179, 240, 
         61, 105, 127, 
-        np.nan, 64, 44, 57]
+        65, 64, 44, 57]
 
     # add intensity and category metadata to the dictionary!
     for datei, dateval in enumerate( dates2021):
@@ -186,24 +190,26 @@ def all_metadata( eye_limits='default'):
     # otherwise, use the same criteria for finding eyewalls
     passes2022 = [
           [ ( )], # 0830, na
-          [ ()], # 8/31
-          [ (9.13, 9.34), (10.42, 10.62), (12.6, 12.83)], # 9/01
-          [ (9.28, 9.53), (10.17, 10.38), (11.35, 11.57), (11.64, 11.85)], # last case is too far -> (13.27, 13.52)], # 9/03
-          [ (13.07, 13.3)], # 9/04
-          [ (10.06, 10.32), (10.81, 11.02), (12.045, 12.193), (12.984, 13.201)], #09/05
-          [ (11.18, 11.38), (12.29, 12.54), (13.365, 13.58)], # 0906, mid
-          [ (10.44, 10.58), (11.79, 11.95), (12.93, 13.02)], # 0908, mid note!! crl and in situ times are off?!?
-          [ (10.29, 10.514), (11.62, 11.83), ( 12.96, 13.196)], # 09/16
-          [ (9.40, 9.60), (11.96, 12.197)],
-          [ (9.97, 10.03), (11.2, 11.27), (12.38, 12.53), (13.27, 13.55), (14.29, 14.45)], # 0918, strong
-          [ (10.37, 10.47), (11.43, 11.47), (12.77, 12.81), (13.96, 14.04)], #0920, strong
-          [ (10.495, 10.81), (12.2, 12.4), (12.8, 13.) ], # 0924, na
-          [ (10.67, 10.914), (11.884, 12.093)], # 09/25
-          [ (10.15, 10.24), (11.42, 11.51), (11.60, 11.67), (12.69, 12.83)], # 0926, mid
-          [ (10.38, 10.42), (11.7, 11.75), (12.58, 12.61)], # 9/27
-          [ (22.4, 22.58), (23.45, 23.64), (24.65, 24.78)], # 10/07
-          [ (22.1, 22.24), (23.16, 23.3), (24.9, 25.0)] # 1008, na
+          [ ()], # 8/31, na
+          [ (9.13, 9.34), (10.42, 10.62), (12.6, 12.83)], # 9/01, 50 km limits
+          [ (9.28, 9.53), (10.17, 10.38), (11.35, 11.57), (11.64, 11.85), (13.27, 13.52)], # 9/03, 50 km. maybe use manual for passes 2-4? 
+          [ (13.1, 13.3)], # 9/04, 50 km
+          [ (10.06, 10.32), (10.81, 11.02), (12.045, 12.193), (12.984, 13.201)], #09/05, 50 km. Maybe use manual for 3-4?
+          [ (11.18, 11.38), (12.29, 12.54), (13.365, 13.58)], # 0906, manual for 1,2,4, 50 km for 3?! 
+          [ (10.44, 10.58), (11.81, 11.95)], #  (12.93, 13.02)], # 0908, p-3 dips were finally corrected! Manual, don't use 3rd eye... actually in eyewall :/
+          [ (10.29, 10.514), (11.62, 11.83), ( 12.96, 13.196)], # 09/16, 50 km... maybe pass 2 is defined enough for manual?
+          [ (9.40, 9.60), (11.96, 12.197)], # 9/17, 50 km... very weak system
+          [ (9.97, 10.03), (11.2, 11.27), (12.38, 12.53), (13.27, 13.55), (14.29, 14.45)], # 0918, manual
+          [ (10.37, 10.47), (11.42, 11.47), (12.76, 12.81), (13.96, 14.04)], #0920, manual
+          [ (10.495, 10.81), (12.2, 12.4), (12.8, 13.) ], # 0924, 50 km with the 2nd profile slightly jogged in manually
+          [ (10.67, 10.914), (11.884, 12.093)], # 09/25, 50 km
+          [ (10.15, 10.24), (11.42, 11.51), (11.60, 11.67), (12.69, 12.83)], # 0926, manual
+          [ (10.38, 10.43), (11.7, 11.76), (12.58, 12.61)], # 9/27, manual
+          [ (22.4, 22.58), (23.45, 23.64), (24.65, 24.78)], # 10/07, 50 km on first 2, manual on 3rd once main eye is penetrated.
+          [ (22.1, 22.24), (23.16, 23.3), (24.33, 24.45), (24.9, 25.0)] # 1008, manual for 2, 4 and 50 km for 1, 3
          ]
+
+    '''
     # these passes were created using a new eye definition! Instead of looking at cloud structures,
     # the TC radial distance center is prioritized, with manual cutoffs being created around that.
     # 3/14 update: not really using this case...
@@ -221,7 +227,9 @@ def all_metadata( eye_limits='default'):
           [ (10.18, 10.25), (11.42, 11.51), (11.60, 11.67), (12.69, 12.83)], # 0926, mid
           [ ()] # 1008, na
          ]
+    '''
 
+    '''
     # set 2021 and 2022 eyewalls depending on user input!
     if eye_limits == 'passes':
         for datei, dateval in enumerate( dates2021):
@@ -234,10 +242,13 @@ def all_metadata( eye_limits='default'):
 
     # this is the default case! use the updated eyewall limits
     elif eye_limits == 'default' or eye_limits == 'passes 50km':
-        for datei, dateval in enumerate( dates2021):
-            eyewall_time_limits['2021']['eyewall_limits'][ dateval] = passes2021_v2[ datei]
-        for datei, dateval in enumerate( dates2022):
-            eyewall_time_limits['2022']['eyewall_limits'][ dateval] = passes2022[ datei]
+    '''
+
+    # set eyewall limits here!
+    for datei, dateval in enumerate( dates2021):
+        eyewall_time_limits['2021']['eyewall_limits'][ dateval] = passes2021[ datei]
+    for datei, dateval in enumerate( dates2022):
+        eyewall_time_limits['2022']['eyewall_limits'][ dateval] = passes2022[ datei]
 
 
     # 5/28/23 update: a new way to sort the data!

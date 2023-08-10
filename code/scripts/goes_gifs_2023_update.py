@@ -40,7 +40,7 @@ def load_goes( gif_path, print_files=True):
 # 1/18 test: this function works!
 def print_dates( year):
     if year == 2022:
-        goes_folders = [ '0901', '0903', '0904', '0906', '0908', '0916', '0917', '0918', '0920', '0925', '0926', '0927']
+        goes_folders = [ '0901', '0903', '0904', '0906', '0908', '0916', '0917', '0918', '0920', '0925', '0926', '0927', '1007', '1008']
     elif year == 2021:
         goes_folders = [ '0812am', '0812pm', '0813', '0816', '0817', '0818', '0819', '0820', '0821', '0827', '0926', '0927', '0929']
     else:
@@ -56,14 +56,18 @@ def simple_wrapper( dataset, year=2021, channel='CMI_C13'):
     i = dataset
 
     if year == 2022:
-        goes_folders = [ '0901', '0903', '0904', '0906', '0908', '0916', '0917', '0918', '0920', '0925', '0926', '0927']
-        crl_path = "/Users/etmu9498/research/data/CRL_data/2022"
-        crl_numbers = [ 0, 2, 4, 5, 6, 7, 8, 47, 51, 58, 60, 10]
+        goes_folders = [ '0901', '0903', '0904', '0906', '0908', '0916', '0917', '0918', '0920', '0925', '0926', '0927', '1007', '1008']
+        
+        # crl_path = "/Users/etmu9498/research/data/CRL_data/2022"
+        # crl_numbers = [ 0, 2, 4, 5, 6, 7, 8, 47, 51, 58, 60, 10]
+        crl_path = "/Users/etmu9498/research/data/cro-all-data-processed/2022"
+        crl_numbers = [ 2, 3, 4, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17]
 
-        name_list = [ 'earl', 'earl', 'earl', 'earl', 'earl', 'fiona', 'fiona', 'fiona', 'fiona', 'ian', 'ian', 'ian']
+        name_list = [ 'earl', 'earl', 'earl', 'earl', 'earl', 'fiona', 'fiona', 'fiona', 'fiona', 'ian', 'ian', 'ian', 'julia', 'julia']
         extent_list = [ [ -57, -48, 12, 20], [ -65, -57, 15, 23], [ -68, -62, 17, 22], [ -68, -62, 21, 27], [ -68, -62, 25, 31],
                 [-62, -48, 8, 20], [-70, -60, 10, 24], [-70, -60, 10, 24], [-75, -64, 14, 27],
-                [-85, -75, 12, 20 ], [-85, -75, 12, 24 ], [-89, -79, 18, 26 ]]
+                [-85, -75, 12, 20 ], [-85, -75, 12, 24 ], [-89, -79, 18, 26 ], 
+                [-90, -70, 0, 20 ], [-90, -70, 0, 20 ]]
 
         goes_path = "/Users/etmu9498/research/data/goes-satellite/2022/" + goes_folders[ i]
 

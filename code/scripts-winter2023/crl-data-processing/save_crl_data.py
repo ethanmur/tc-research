@@ -55,10 +55,9 @@ def save_one_crl( yearval, crl_name, add_dist_coords={'new_heights': False, 'fl_
     crl_data_root = "/Users/etmu9498/research/data/CRL_data/"
     crl_path = crl_data_root + yearval
     os.chdir( crl_path)
-
-    print(crl_name)
     crl_data = xr.open_dataset( crl_name)
-
+    print(crl_name)
+    
     # go through every key for add_dist_coords. If any of them are true, we'll need to
     # load the crl's corresponding flight level dataset!
     load_data = False
@@ -98,7 +97,8 @@ def save_one_crl( yearval, crl_name, add_dist_coords={'new_heights': False, 'fl_
         power_2d = power_2d.where( power_2d.values < 0)
         warnings.filterwarnings("default")
         wv_2d = crl_data.WVMR.where( crl_data.WVMR.values != 0)
-        wv_2d = wv_2d.where( wv_2d.values < 30)
+        wv_2d = wv_2d.where( wv_2d.values < 30.)
+        wv_2d = wv_2d.where( wv_2d.values >= 0.)
         lsr_2d = crl_data.LSR.where( crl_data.LSR.values < 10)
         lsr_2d = lsr_2d.where( lsr_2d.values > .1)
 
@@ -111,22 +111,89 @@ def save_one_crl( yearval, crl_name, add_dist_coords={'new_heights': False, 'fl_
         vars = [ T_2d, power_2d, wv_2d, lsr_2d]
         var_names = ["T", "P_ch1", "WVMR", "LSR"]
 
+        # special case for 9/8/22 earl data: fill in a roughly hour long time gap!
+        if crl_name == "P3_20220908H1_095405-141758.cdf":
+            print("Special Case for TC Earl: fill time gaps with nans")
+
+            # find the time gap here
+            starti = 0
+            endi = 0
+            time = crl_data.time.values
+            for timei in range(len(time) - 1):
+                if time[timei+1] - time[timei] > .1:
+                    starti = timei
+                    endi = timei+1
+            # find an updated time matrix
+            step = 2 / 3600 # 2 second timestep for crl data
+            missingtimes = np.arange(time[starti] + step, time[endi], step) # increment the start by step to not duplicate that value
+            crltimes = np.concatenate(( np.concatenate((time[0:starti], missingtimes), axis=0), time[endi:len(time)-1]), axis=0)
+
+            '''
+            print('start end times')
+            print(starti)
+            print(endi)
+            print('crl times')
+            print(len(crltimes))
+            print("missing times info:")
+            print(len(missingtimes))           
+            print(missingtimes)
+            print("Length of corrected time index")
+            print(len(crltimes))
+            print(crltimes)
+            print(starti)
+            print(endi)
+            '''
+
+            # correct the p3 heights on this step to match extended time axis
+            p3_heights = find_crl_distance_rmws.find_interp( crl_data, fl_data, fl_data['HT.d'], correct_case=len(crltimes))
+
+            # print('p3 heights')
+            # print(len(p3_heights))
+
+            # do this for each of the 4 matrices
+            for fieldi, fieldval in enumerate( vars):
+                nanarray = np.empty( (len(missingtimes), np.shape(fieldval)[1]))
+                nanarray[:] = np.nan
+
+                # now, slice the nan array into the current array
+                array1, array2 = fieldval[0:starti, :], fieldval[endi:np.shape( fieldval)[0]-1, :]
+                vars[fieldi] = np.concatenate(( np.concatenate((array1, nanarray), axis=0), array2), axis=0)
+                totalarray = np.concatenate(( np.concatenate((array1, nanarray), axis=0), array2), axis=0)
+
+                '''
+                # print(len(crltimes))
+                # print(np.shape(vars[fieldi]))
+                print("Shape of 1st and second halves of temperature array:")
+                print(np.shape(array1))
+                print(np.shape(array2))
+                print("shape of corrected array:")
+                print(np.shape(vars[fieldi]))
+                '''
+
+        # otherwise, use default values
+        else:
+            crltimes = crl_data.time.values
+
         vars_interpolated = []
         for vari, varval in enumerate( vars):
-            newh, var_2d = find_crl_distance_rmws.interp_data( varval, crl_data.H, p3_heights, crl_data.time,  year=yearval, crl_name=crl_name)
+            newh, var_2d = find_crl_distance_rmws.interp_data( varval, crl_data.H, p3_heights, crltimes,  year=yearval, crl_name=crl_name)
             # save
             if vari == 0:
                 vars_interpolated.append( newh)
             vars_interpolated.append( var_2d)
             print( var_names[ vari] + " Interpolated")
-
+            
     # add downscaled flight level data like wind speeds, etc!
     if add_dist_coords['fl_fields']:
 
         fl_field_list = [ 'WS.d', 'UWZ.d', 'MR.d', 'TA.d', 'PSURF.d']
         fl_field_interp = []
         for fieldi, fieldval in enumerate( fl_field_list):
-            fl_field_interp.append( find_crl_distance_rmws.find_interp( crl_data, fl_data, fl_data[ fieldval]) )
+
+            if crl_name == "P3_20220908H1_095405-141758.cdf":
+                fl_field_interp.append( find_crl_distance_rmws.find_interp( crl_data, fl_data, fl_data[ fieldval], correct_case=len(crltimes)) )
+            else:
+                fl_field_interp.append( find_crl_distance_rmws.find_interp( crl_data, fl_data, fl_data[ fieldval]) )
 
 
 
@@ -168,8 +235,25 @@ def save_one_crl( yearval, crl_name, add_dist_coords={'new_heights': False, 'fl_
     description1 += ( "", "", "", "")
     description2 += ( "", "", "", "")
     description3 += ( "", "", "", "")
-    dvs={'ProductionDateTime':( crl_data.ProductionDateTime.values),'VersionID':( crl_data.VersionID.values),
-    	     'Lon':( 'time', crl_data.Lon.values), 'Lat':( 'time', crl_data.Lat.values) }
+
+    # correct lat, lot, and radial distances here
+    if crl_name == "P3_20220908H1_095405-141758.cdf":
+        print("Special Case for TC Earl: correct other values")
+        lonorig, latorig = crl_data.Lon.values, crl_data.Lat.values
+        nanlist = np.empty( len(missingtimes))
+        nanlist[:] = np.nan
+        lons = np.concatenate(( np.concatenate((lonorig[0:starti], nanlist), axis=0), lonorig[endi:len(time)-1]), axis=0)
+        lats = np.concatenate(( np.concatenate((latorig[0:starti], nanlist), axis=0), latorig[endi:len(time)-1]), axis=0)
+        dvs={'ProductionDateTime':( crl_data.ProductionDateTime.values),'VersionID':( crl_data.VersionID.values),
+                     'Lon':( 'time', lons), 'Lat':( 'time', lats) }
+
+        # crldist = np.concatenate(( np.concatenate((crldist[0:starti], nanlist), axis=0), crldist[endi:len(time)-1]), axis=0)
+        # crlrmw = np.concatenate(( np.concatenate((crlrmw[0:starti], nanlist), axis=0), crlrmw[endi:len(time)-1]), axis=0)
+        crldist, crlrmw = find_crl_distance_rmws.find_rmws( crl_data, fl_data, correct_case=len(crltimes))
+
+    else:
+        dvs={'ProductionDateTime':( crl_data.ProductionDateTime.values),'VersionID':( crl_data.VersionID.values),
+        	     'Lon':( 'time', crl_data.Lon.values), 'Lat':( 'time', crl_data.Lat.values) }
 
     # if new matrices were created, add them here!
     if add_dist_coords['new_heights']:
@@ -203,6 +287,8 @@ def save_one_crl( yearval, crl_name, add_dist_coords={'new_heights': False, 'fl_
                 "Created using maximum eyewall wind speeds and the radial distances described above.")
         description3 += ( 'nan values represent missing or non-overlapping P-3 and / or TC track locations.',
                 'nan values represent missing or non-overlapping P-3 and / or TC track locations, or TCs without peak wind speeds.')
+        
+
         dvs.update( { 'center_dist': ( 'time', crldist), 'rmw': ( 'time', crlrmw) })
 
 
@@ -218,7 +304,7 @@ def save_one_crl( yearval, crl_name, add_dist_coords={'new_heights': False, 'fl_
 
 
     # next step: create the dataset and update units!
-    crl_new = xr.Dataset( data_vars=dvs, coords={'time': time, 'height': height})
+    crl_new = xr.Dataset( data_vars=dvs, coords={'time': crltimes, 'height': height})
 
     # add explanations to global attributes
     # add a new attribute explaining how this dataset has been edited

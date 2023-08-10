@@ -27,22 +27,19 @@ def find_matching_fl( year, crlname):
     matchlist = []
     for fl_filei, fl_fileval in enumerate( fllist):
         if crlname[3:-18] == fl_fileval[ : 10]:
-            print( fl_fileval[ : 10])
             matchlist.append( fl_fileval)
 
     # error cases: either too many files with the same date from the same plane, or no valid files!
     if len( matchlist) == 0:
-        print(crlname[3:-18])
+        # print(crlname[3:-18])
         print( "Error! No flight level dataset found. Investigate!")
         return False
     elif len( matchlist) > 1:
         print( "Error! Too many flight level datasets found for the same date and aircraft. Investigate!")
-        print(crlname[3:-18])
+        # print(crlname[3:-18])
         return False
-
     # get the fl dataset and return it!
     os.chdir( flpath)
-
     return xr.open_dataset( matchlist[ 0], decode_times=True)
 
 
@@ -50,13 +47,14 @@ def find_matching_fl( year, crlname):
 
 # downscale the existing flight level distance and rmw axes and return them for saving
 # in the new crl dataset!
-def find_rmws( crl_data, fl_data):
+def find_rmws( crl_data, fl_data, correct_case=False):
     # get the flight level distance and rmw axes
     fldist, flrmw = fl_data['center_dist'], fl_data['rmw']
     #print("first crl time: " + str( crl_data.time[0].values))
     #print("last crl time: " + str( crl_data.time[-1].values))
     #print("first fl time: " + str( fl_data['float_time'][0].values))
     #print("last fl time: " + str( fl_data['float_time'][-1].values))
+    # print(correct_case)
 
     # trim down the distances and rmws to the crl's time limits!
     # flight level indices of min + max crl times!
@@ -73,27 +71,36 @@ def find_rmws( crl_data, fl_data):
     # feel free to switch to this method if scipy is misbehaving
     # crldist = np.interp( crl_data['time'], fl_data['float_time'][i0:i1], fldist)
 
+    # define interpolation functions
     dist_interp = scipy.interpolate.interp1d( np.arange(fldist.size), fldist)
-    crldist = dist_interp( np.linspace( 0, fldist.size - 1, crl_data.time.size))
-
     rmw_interp = scipy.interpolate.interp1d( np.arange( flrmw.size), flrmw)
-    crlrmw = rmw_interp( np.linspace( 0, flrmw.size - 1, crl_data.time.size))
+    
+    if not correct_case:
+        crldist = dist_interp( np.linspace( 0, fldist.size - 1, crl_data.time.size))
+        crlrmw = rmw_interp( np.linspace( 0, flrmw.size - 1, crl_data.time.size))
+    else:
+        crldist = dist_interp( np.linspace( 0, fldist.size - 1, correct_case))
+        crlrmw = rmw_interp( np.linspace( 0, flrmw.size - 1, correct_case))
     return crldist, crlrmw
 
 
 # downscale the existing chosen flight level value onto a crl scale! This works a lot
 # like find_rmws() but obviously focusing on correcting heights. Really useful when
 # correcting / interpolating crl matrices
-def find_interp( crl_data, fl_data, fl_data_field):
-
+# correct_case attempts to fix the incorrectly shortened p3 heights for TC earl! due to the skipped time
+# always pass false unless the earl case appears. If so, pass the length of the new time index.
+def find_interp( crl_data, fl_data, fl_data_field, correct_case=False):
     # trim down the distances and rmws to the crl's time limits!
     # flight level indices of min + max crl times!
     i0 = np.argmin( np.abs( fl_data.time.values - crl_data.time[0].values ))
     i1 = np.argmin( np.abs( fl_data.time.values - crl_data.time[-1].values ))
     fl_data_field = fl_data_field[ i0:i1]
-
     interp = scipy.interpolate.interp1d( np.arange(fl_data_field.size), fl_data_field)
-    crl_field = interp( np.linspace( 0, fl_data_field.size - 1, crl_data.time.size))
+
+    if not correct_case:
+        crl_field = interp( np.linspace( 0, fl_data_field.size - 1, crl_data.time.size))
+    else:
+        crl_field = interp( np.linspace( 0, fl_data_field.size - 1, correct_case))
     return crl_field
 
 
@@ -104,9 +111,6 @@ def interp_data( varval, crl_origh, p3_heights, crl_time, year=None, crl_name=No
 
     # see if the p-3 ever reaches really high altitudes (above the assumed 4 km cap)
     # if so, make a larger matrix :/ slower, but will put upper data where it belongs!
-
-    print(np.nanmax(p3_heights))
-
     if np.nanmax( p3_heights) > 4000:
 
         # find the height of the top of the matrix. Kinda complicated, because
@@ -128,16 +132,15 @@ def interp_data( varval, crl_origh, p3_heights, crl_time, year=None, crl_name=No
                 topheight += 1
                 idx += 1
 
-        print("tall case")
-        print(topheight)
+        # print("tall case")
+        # print(topheight)
 
         # make a new base height array for our new crl data! Convert it to km
         # to match old height array
         base_h = np.arange( - topheight / 1000, 0, resolution / 1000)
     # regular case: assume a peak height of 4 km
     else:
-
-        print('short case')
+        # print('short case')
         
         # defining a new base height array to standardize the new matrix
         base_h = np.arange( -4.0, 0.0, resolution / 1000)
@@ -148,8 +151,9 @@ def interp_data( varval, crl_origh, p3_heights, crl_time, year=None, crl_name=No
     # around 3.5 km
     orig_maxh = np.nanmax( - crl_origh)
 
+    # 8/5/23 update: removed the code below
     # locally define the time axis: save runtime speed
-    crl_time = crl_time.values
+    # crl_time = crl_time.values
 
     # do this for every x axis value
     for i in range( np.size( varval, 0) ):
